@@ -1,9 +1,9 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect } from 'react';
-import { ActivityIndicator, StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../../components/ui/Button';
-import { colors } from '../../constants/colors';
+import { useTheme } from '../../hooks/useTheme';
 import { useAppStore } from '../../store/useAppStore';
 
 /**
@@ -11,8 +11,7 @@ import { useAppStore } from '../../store/useAppStore';
  */
 export default function JoinDeepLinkScreen() {
   const { code } = useLocalSearchParams<{ code: string }>();
-  const isDark = useColorScheme() === 'dark';
-  const palette = isDark ? colors.dark : colors.light;
+  const { palette } = useTheme();
 
   const user = useAppStore((s) => s.user);
   const loginAsGuest = useAppStore((s) => s.loginAsGuest);
@@ -30,35 +29,20 @@ export default function JoinDeepLinkScreen() {
   }, [code, user, loginAsGuest, joinTripByCode]);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={[styles.text, { color: palette.text }]}>
+    <SafeAreaView className="flex-1 bg-canvas dark:bg-canvas-dark">
+      <View className="flex-1 items-center justify-center p-6">
+        <ActivityIndicator size="large" color={palette.text} />
+        <Text className="font-semibold text-[15px] mt-3.5 text-ink dark:text-ink-dark">
           Joining trip {code?.toUpperCase()}...
         </Text>
         <Button
-          title="Go to Trips"
+          title="Go to trips"
           onPress={() => router.replace('/(tabs)/trips')}
           variant="ghost"
           size="sm"
-          style={{ marginTop: 16 }}
+          className="mt-4"
         />
       </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-  },
-  text: {
-    marginTop: 14,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-});

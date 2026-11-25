@@ -7,22 +7,14 @@ import {
   Trash2,
 } from 'lucide-react-native';
 import React, { useMemo } from 'react';
-import {
-  Alert,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AvatarStack } from '../../../components/ui/AvatarStack';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { TicketDivider } from '../../../components/ui/TicketDivider';
-import { fonts, tabularNums } from '../../../constants/typography';
+import { tabularNums } from '../../../constants/typography';
 import {
   calculateNetBalances,
   convertToBaseMinor,
@@ -105,10 +97,12 @@ export default function BalancesScreen() {
 
   if (!trip) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
-        <View style={styles.notFound}>
-          <Text style={[styles.notFoundText, { color: palette.text }]}>Trip not found</Text>
-          <Button title="Back" onPress={() => router.back()} style={{ marginTop: 12 }} />
+      <SafeAreaView className="flex-1 bg-canvas dark:bg-canvas-dark">
+        <View className="flex-1 items-center justify-center">
+          <Text className="font-bold text-[16px] text-ink dark:text-ink-dark">
+            Trip not found
+          </Text>
+          <Button title="Back" onPress={() => router.back()} className="mt-3" />
         </View>
       </SafeAreaView>
     );
@@ -118,15 +112,15 @@ export default function BalancesScreen() {
   const debtColor = isDark ? colors.dangerDark : colors.danger;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
-      <View style={[styles.header, { borderBottomColor: palette.border }]}>
+    <SafeAreaView className="flex-1 bg-canvas dark:bg-canvas-dark">
+      <View className="flex-row items-center justify-between px-4 py-3 border-b border-hairline dark:border-hairline-dark">
         <Pressable
           onPress={() => router.back()}
-          style={[styles.iconButton, { backgroundColor: palette.surface }]}
+          className="w-9 h-9 rounded-lg bg-surface dark:bg-surface-dark items-center justify-center"
         >
           <ArrowLeft size={19} color={palette.text} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: palette.text }]}>
+        <Text className="font-bold text-[17px] tracking-tight text-ink dark:text-ink-dark">
           Balances & settle up
         </Text>
         <Button
@@ -140,25 +134,25 @@ export default function BalancesScreen() {
         />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
         {/* Simplified Debt Ticket */}
-        <Card style={styles.planCard}>
-          <View style={styles.cardHeaderRow}>
-            <Text style={[styles.sectionTitle, { color: palette.text }]}>
+        <Card className="p-4">
+          <View className="flex-row items-center justify-between">
+            <Text className="font-bold text-[16px] text-ink dark:text-ink-dark">
               Recommended transfers
             </Text>
             <Badge label={`${settlements.length} needed`} variant="neutral" />
           </View>
-          <Text style={[styles.helperText, { color: palette.textMuted }]}>
+          <Text className="font-sans text-[12px] mt-1 leading-[17px] text-muted dark:text-muted-dark">
             Minimized payment plan to clear every group balance.
           </Text>
 
           <TicketDivider />
 
           {settlements.length === 0 ? (
-            <View style={styles.allSettledBox}>
+            <View className="items-center py-4 gap-2">
               <CheckCircle2 size={26} color={creditColor} />
-              <Text style={[styles.allSettledText, { color: palette.text }]}>
+              <Text className="font-semibold text-[14px] text-ink dark:text-ink-dark">
                 Everyone is settled up.
               </Text>
             </View>
@@ -170,16 +164,14 @@ export default function BalancesScreen() {
                 return (
                   <View
                     key={`${t.fromUser}_${t.toUser}_${idx}`}
-                    style={[
-                      styles.transferRow,
-                      idx < settlements.length - 1 && {
-                        borderBottomWidth: 1,
-                        borderBottomColor: palette.border,
-                      },
-                    ]}
+                    className={`flex-row items-center justify-between py-3 ${
+                      idx < settlements.length - 1
+                        ? 'border-b border-hairline dark:border-hairline-dark'
+                        : ''
+                    }`}
                   >
-                    <View style={styles.transferLeft}>
-                      <View style={styles.transferAvatars}>
+                    <View className="flex-1 mr-3">
+                      <View className="flex-row items-center gap-2">
                         {fromMember && (
                           <AvatarStack members={[fromMember]} size={26} />
                         )}
@@ -188,17 +180,20 @@ export default function BalancesScreen() {
                           <AvatarStack members={[toMember]} size={26} />
                         )}
                       </View>
-                      <View style={{ marginTop: 5 }}>
-                        <Text style={[styles.transferLabel, { color: palette.text }]}>
-                          <Text style={{ color: debtColor }}>
+                      <View className="mt-1.5">
+                        <Text className="font-semibold text-[13px] text-ink dark:text-ink-dark">
+                          <Text className="text-debt dark:text-debt-dark">
                             {getMemberName(t.fromUser)}
                           </Text>
                           {' pays '}
-                          <Text style={{ color: creditColor }}>
+                          <Text className="text-credit dark:text-credit-dark">
                             {getMemberName(t.toUser)}
                           </Text>
                         </Text>
-                        <Text style={[styles.transferAmount, tabularNums, { color: palette.text }]}>
+                        <Text
+                          style={tabularNums}
+                          className="font-bold text-[17px] mt-0.5 text-ink dark:text-ink-dark"
+                        >
                           {formatMoney(t.amountMinor, trip.baseCurrency)}
                         </Text>
                       </View>
@@ -228,10 +223,10 @@ export default function BalancesScreen() {
         </Card>
 
         {/* Per-Member Net Balances */}
-        <Text style={[styles.groupHeading, { color: palette.text }]}>
+        <Text className="font-bold text-[16px] mt-4 mb-1.5 tracking-tight text-ink dark:text-ink-dark">
           Net balances
         </Text>
-        <Card style={styles.balancesCard}>
+        <Card className="p-0 overflow-hidden">
           {sortedBalances.map((b, idx) => {
             const isPositive = b.netMinor > 0;
             const isNegative = b.netMinor < 0;
@@ -243,30 +238,25 @@ export default function BalancesScreen() {
             return (
               <View
                 key={b.userId}
-                style={[
-                  styles.balanceRow,
-                  idx < sortedBalances.length - 1 && {
-                    borderBottomWidth: 1,
-                    borderBottomColor: palette.border,
-                  },
-                ]}
+                className={`px-3.5 py-3 ${
+                  idx < sortedBalances.length - 1
+                    ? 'border-b border-hairline dark:border-hairline-dark'
+                    : ''
+                }`}
               >
-                <View style={styles.balanceTopRow}>
-                  <Text style={[styles.memberName, { color: palette.text }]}>
+                <View className="flex-row justify-between items-center mb-1.5">
+                  <Text className="font-semibold text-[14px] text-ink dark:text-ink-dark">
                     {getMemberName(b.userId)}
                   </Text>
                   <Text
-                    style={[
-                      styles.balanceAmount,
-                      tabularNums,
-                      {
-                        color: isPositive
-                          ? creditColor
-                          : isNegative
-                          ? debtColor
-                          : palette.textMuted,
-                      },
-                    ]}
+                    style={tabularNums}
+                    className={`font-bold text-[15px] ${
+                      isPositive
+                        ? 'text-credit dark:text-credit-dark'
+                        : isNegative
+                        ? 'text-debt dark:text-debt-dark'
+                        : 'text-muted dark:text-muted-dark'
+                    }`}
                   >
                     {isPositive
                       ? `+${formatMoney(b.netMinor, trip.baseCurrency)}`
@@ -276,15 +266,13 @@ export default function BalancesScreen() {
                   </Text>
                 </View>
 
-                <View style={[styles.barTrack, { backgroundColor: palette.surface }]}>
+                <View className="h-[5px] rounded bg-surface dark:bg-surface-dark overflow-hidden">
                   <View
-                    style={[
-                      styles.barFill,
-                      {
-                        width: `${b.netMinor === 0 ? 0 : Math.max(6, barWidthPct)}%`,
-                        backgroundColor: isPositive ? creditColor : debtColor,
-                      },
-                    ]}
+                    style={{
+                      width: `${b.netMinor === 0 ? 0 : Math.max(6, barWidthPct)}%`,
+                      backgroundColor: isPositive ? creditColor : debtColor,
+                    }}
+                    className="h-full rounded"
                   />
                 </View>
               </View>
@@ -293,33 +281,34 @@ export default function BalancesScreen() {
         </Card>
 
         {/* Recorded Payments History */}
-        <Text style={[styles.groupHeading, { color: palette.text }]}>
+        <Text className="font-bold text-[16px] mt-4 mb-1.5 tracking-tight text-ink dark:text-ink-dark">
           Recorded payments ({tripPayments.length})
         </Text>
         {tripPayments.length === 0 ? (
-          <Card style={styles.emptyCard}>
-            <Text style={[styles.emptyText, { color: palette.textMuted }]}>
+          <Card className="p-5 items-center">
+            <Text className="font-sans text-[13px] text-center leading-[19px] text-muted dark:text-muted-dark">
               No payments recorded yet. Tap &quot;Mark paid&quot; above after settling up.
             </Text>
           </Card>
         ) : (
-          <Card style={styles.paymentsCard}>
+          <Card className="p-0 overflow-hidden">
             {tripPayments.map((p, idx) => (
               <View
                 key={p.id}
-                style={[
-                  styles.paymentRow,
-                  idx < tripPayments.length - 1 && {
-                    borderBottomWidth: 1,
-                    borderBottomColor: palette.border,
-                  },
-                ]}
+                className={`flex-row items-center px-3.5 py-3 ${
+                  idx < tripPayments.length - 1
+                    ? 'border-b border-hairline dark:border-hairline-dark'
+                    : ''
+                }`}
               >
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.paymentTitle, { color: palette.text }]}>
+                <View className="flex-1">
+                  <Text className="font-semibold text-[14px] text-ink dark:text-ink-dark">
                     {getMemberName(p.fromUser)} paid {getMemberName(p.toUser)}
                   </Text>
-                  <Text style={[styles.paymentSub, tabularNums, { color: creditColor }]}>
+                  <Text
+                    style={tabularNums}
+                    className="font-bold text-[13px] mt-0.5 text-credit dark:text-credit-dark"
+                  >
                     {formatMoney(
                       convertToBaseMinor(p.amountMinor, p.fxRateToBase),
                       trip.baseCurrency
@@ -331,7 +320,7 @@ export default function BalancesScreen() {
                 </View>
                 <Pressable
                   onPress={() => handleDeletePayment(p.id)}
-                  style={[styles.trashBtn, { backgroundColor: palette.surface }]}
+                  className="w-8 h-8 rounded-lg bg-surface dark:bg-surface-dark items-center justify-center"
                   accessibilityLabel="Remove payment"
                 >
                   <Trash2 size={15} color={debtColor} />
@@ -344,145 +333,3 @@ export default function BalancesScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  notFound: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  notFoundText: { fontFamily: fonts.bold, fontSize: 16 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  iconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontFamily: fonts.bold,
-    fontSize: 17,
-    letterSpacing: -0.2,
-  },
-  scroll: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-  planCard: {
-    padding: 16,
-  },
-  cardHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  sectionTitle: {
-    fontFamily: fonts.bold,
-    fontSize: 16,
-  },
-  helperText: {
-    fontFamily: fonts.regular,
-    fontSize: 12,
-    marginTop: 4,
-    lineHeight: 17,
-  },
-  allSettledBox: {
-    alignItems: 'center',
-    paddingVertical: 16,
-    gap: 8,
-  },
-  allSettledText: {
-    fontFamily: fonts.semibold,
-    fontSize: 14,
-  },
-  transferRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-  },
-  transferLeft: {
-    flex: 1,
-    marginRight: 12,
-  },
-  transferAvatars: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  transferLabel: {
-    fontFamily: fonts.semibold,
-    fontSize: 13,
-  },
-  transferAmount: {
-    fontFamily: fonts.bold,
-    fontSize: 17,
-    marginTop: 2,
-  },
-  groupHeading: {
-    fontFamily: fonts.bold,
-    fontSize: 16,
-    marginTop: 16,
-    marginBottom: 6,
-    letterSpacing: -0.2,
-  },
-  balancesCard: {
-    padding: 0,
-    overflow: 'hidden',
-  },
-  balanceRow: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  balanceTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  memberName: { fontFamily: fonts.semibold, fontSize: 14 },
-  balanceAmount: { fontFamily: fonts.bold, fontSize: 15 },
-  barTrack: {
-    height: 5,
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  barFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  emptyCard: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontFamily: fonts.regular,
-    fontSize: 13,
-    textAlign: 'center',
-    lineHeight: 19,
-  },
-  paymentsCard: {
-    padding: 0,
-    overflow: 'hidden',
-  },
-  paymentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  paymentTitle: { fontFamily: fonts.semibold, fontSize: 14 },
-  paymentSub: { fontFamily: fonts.bold, fontSize: 13, marginTop: 2 },
-  trashBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

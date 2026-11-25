@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { colorScheme } from 'nativewind';
 import { create } from 'zustand';
 import { calculateNetBalances, convertToBaseMinor, simplifyDebts } from '../domain';
 import {
@@ -142,6 +143,11 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setThemePreference: (pref) => {
     set({ themePreference: pref });
+    try {
+      colorScheme.set(pref);
+    } catch {
+      // Ignore outside native/web runtime
+    }
     void AsyncStorage.setItem(THEME_STORAGE_KEY, pref).catch(() => {});
   },
 
@@ -150,6 +156,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       const saved = await AsyncStorage.getItem(THEME_STORAGE_KEY);
       if (saved === 'light' || saved === 'dark' || saved === 'system') {
         set({ themePreference: saved });
+        try {
+          colorScheme.set(saved);
+        } catch {
+          // Ignore
+        }
       }
     } catch {
       // Ignore storage error

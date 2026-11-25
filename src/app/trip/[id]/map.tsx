@@ -8,15 +8,7 @@ import {
   Trash2,
 } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
-import {
-  Linking,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Linking, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Line, Rect } from 'react-native-svg';
 import { Badge } from '../../../components/ui/Badge';
@@ -26,7 +18,7 @@ import { CategoryIcon } from '../../../components/ui/CategoryIcon';
 import { Input } from '../../../components/ui/Input';
 import { KeyboardAwareView } from '../../../components/ui/KeyboardAwareView';
 import { EXPENSE_CATEGORIES } from '../../../constants/categories';
-import { fonts, tabularNums } from '../../../constants/typography';
+import { tabularNums } from '../../../constants/typography';
 import { ExpenseCategory, PlaceRecord } from '../../../domain/types';
 import { useTheme } from '../../../hooks/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
@@ -161,10 +153,12 @@ export default function TripMapScreen() {
 
   if (!trip) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
-        <View style={styles.notFound}>
-          <Text style={[styles.notFoundText, { color: palette.text }]}>Trip not found</Text>
-          <Button title="Back" onPress={() => router.back()} style={{ marginTop: 12 }} />
+      <SafeAreaView className="flex-1 bg-canvas dark:bg-canvas-dark">
+        <View className="flex-1 items-center justify-center">
+          <Text className="font-bold text-[16px] text-ink dark:text-ink-dark">
+            Trip not found
+          </Text>
+          <Button title="Back" onPress={() => router.back()} className="mt-3" />
         </View>
       </SafeAreaView>
     );
@@ -173,15 +167,17 @@ export default function TripMapScreen() {
   const debtColor = isDark ? colors.dangerDark : colors.danger;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
-      <View style={[styles.header, { borderBottomColor: palette.border }]}>
+    <SafeAreaView className="flex-1 bg-canvas dark:bg-canvas-dark">
+      <View className="flex-row items-center justify-between px-4 py-3 border-b border-hairline dark:border-hairline-dark">
         <Pressable
           onPress={() => router.back()}
-          style={[styles.iconButton, { backgroundColor: palette.surface }]}
+          className="w-9 h-9 rounded-lg bg-surface dark:bg-surface-dark items-center justify-center"
         >
           <ArrowLeft size={19} color={palette.text} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: palette.text }]}>Trip map</Text>
+        <Text className="font-bold text-[17px] tracking-tight text-ink dark:text-ink-dark">
+          Trip map
+        </Text>
         <Button
           title="Pin"
           onPress={() => setShowAddForm(!showAddForm)}
@@ -193,14 +189,14 @@ export default function TripMapScreen() {
 
       <KeyboardAwareView>
         <ScrollView
-          contentContainerStyle={styles.scroll}
+          contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
           {/* Monochrome Coordinate Map Canvas */}
-          <Card style={styles.mapCard}>
-            <View style={styles.mapHeaderRow}>
-              <Text style={[styles.mapTitle, { color: palette.text }]}>
+          <Card className="p-3.5">
+            <View className="flex-row items-center justify-between mb-3">
+              <Text className="font-bold text-[15px] text-ink dark:text-ink-dark">
                 Pinned spots ({tripPlaces.length})
               </Text>
               <Button
@@ -213,15 +209,7 @@ export default function TripMapScreen() {
               />
             </View>
 
-            <View
-              style={[
-                styles.canvasWrap,
-                {
-                  backgroundColor: palette.surface,
-                  borderColor: palette.border,
-                },
-              ]}
-            >
+            <View className="rounded-lg border border-hairline dark:border-hairline-dark bg-surface dark:bg-surface-dark overflow-hidden">
               <Svg
                 width="100%"
                 height={canvasHeight}
@@ -301,17 +289,15 @@ export default function TripMapScreen() {
             </View>
 
             {selectedPlace && (
-              <View
-                style={[
-                  styles.selectedBanner,
-                  { backgroundColor: palette.surface, borderColor: palette.border },
-                ]}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.selectedTitle, { color: palette.text }]}>
+              <View className="mt-3 p-3 rounded-lg border border-hairline dark:border-hairline-dark bg-surface dark:bg-surface-dark flex-row items-center gap-2">
+                <View className="flex-1">
+                  <Text className="font-bold text-[14px] text-ink dark:text-ink-dark">
                     {selectedPlace.name}
                   </Text>
-                  <Text style={[styles.selectedCoords, tabularNums, { color: palette.textMuted }]}>
+                  <Text
+                    style={tabularNums}
+                    className="font-sans text-[12px] mt-0.5 text-muted dark:text-muted-dark"
+                  >
                     {selectedPlace.lat.toFixed(4)}, {selectedPlace.lng.toFixed(4)}
                     {selectedPlace.note ? `  ${selectedPlace.note}` : ''}
                   </Text>
@@ -329,9 +315,9 @@ export default function TripMapScreen() {
 
           {/* Add Pin Form */}
           {showAddForm && (
-            <Card style={[styles.formCard, { borderColor: palette.text }]}>
-              <View style={styles.formHeader}>
-                <Text style={[styles.formTitle, { color: palette.text }]}>
+            <Card className="p-4 border-ink dark:border-ink-dark">
+              <View className="flex-row justify-between items-center mb-2">
+                <Text className="font-bold text-[16px] text-ink dark:text-ink-dark">
                   Add map pin
                 </Text>
                 {coords && (
@@ -361,7 +347,7 @@ export default function TripMapScreen() {
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.catRow}
+                contentContainerStyle={{ gap: 8, paddingVertical: 8 }}
               >
                 {EXPENSE_CATEGORIES.map((c) => {
                   const active = placeCategory === c.id;
@@ -369,13 +355,11 @@ export default function TripMapScreen() {
                     <Pressable
                       key={c.id}
                       onPress={() => setPlaceCategory(c.id)}
-                      style={[
-                        styles.catChip,
-                        {
-                          backgroundColor: active ? palette.accent : palette.surface,
-                          borderColor: active ? palette.accent : palette.border,
-                        },
-                      ]}
+                      className={`flex-row items-center gap-[5px] px-[11px] py-1.5 rounded-lg border ${
+                        active
+                          ? 'bg-ink dark:bg-ink-dark border-ink dark:border-ink-dark'
+                          : 'bg-surface dark:bg-surface-dark border-hairline dark:border-hairline-dark'
+                      }`}
                     >
                       <CategoryIcon
                         category={c.id}
@@ -383,11 +367,11 @@ export default function TripMapScreen() {
                         color={active ? palette.accentText : palette.text}
                       />
                       <Text
-                        style={{
-                          fontFamily: fonts.semibold,
-                          fontSize: 12,
-                          color: active ? palette.accentText : palette.text,
-                        }}
+                        className={`font-semibold text-[12px] ${
+                          active
+                            ? 'text-ink-dark dark:text-ink'
+                            : 'text-ink dark:text-ink-dark'
+                        }`}
                       >
                         {c.shortLabel}
                       </Text>
@@ -397,55 +381,55 @@ export default function TripMapScreen() {
               </ScrollView>
 
               {gpsError ? (
-                <Text style={[styles.errorText, { color: debtColor }]}>{gpsError}</Text>
+                <Text className="font-semibold text-[12px] mt-1 text-debt dark:text-debt-dark">
+                  {gpsError}
+                </Text>
               ) : null}
 
-              <View style={styles.formActions}>
+              <View className="flex-row gap-2.5 mt-2.5">
                 <Button
                   title="Cancel"
                   onPress={() => setShowAddForm(false)}
                   variant="ghost"
                   size="sm"
-                  style={{ flex: 1 }}
+                  className="flex-1"
                 />
                 <Button
                   title="Save pin"
                   onPress={handleSavePlace}
                   variant="primary"
                   size="sm"
-                  style={{ flex: 1 }}
+                  className="flex-1"
                 />
               </View>
             </Card>
           )}
 
           {/* Saved Places List */}
-          <Text style={[styles.listHeading, { color: palette.text }]}>
+          <Text className="font-bold text-[16px] mt-3.5 mb-1.5 text-ink dark:text-ink-dark">
             Saved places
           </Text>
-          <Card style={styles.placesListCard}>
+          <Card className="p-0 overflow-hidden">
             {tripPlaces.map((place, idx) => {
               const isSelected = selectedPlace?.id === place.id;
               return (
                 <Pressable
                   key={place.id}
                   onPress={() => setSelectedPlaceId(place.id)}
-                  style={[
-                    styles.placeRow,
-                    isSelected && { backgroundColor: palette.surface },
-                    idx < tripPlaces.length - 1 && {
-                      borderBottomWidth: 1,
-                      borderBottomColor: palette.border,
-                    },
-                  ]}
+                  className={`flex-row items-center px-3.5 py-3 ${
+                    isSelected ? 'bg-surface dark:bg-surface-dark' : ''
+                  } ${
+                    idx < tripPlaces.length - 1
+                      ? 'border-b border-hairline dark:border-hairline-dark'
+                      : ''
+                  }`}
                 >
                   <View
-                    style={[
-                      styles.pinBadge,
-                      {
-                        backgroundColor: isSelected ? palette.accent : palette.surface,
-                      },
-                    ]}
+                    className={`w-9 h-9 rounded-lg items-center justify-center mr-3 ${
+                      isSelected
+                        ? 'bg-ink dark:bg-ink-dark'
+                        : 'bg-surface dark:bg-surface-dark'
+                    }`}
                   >
                     <CategoryIcon
                       category={place.category}
@@ -453,19 +437,19 @@ export default function TripMapScreen() {
                       color={isSelected ? palette.accentText : palette.text}
                     />
                   </View>
-                  <View style={{ flex: 1, marginRight: 8 }}>
-                    <Text style={[styles.placeName, { color: palette.text }]}>
+                  <View className="flex-1 mr-2">
+                    <Text className="font-semibold text-[14px] text-ink dark:text-ink-dark">
                       {place.name}
                     </Text>
                     {place.note ? (
-                      <Text style={[styles.placeNote, { color: palette.textMuted }]}>
+                      <Text className="font-sans text-[12px] mt-0.5 text-muted dark:text-muted-dark">
                         {place.note}
                       </Text>
                     ) : null}
                   </View>
                   <Pressable
                     onPress={() => deletePlace(place.id)}
-                    style={[styles.trashBtn, { backgroundColor: palette.surface }]}
+                    className="w-8 h-8 rounded-lg bg-surface dark:bg-surface-dark items-center justify-center"
                     accessibilityLabel={`Delete ${place.name}`}
                   >
                     <Trash2 size={14} color={debtColor} />
@@ -479,107 +463,3 @@ export default function TripMapScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  notFound: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  notFoundText: { fontFamily: fonts.bold, fontSize: 16 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  iconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontFamily: fonts.bold,
-    fontSize: 17,
-    letterSpacing: -0.2,
-  },
-  scroll: { padding: 16, paddingBottom: 40 },
-  mapCard: { padding: 14 },
-  mapHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  mapTitle: { fontFamily: fonts.bold, fontSize: 15 },
-  canvasWrap: {
-    borderRadius: 8,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  selectedBanner: {
-    marginTop: 12,
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  selectedTitle: { fontFamily: fonts.bold, fontSize: 14 },
-  selectedCoords: { fontFamily: fonts.regular, fontSize: 12, marginTop: 2 },
-  formCard: { padding: 16 },
-  formHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  formTitle: { fontFamily: fonts.bold, fontSize: 16 },
-  catRow: { gap: 8, paddingVertical: 8 },
-  catChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 11,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  formActions: { flexDirection: 'row', gap: 10, marginTop: 10 },
-  errorText: { fontFamily: fonts.semibold, fontSize: 12, marginTop: 4 },
-  listHeading: {
-    fontFamily: fonts.bold,
-    fontSize: 16,
-    marginTop: 14,
-    marginBottom: 6,
-  },
-  placesListCard: {
-    padding: 0,
-    overflow: 'hidden',
-  },
-  placeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  pinBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  placeName: { fontFamily: fonts.semibold, fontSize: 14 },
-  placeNote: { fontFamily: fonts.regular, fontSize: 12, marginTop: 2 },
-  trashBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

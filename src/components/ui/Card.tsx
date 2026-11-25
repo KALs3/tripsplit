@@ -1,36 +1,19 @@
 import React from 'react';
-import { StyleSheet, View, ViewProps } from 'react-native';
-import { useTheme } from '../../hooks/useTheme';
+import { View, ViewProps } from 'react-native';
 
 interface CardProps extends ViewProps {
   children: React.ReactNode;
+  className?: string;
 }
 
-export function Card({ children, style, ...props }: CardProps) {
-  const { palette } = useTheme();
-
+export function Card({ children, className = '', style, ...props }: CardProps) {
   return (
     <View
-      style={[
-        styles.card,
-        {
-          backgroundColor: palette.card,
-          borderColor: palette.border,
-        },
-        style,
-      ]}
+      style={style}
+      className={`rounded-[10px] border border-hairline dark:border-hairline-dark bg-card dark:bg-card-dark p-4 my-1.5 ${className}`}
       {...props}
     >
       {children}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    borderRadius: 10,
-    borderWidth: 1,
-    padding: 16,
-    marginVertical: 6,
-  },
-});

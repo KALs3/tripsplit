@@ -1,20 +1,12 @@
 import { router } from 'expo-router';
 import { DollarSign, LogOut, Moon, Sun, User, WifiOff } from 'lucide-react-native';
 import React from 'react';
-import {
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  View,
-} from 'react-native';
+import { Image, Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
-import { fonts, tabularNums } from '../../../constants/typography';
+import { tabularNums } from '../../../constants/typography';
 import { useTheme } from '../../../hooks/useTheme';
 import { ThemePreference, useAppStore } from '../../../store/useAppStore';
 
@@ -43,31 +35,36 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView
       edges={['top', 'left', 'right']}
-      style={[styles.container, { backgroundColor: palette.background }]}
+      className="flex-1 bg-canvas dark:bg-canvas-dark"
     >
-      <View style={[styles.header, { borderBottomColor: palette.border }]}>
-        <Text style={[styles.headerTitle, { color: palette.text }]}>Profile & settings</Text>
+      <View className="px-[18px] pt-2.5 pb-3.5 border-b border-hairline dark:border-hairline-dark">
+        <Text className="font-bold text-[22px] tracking-tight text-ink dark:text-ink-dark">
+          Profile & settings
+        </Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 110 }}>
         {/* User Card */}
-        <Card style={styles.userCard}>
-          <View style={styles.userRow}>
+        <Card className="p-4">
+          <View className="flex-row items-center">
             {user?.avatarUrl ? (
-              <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
+              <Image
+                source={{ uri: user.avatarUrl }}
+                className="w-14 h-14 rounded-full mr-3.5"
+              />
             ) : (
-              <View style={[styles.avatarFallback, { backgroundColor: palette.surface }]}>
+              <View className="w-14 h-14 rounded-full bg-surface dark:bg-surface-dark items-center justify-center mr-3.5">
                 <User size={26} color={palette.text} />
               </View>
             )}
-            <View style={styles.userInfo}>
-              <Text style={[styles.userName, { color: palette.text }]}>
+            <View className="flex-1">
+              <Text className="font-bold text-[18px] tracking-tight text-ink dark:text-ink-dark">
                 {user?.displayName || 'Traveler'}
               </Text>
-              <Text style={[styles.userEmail, { color: palette.textMuted }]}>
+              <Text className="font-sans text-[13px] mt-0.5 text-muted dark:text-muted-dark">
                 {user?.email || (isGuestDemo ? 'guest.demo@tripsplit.app' : '')}
               </Text>
-              <View style={styles.badgeRow}>
+              <View className="mt-2">
                 {isGuestDemo ? (
                   <Badge label="Guest demo" variant="neutral" />
                 ) : (
@@ -79,43 +76,37 @@ export default function ProfileScreen() {
         </Card>
 
         {/* Preferences & Appearance */}
-        <Card style={styles.settingsCard}>
+        <Card className="p-4 mt-1.5">
           {/* Theme Switcher */}
-          <View style={styles.appearanceBlock}>
-            <View style={styles.settingIconTitle}>
+          <View className="gap-2.5">
+            <View className="flex-row items-center gap-2.5">
               {isDark ? (
                 <Moon size={18} color={palette.textMuted} />
               ) : (
                 <Sun size={18} color={palette.textMuted} />
               )}
-              <Text style={[styles.settingLabel, { color: palette.text }]}>Appearance</Text>
+              <Text className="font-semibold text-[15px] text-ink dark:text-ink-dark">
+                Appearance
+              </Text>
             </View>
 
-            <View
-              style={[
-                styles.themeSegment,
-                { backgroundColor: palette.surface, borderColor: palette.border },
-              ]}
-            >
+            <View className="flex-row rounded-lg border border-hairline dark:border-hairline-dark bg-surface dark:bg-surface-dark p-[3px]">
               {THEME_OPTIONS.map((opt) => {
                 const active = themePreference === opt.id;
                 return (
                   <Pressable
                     key={opt.id}
                     onPress={() => setThemePreference(opt.id)}
-                    style={[
-                      styles.themeSegmentBtn,
-                      active && { backgroundColor: palette.card },
-                    ]}
+                    className={`flex-1 py-[7px] rounded-[6px] items-center ${
+                      active ? 'bg-card dark:bg-card-dark' : ''
+                    }`}
                   >
                     <Text
-                      style={[
-                        styles.themeSegmentText,
-                        {
-                          color: active ? palette.text : palette.textMuted,
-                          fontFamily: active ? fonts.bold : fonts.medium,
-                        },
-                      ]}
+                      className={`text-[13px] ${
+                        active
+                          ? 'font-bold text-ink dark:text-ink-dark'
+                          : 'font-medium text-muted dark:text-muted-dark'
+                      }`}
                     >
                       {opt.label}
                     </Text>
@@ -125,42 +116,27 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          <View
-            style={[
-              styles.settingRow,
-              {
-                marginTop: 14,
-                paddingTop: 14,
-                borderTopWidth: 1,
-                borderTopColor: palette.border,
-              },
-            ]}
-          >
-            <View style={styles.settingIconTitle}>
+          <View className="flex-row items-center justify-between mt-3.5 pt-3.5 border-t border-hairline dark:border-hairline-dark">
+            <View className="flex-row items-center gap-2.5">
               <DollarSign size={18} color={palette.textMuted} />
-              <Text style={[styles.settingLabel, { color: palette.text }]}>Base currency</Text>
+              <Text className="font-semibold text-[15px] text-ink dark:text-ink-dark">
+                Base currency
+              </Text>
             </View>
             <Badge label={user?.defaultCurrency || 'USD'} variant="neutral" />
           </View>
 
-          <View
-            style={[
-              styles.settingRow,
-              {
-                marginTop: 14,
-                paddingTop: 14,
-                borderTopWidth: 1,
-                borderTopColor: palette.border,
-              },
-            ]}
-          >
-            <View style={[styles.settingIconTitle, { flex: 1, marginRight: 10 }]}>
+          <View className="flex-row items-center justify-between mt-3.5 pt-3.5 border-t border-hairline dark:border-hairline-dark">
+            <View className="flex-row items-center gap-2.5 flex-1 mr-2.5">
               <WifiOff size={18} color={palette.textMuted} />
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.settingLabel, { color: palette.text }]}>
+              <View className="flex-1">
+                <Text className="font-semibold text-[15px] text-ink dark:text-ink-dark">
                   Simulate airplane mode
                 </Text>
-                <Text style={[styles.settingSub, tabularNums, { color: palette.textMuted }]}>
+                <Text
+                  style={tabularNums}
+                  className="font-sans text-[12px] mt-0.5 leading-[17px] text-muted dark:text-muted-dark"
+                >
                   Queue expenses offline ({pendingMutationsCount} pending) and replay on reconnect
                 </Text>
               </View>
@@ -179,109 +155,9 @@ export default function ProfileScreen() {
           variant="outline"
           size="md"
           icon={<LogOut size={16} color={palette.text} />}
-          style={{ marginTop: 16 }}
+          className="mt-4"
         />
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    paddingHorizontal: 18,
-    paddingTop: 10,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-  },
-  headerTitle: {
-    fontFamily: fonts.bold,
-    fontSize: 22,
-    letterSpacing: -0.5,
-  },
-  scroll: {
-    padding: 16,
-    paddingBottom: 110,
-  },
-  userCard: {
-    padding: 16,
-  },
-  userRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    marginRight: 14,
-  },
-  avatarFallback: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-  userInfo: {
-    flex: 1,
-  },
-  userName: {
-    fontFamily: fonts.bold,
-    fontSize: 18,
-    letterSpacing: -0.2,
-  },
-  userEmail: {
-    fontFamily: fonts.regular,
-    fontSize: 13,
-    marginTop: 2,
-  },
-  badgeRow: {
-    marginTop: 8,
-  },
-  settingsCard: {
-    padding: 16,
-    marginTop: 6,
-  },
-  appearanceBlock: {
-    gap: 10,
-  },
-  themeSegment: {
-    flexDirection: 'row',
-    borderRadius: 8,
-    borderWidth: 1,
-    padding: 3,
-  },
-  themeSegmentBtn: {
-    flex: 1,
-    paddingVertical: 7,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  themeSegmentText: {
-    fontSize: 13,
-  },
-  settingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  settingIconTitle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  settingLabel: {
-    fontFamily: fonts.semibold,
-    fontSize: 15,
-  },
-  settingSub: {
-    fontFamily: fonts.regular,
-    fontSize: 12,
-    marginTop: 2,
-    lineHeight: 17,
-  },
-});

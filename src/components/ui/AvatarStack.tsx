@@ -1,6 +1,6 @@
 import React from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
-import { fonts, tabularNums } from '../../constants/typography';
+import { Image, Text, View } from 'react-native';
+import { tabularNums } from '../../constants/typography';
 import { useTheme } from '../../hooks/useTheme';
 
 export interface AvatarPerson {
@@ -13,9 +13,7 @@ interface AvatarStackProps {
   members: AvatarPerson[];
   maxVisible?: number;
   size?: number;
-  /** Border color separating overlapping avatars */
   ringColor?: string;
-  /** Optional text color for "+N" overflow label rendered beside the stack */
   overflowTextColor?: string;
 }
 
@@ -35,7 +33,7 @@ export function AvatarStack({
   const borderCol = ringColor ?? palette.card;
 
   return (
-    <View style={styles.row}>
+    <View className="flex-row items-center">
       {visible.map((member, index) => {
         const initials = member.displayName
           .split(' ')
@@ -62,17 +60,12 @@ export function AvatarStack({
         ) : (
           <View
             key={member.userId}
-            style={[
-              sharedStyle,
-              styles.fallback,
-              { backgroundColor: palette.surface },
-            ]}
+            style={sharedStyle}
+            className="items-center justify-center bg-surface dark:bg-surface-dark"
           >
             <Text
-              style={[
-                styles.initials,
-                { color: palette.text, fontSize: Math.max(9, Math.round(size * 0.36)) },
-              ]}
+              style={{ fontSize: Math.max(9, Math.round(size * 0.36)) }}
+              className="font-bold text-ink dark:text-ink-dark"
             >
               {initials}
             </Text>
@@ -80,65 +73,34 @@ export function AvatarStack({
         );
       })}
 
-      {overflow > 0 && (
-        overflowTextColor ? (
+      {overflow > 0 &&
+        (overflowTextColor ? (
           <Text
-            style={[
-              styles.overflowText,
-              tabularNums,
-              { color: overflowTextColor },
-            ]}
+            style={[tabularNums, { color: overflowTextColor }]}
+            className="font-semibold text-[12px] ml-1.5"
           >
             +{overflow}
           </Text>
         ) : (
           <View
-            style={[
-              styles.fallback,
-              {
-                width: size,
-                height: size,
-                borderRadius: size / 2,
-                marginLeft: -Math.round(size * 0.28),
-                borderWidth: 1.5,
-                borderColor: borderCol,
-                backgroundColor: palette.accent,
-              },
-            ]}
+            style={{
+              width: size,
+              height: size,
+              borderRadius: size / 2,
+              marginLeft: -Math.round(size * 0.28),
+              borderWidth: 1.5,
+              borderColor: borderCol,
+            }}
+            className="items-center justify-center bg-ink dark:bg-ink-dark"
           >
             <Text
-              style={[
-                styles.initials,
-                {
-                  color: palette.accentText,
-                  fontSize: Math.max(9, Math.round(size * 0.35)),
-                },
-              ]}
+              style={{ fontSize: Math.max(9, Math.round(size * 0.35)) }}
+              className="font-bold text-ink-dark dark:text-ink"
             >
               +{overflow}
             </Text>
           </View>
-        )
-      )}
+        ))}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  fallback: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  initials: {
-    fontFamily: fonts.bold,
-  },
-  overflowText: {
-    fontFamily: fonts.semibold,
-    fontSize: 12,
-    marginLeft: 6,
-  },
-});

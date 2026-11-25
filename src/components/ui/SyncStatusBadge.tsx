@@ -1,7 +1,7 @@
 import { Cloud, CloudOff, RefreshCw } from 'lucide-react-native';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { fonts, tabularNums } from '../../constants/typography';
+import { Text, View } from 'react-native';
+import { tabularNums } from '../../constants/typography';
 import { useTheme } from '../../hooks/useTheme';
 import { SyncStatus } from '../../sync/types';
 
@@ -17,9 +17,9 @@ export function SyncStatusBadge({ status, pendingCount }: SyncStatusBadgeProps) 
     if (status === 'offline' || pendingCount > 0) {
       return {
         label: pendingCount > 0 ? `Offline (${pendingCount} queued)` : 'Offline',
-        bg: isDark ? 'rgba(217, 119, 6, 0.16)' : colors.warningLight,
-        fg: isDark ? '#FBBF24' : '#B45309',
-        border: isDark ? 'rgba(251, 191, 36, 0.3)' : 'rgba(217, 119, 6, 0.25)',
+        containerClass:
+          'bg-amber-100 dark:bg-amber-500/15 border-amber-600/25 dark:border-amber-400/30',
+        textClass: 'text-amber-700 dark:text-amber-400',
         icon: <CloudOff size={12} color={isDark ? '#FBBF24' : '#B45309'} />,
       };
     }
@@ -27,9 +27,9 @@ export function SyncStatusBadge({ status, pendingCount }: SyncStatusBadgeProps) 
     if (status === 'syncing') {
       return {
         label: 'Syncing...',
-        bg: palette.surface,
-        fg: palette.text,
-        border: palette.borderStrong,
+        containerClass:
+          'bg-surface dark:bg-surface-dark border-hairline dark:border-hairline-dark',
+        textClass: 'text-ink dark:text-ink-dark',
         icon: <RefreshCw size={12} color={palette.text} />,
       };
     }
@@ -37,49 +37,43 @@ export function SyncStatusBadge({ status, pendingCount }: SyncStatusBadgeProps) 
     if (status === 'error') {
       return {
         label: 'Retry pending',
-        bg: isDark ? 'rgba(248, 113, 113, 0.14)' : colors.dangerLight,
-        fg: isDark ? colors.dangerDark : colors.danger,
-        border: isDark ? 'rgba(248, 113, 113, 0.3)' : 'rgba(220, 38, 38, 0.2)',
-        icon: <CloudOff size={12} color={isDark ? colors.dangerDark : colors.danger} />,
+        containerClass:
+          'bg-red-100 dark:bg-red-500/15 border-red-600/20 dark:border-red-400/30',
+        textClass: 'text-debt dark:text-debt-dark',
+        icon: (
+          <CloudOff
+            size={12}
+            color={isDark ? colors.dangerDark : colors.danger}
+          />
+        ),
       };
     }
 
     return {
       label: 'Synced',
-      bg: palette.surface,
-      fg: palette.textMuted,
-      border: palette.border,
-      icon: <Cloud size={12} color={isDark ? colors.successDark : colors.success} />,
+      containerClass:
+        'bg-surface dark:bg-surface-dark border-hairline dark:border-hairline-dark',
+      textClass: 'text-muted dark:text-muted-dark',
+      icon: (
+        <Cloud
+          size={12}
+          color={isDark ? colors.successDark : colors.success}
+        />
+      ),
     };
   })();
 
   return (
     <View
-      style={[
-        styles.pill,
-        { backgroundColor: config.bg, borderColor: config.border },
-      ]}
+      className={`flex-row items-center gap-1.5 px-2 py-[3px] rounded-lg border ${config.containerClass}`}
     >
       {config.icon}
-      <Text style={[styles.label, tabularNums, { color: config.fg }]}>
+      <Text
+        style={tabularNums}
+        className={`font-medium text-[11px] ${config.textClass}`}
+      >
         {config.label}
       </Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  label: {
-    fontFamily: fonts.medium,
-    fontSize: 11,
-  },
-});

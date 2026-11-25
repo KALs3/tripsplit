@@ -1,3 +1,6 @@
+import '../../global.css';
+import '../lib/nativewind';
+
 import {
   SpaceGrotesk_400Regular,
   SpaceGrotesk_500Medium,

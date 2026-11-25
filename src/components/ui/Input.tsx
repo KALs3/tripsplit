@@ -1,52 +1,55 @@
 import React, { useState } from 'react';
 import {
-  StyleSheet,
+  StyleProp,
   Text,
   TextInput,
   TextInputProps,
   View,
   ViewStyle,
 } from 'react-native';
-import { fonts } from '../../constants/typography';
 import { useTheme } from '../../hooks/useTheme';
 
 interface InputProps extends TextInputProps {
   label?: string;
   error?: string;
   icon?: React.ReactNode;
-  containerStyle?: ViewStyle;
+  className?: string;
+  containerClassName?: string;
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
 export function Input({
   label,
   error,
   icon,
+  className = '',
+  containerClassName = '',
   containerStyle,
-  style,
   onFocus,
   onBlur,
   ...props
 }: InputProps) {
-  const { palette, colors } = useTheme();
+  const { palette } = useTheme();
   const [focused, setFocused] = useState(false);
 
+  const borderClass = error
+    ? 'border-debt dark:border-debt-dark'
+    : focused
+    ? 'border-ink dark:border-ink-dark'
+    : 'border-hairline dark:border-hairline-dark';
+
   return (
-    <View style={[styles.container, containerStyle]}>
-      {label && <Text style={[styles.label, { color: palette.text }]}>{label}</Text>}
+    <View style={containerStyle} className={`my-1.5 ${containerClassName}`}>
+      {label ? (
+        <Text className="font-semibold text-[13px] mb-1.5 tracking-tight text-ink dark:text-ink-dark">
+          {label}
+        </Text>
+      ) : null}
+
       <View
-        style={[
-          styles.inputWrapper,
-          {
-            backgroundColor: palette.card,
-            borderColor: error
-              ? colors.danger
-              : focused
-              ? palette.text
-              : palette.border,
-          },
-        ]}
+        className={`flex-row items-center rounded-lg border px-3 min-h-[46px] bg-card dark:bg-card-dark ${borderClass}`}
       >
-        {icon && <View style={styles.iconContainer}>{icon}</View>}
+        {icon ? <View className="mr-2.5">{icon}</View> : null}
         <TextInput
           placeholderTextColor={palette.textMuted}
           onFocus={(e) => {
@@ -57,51 +60,16 @@ export function Input({
             setFocused(false);
             onBlur?.(e);
           }}
-          style={[
-            styles.input,
-            {
-              color: palette.text,
-            },
-            style,
-          ]}
+          className={`flex-1 font-sans text-[15px] py-2.5 text-ink dark:text-ink-dark ${className}`}
           {...props}
         />
       </View>
-      {error && <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text>}
+
+      {error ? (
+        <Text className="font-medium text-[12px] mt-1 text-debt dark:text-debt-dark">
+          {error}
+        </Text>
+      ) : null}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    marginVertical: 6,
-  },
-  label: {
-    fontFamily: fonts.semibold,
-    fontSize: 13,
-    marginBottom: 6,
-    letterSpacing: -0.1,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 8,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    minHeight: 46,
-  },
-  iconContainer: {
-    marginRight: 10,
-  },
-  input: {
-    flex: 1,
-    fontFamily: fonts.regular,
-    fontSize: 15,
-    paddingVertical: 10,
-  },
-  errorText: {
-    fontFamily: fonts.medium,
-    fontSize: 12,
-    marginTop: 4,
-  },
-});

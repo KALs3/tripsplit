@@ -1,19 +1,12 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowRight, X } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { Input } from '../../../components/ui/Input';
 import { KeyboardAwareView } from '../../../components/ui/KeyboardAwareView';
-import { fonts } from '../../../constants/typography';
 import { CURRENCY_METADATA, fromMinorUnits, toMinorUnits } from '../../../domain';
 import { useTheme } from '../../../hooks/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
@@ -31,7 +24,7 @@ export default function SettlePaymentModal() {
     amountMinor?: string;
   }>();
 
-  const { isDark, palette, colors } = useTheme();
+  const { palette } = useTheme();
 
   const trips = useAppStore((s) => s.trips);
   const members = useAppStore((s) => s.members);
@@ -98,41 +91,42 @@ export default function SettlePaymentModal() {
 
   if (!trip) return null;
 
-  const creditColor = isDark ? colors.successDark : colors.success;
-  const debtColor = isDark ? colors.dangerDark : colors.danger;
-
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
-      <View style={[styles.header, { borderBottomColor: palette.border }]}>
-        <Text style={[styles.title, { color: palette.text }]}>Record payment</Text>
-        <Pressable onPress={() => router.back()} style={styles.closeBtn}>
+    <SafeAreaView className="flex-1 bg-canvas dark:bg-canvas-dark">
+      <View className="flex-row items-center justify-between px-[18px] py-3.5 border-b border-hairline dark:border-hairline-dark">
+        <Text className="font-bold text-[19px] tracking-tight text-ink dark:text-ink-dark">
+          Record payment
+        </Text>
+        <Pressable onPress={() => router.back()} className="p-1">
           <X size={21} color={palette.text} />
         </Pressable>
       </View>
 
       <KeyboardAwareView>
         <ScrollView
-          contentContainerStyle={styles.scroll}
+          contentContainerStyle={{ padding: 18, paddingBottom: 40 }}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
-          <Card style={styles.summaryCard}>
-            <View style={styles.directionRow}>
-              <Text style={[styles.partyBadge, { color: debtColor }]}>
+          <Card className="items-center py-[18px] mb-3">
+            <View className="flex-row items-center gap-3">
+              <Text className="font-bold text-[18px] text-debt dark:text-debt-dark">
                 {getMemberLabel(fromUser)}
               </Text>
               <ArrowRight size={17} color={palette.textMuted} />
-              <Text style={[styles.partyBadge, { color: creditColor }]}>
+              <Text className="font-bold text-[18px] text-credit dark:text-credit-dark">
                 {getMemberLabel(toUser)}
               </Text>
             </View>
-            <Text style={[styles.summarySub, { color: palette.textMuted }]}>
+            <Text className="font-sans text-[12px] mt-1.5 text-muted dark:text-muted-dark">
               Updates net balances immediately
             </Text>
           </Card>
 
-          <Text style={[styles.sectionLabel, { color: palette.text }]}>Who paid?</Text>
-          <View style={styles.chipsWrap}>
+          <Text className="font-semibold text-[13px] mt-3 mb-2 text-ink dark:text-ink-dark">
+            Who paid?
+          </Text>
+          <View className="flex-row flex-wrap gap-2">
             {tripMembers.map((m) => {
               const selected = fromUser === m.userId;
               return (
@@ -142,19 +136,18 @@ export default function SettlePaymentModal() {
                     setFromUser(m.userId);
                     setError('');
                   }}
-                  style={[
-                    styles.chip,
-                    {
-                      backgroundColor: selected ? palette.accent : palette.card,
-                      borderColor: selected ? palette.accent : palette.border,
-                    },
-                  ]}
+                  className={`px-[13px] py-2 rounded-lg border ${
+                    selected
+                      ? 'bg-ink dark:bg-ink-dark border-ink dark:border-ink-dark'
+                      : 'bg-card dark:bg-card-dark border-hairline dark:border-hairline-dark'
+                  }`}
                 >
                   <Text
-                    style={[
-                      styles.chipText,
-                      { color: selected ? palette.accentText : palette.text },
-                    ]}
+                    className={`font-semibold text-[13px] ${
+                      selected
+                        ? 'text-ink-dark dark:text-ink'
+                        : 'text-ink dark:text-ink-dark'
+                    }`}
                   >
                     {getMemberLabel(m.userId)}
                   </Text>
@@ -163,8 +156,10 @@ export default function SettlePaymentModal() {
             })}
           </View>
 
-          <Text style={[styles.sectionLabel, { color: palette.text }]}>Paid to whom?</Text>
-          <View style={styles.chipsWrap}>
+          <Text className="font-semibold text-[13px] mt-3 mb-2 text-ink dark:text-ink-dark">
+            Paid to whom?
+          </Text>
+          <View className="flex-row flex-wrap gap-2">
             {tripMembers.map((m) => {
               const selected = toUser === m.userId;
               return (
@@ -174,19 +169,18 @@ export default function SettlePaymentModal() {
                     setToUser(m.userId);
                     setError('');
                   }}
-                  style={[
-                    styles.chip,
-                    {
-                      backgroundColor: selected ? palette.accent : palette.card,
-                      borderColor: selected ? palette.accent : palette.border,
-                    },
-                  ]}
+                  className={`px-[13px] py-2 rounded-lg border ${
+                    selected
+                      ? 'bg-ink dark:bg-ink-dark border-ink dark:border-ink-dark'
+                      : 'bg-card dark:bg-card-dark border-hairline dark:border-hairline-dark'
+                  }`}
                 >
                   <Text
-                    style={[
-                      styles.chipText,
-                      { color: selected ? palette.accentText : palette.text },
-                    ]}
+                    className={`font-semibold text-[13px] ${
+                      selected
+                        ? 'text-ink-dark dark:text-ink'
+                        : 'text-ink dark:text-ink-dark'
+                    }`}
                   >
                     {getMemberLabel(m.userId)}
                   </Text>
@@ -205,7 +199,7 @@ export default function SettlePaymentModal() {
               setError('');
             }}
             error={error}
-            containerStyle={{ marginTop: 14 }}
+            containerClassName="mt-3.5"
           />
 
           <Button
@@ -213,62 +207,10 @@ export default function SettlePaymentModal() {
             onPress={handleRecordPayment}
             variant="primary"
             size="lg"
-            style={{ marginTop: 22 }}
+            className="mt-5"
           />
         </ScrollView>
       </KeyboardAwareView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-  },
-  title: { fontFamily: fonts.bold, fontSize: 19, letterSpacing: -0.3 },
-  closeBtn: { padding: 4 },
-  scroll: { padding: 18, paddingBottom: 40 },
-  summaryCard: {
-    alignItems: 'center',
-    paddingVertical: 18,
-    marginBottom: 12,
-  },
-  directionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  partyBadge: {
-    fontFamily: fonts.bold,
-    fontSize: 18,
-  },
-  summarySub: {
-    fontFamily: fonts.regular,
-    fontSize: 12,
-    marginTop: 5,
-  },
-  sectionLabel: {
-    fontFamily: fonts.semibold,
-    fontSize: 13,
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  chipsWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  chip: {
-    paddingHorizontal: 13,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  chipText: { fontFamily: fonts.semibold, fontSize: 13 },
-});

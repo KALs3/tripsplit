@@ -1,20 +1,13 @@
 import { router } from 'expo-router';
 import { QrCode, X } from 'lucide-react-native';
 import React, { useState } from 'react';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { KeyboardAwareView } from '../../components/ui/KeyboardAwareView';
-import { fonts } from '../../constants/typography';
 import { useTheme } from '../../hooks/useTheme';
 import { useAppStore } from '../../store/useAppStore';
 
@@ -39,25 +32,32 @@ export default function JoinTripModal() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
-      <View style={[styles.header, { borderBottomColor: palette.border }]}>
-        <Text style={[styles.title, { color: palette.text }]}>Join a trip</Text>
-        <Pressable onPress={() => router.back()} style={styles.closeBtn}>
+    <SafeAreaView className="flex-1 bg-canvas dark:bg-canvas-dark">
+      <View className="flex-row items-center justify-between px-[18px] py-3.5 border-b border-hairline dark:border-hairline-dark">
+        <Text className="font-bold text-[19px] tracking-tight text-ink dark:text-ink-dark">
+          Join a trip
+        </Text>
+        <Pressable onPress={() => router.back()} className="p-1">
           <X size={21} color={palette.text} />
         </Pressable>
       </View>
 
       <KeyboardAwareView>
         <ScrollView
-          contentContainerStyle={styles.body}
+          contentContainerStyle={{
+            flexGrow: 1,
+            padding: 20,
+            alignItems: 'center',
+            paddingTop: 32,
+          }}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
-          <View style={[styles.iconBox, { backgroundColor: palette.surface }]}>
+          <View className="w-[60px] h-[60px] rounded-[10px] bg-surface dark:bg-surface-dark items-center justify-center mb-4">
             <QrCode size={30} color={palette.text} />
           </View>
 
-          <Text style={[styles.subtitle, { color: palette.textMuted }]}>
+          <Text className="font-sans text-[14px] text-center mb-[18px] leading-5 text-muted dark:text-muted-dark">
             Enter the invite code shared by a trip member.
           </Text>
 
@@ -72,7 +72,7 @@ export default function JoinTripModal() {
             autoCapitalize="characters"
             autoCorrect={false}
             error={error}
-            containerStyle={{ width: '100%' }}
+            containerClassName="w-full"
           />
 
           <Button
@@ -80,14 +80,14 @@ export default function JoinTripModal() {
             onPress={() => handleJoin()}
             variant="primary"
             size="lg"
-            style={{ width: '100%', marginTop: 14 }}
+            className="w-full mt-3.5"
           />
 
           {isGuestDemo && (
-            <Card style={styles.demoHintCard}>
-              <View style={styles.demoHintRow}>
+            <Card className="w-full mt-5 p-3.5">
+              <View className="flex-row items-center gap-2">
                 <Badge label="Demo" variant="neutral" />
-                <Text style={[styles.demoHintText, { color: palette.text }]}>
+                <Text className="flex-1 font-sans text-[13px] leading-[18px] text-ink dark:text-ink-dark">
                   Try code PARIS26 to join a sample Paris trip in EUR.
                 </Text>
               </View>
@@ -96,7 +96,7 @@ export default function JoinTripModal() {
                 onPress={() => handleJoin('PARIS26')}
                 variant="outline"
                 size="sm"
-                style={{ marginTop: 10 }}
+                className="mt-2.5"
               />
             </Card>
           )}
@@ -105,54 +105,3 @@ export default function JoinTripModal() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-  },
-  title: { fontFamily: fonts.bold, fontSize: 19, letterSpacing: -0.3 },
-  closeBtn: { padding: 4 },
-  body: {
-    flexGrow: 1,
-    padding: 20,
-    alignItems: 'center',
-    paddingTop: 32,
-  },
-  iconBox: {
-    width: 60,
-    height: 60,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  subtitle: {
-    fontFamily: fonts.regular,
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 18,
-    lineHeight: 20,
-  },
-  demoHintCard: {
-    width: '100%',
-    marginTop: 22,
-    padding: 14,
-  },
-  demoHintRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  demoHintText: {
-    flex: 1,
-    fontFamily: fonts.regular,
-    fontSize: 13,
-    lineHeight: 18,
-  },
-});

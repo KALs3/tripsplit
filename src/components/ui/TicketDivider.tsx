@@ -1,65 +1,26 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import { useTheme } from '../../hooks/useTheme';
+import { View } from 'react-native';
 
 interface TicketDividerProps {
-  /** Background color behind the card so semicircular cutouts match cleanly */
-  cutoutBackground?: string;
+  /** Optional explicit background class for side cutouts */
+  cutoutClassName?: string;
 }
 
 /**
  * Transit-ticket perforated horizontal divider with side notches.
  */
-export function TicketDivider({ cutoutBackground }: TicketDividerProps) {
-  const { palette } = useTheme();
-  const notchBg = cutoutBackground ?? palette.background;
-
+export function TicketDivider({
+  cutoutClassName = 'bg-canvas dark:bg-canvas-dark',
+}: TicketDividerProps) {
   return (
-    <View style={styles.wrapper}>
+    <View className="h-[18px] justify-center relative my-2.5 -mx-4">
       <View
-        style={[
-          styles.notchLeft,
-          { backgroundColor: notchBg, borderColor: palette.border },
-        ]}
+        className={`absolute -left-[9px] w-[18px] h-[18px] rounded-full border border-hairline dark:border-hairline-dark ${cutoutClassName}`}
       />
-      <View style={[styles.dashedLine, { borderColor: palette.borderStrong }]} />
+      <View className="border-b border-dashed border-hairline dark:border-hairline-dark mx-3.5" />
       <View
-        style={[
-          styles.notchRight,
-          { backgroundColor: notchBg, borderColor: palette.border },
-        ]}
+        className={`absolute -right-[9px] w-[18px] h-[18px] rounded-full border border-hairline dark:border-hairline-dark ${cutoutClassName}`}
       />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrapper: {
-    height: 18,
-    justifyContent: 'center',
-    position: 'relative',
-    marginVertical: 10,
-    marginHorizontal: -16,
-  },
-  dashedLine: {
-    borderBottomWidth: 1,
-    borderStyle: 'dashed',
-    marginHorizontal: 14,
-  },
-  notchLeft: {
-    position: 'absolute',
-    left: -9,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 1,
-  },
-  notchRight: {
-    position: 'absolute',
-    right: -9,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 1,
-  },
-});

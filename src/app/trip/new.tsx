@@ -1,19 +1,11 @@
 import { router } from 'expo-router';
 import { X } from 'lucide-react-native';
 import React, { useState } from 'react';
-import {
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { KeyboardAwareView } from '../../components/ui/KeyboardAwareView';
-import { fonts } from '../../constants/typography';
 import { CURRENCY_METADATA } from '../../domain';
 import { useTheme } from '../../hooks/useTheme';
 import { useAppStore } from '../../store/useAppStore';
@@ -67,17 +59,19 @@ export default function NewTripModal() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
-      <View style={[styles.header, { borderBottomColor: palette.border }]}>
-        <Text style={[styles.title, { color: palette.text }]}>Create trip</Text>
-        <Pressable onPress={() => router.back()} style={styles.closeBtn}>
+    <SafeAreaView className="flex-1 bg-canvas dark:bg-canvas-dark">
+      <View className="flex-row items-center justify-between px-[18px] py-3.5 border-b border-hairline dark:border-hairline-dark">
+        <Text className="font-bold text-[19px] tracking-tight text-ink dark:text-ink-dark">
+          Create trip
+        </Text>
+        <Pressable onPress={() => router.back()} className="p-1">
           <X size={21} color={palette.text} />
         </Pressable>
       </View>
 
       <KeyboardAwareView>
         <ScrollView
-          contentContainerStyle={styles.scroll}
+          contentContainerStyle={{ padding: 18, paddingBottom: 40 }}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
@@ -92,32 +86,31 @@ export default function NewTripModal() {
             error={error}
           />
 
-          <Text style={[styles.sectionLabel, { color: palette.text }]}>
+          <Text className="font-semibold text-[13px] mt-3.5 mb-1 text-ink dark:text-ink-dark">
             Base currency
           </Text>
-          <Text style={[styles.sectionHelp, { color: palette.textMuted }]}>
+          <Text className="font-sans text-[12px] mb-2.5 leading-[17px] text-muted dark:text-muted-dark">
             All expenses and settlements are summarized in this currency.
           </Text>
-          <View style={styles.currencyRow}>
+          <View className="flex-row flex-wrap gap-2">
             {['USD', 'EUR', 'GBP', 'EGP', 'JPY', 'CAD'].map((curr) => {
               const isSelected = baseCurrency === curr;
               return (
                 <Pressable
                   key={curr}
                   onPress={() => setBaseCurrency(curr)}
-                  style={[
-                    styles.currencyChip,
-                    {
-                      backgroundColor: isSelected ? palette.accent : palette.card,
-                      borderColor: isSelected ? palette.accent : palette.border,
-                    },
-                  ]}
+                  className={`px-3 py-[9px] rounded-lg border ${
+                    isSelected
+                      ? 'bg-ink dark:bg-ink-dark border-ink dark:border-ink-dark'
+                      : 'bg-card dark:bg-card-dark border-hairline dark:border-hairline-dark'
+                  }`}
                 >
                   <Text
-                    style={[
-                      styles.currencyChipText,
-                      { color: isSelected ? palette.accentText : palette.text },
-                    ]}
+                    className={`font-semibold text-[13px] ${
+                      isSelected
+                        ? 'text-ink-dark dark:text-ink'
+                        : 'text-ink dark:text-ink-dark'
+                    }`}
                   >
                     {curr} ({CURRENCY_METADATA[curr]?.symbol || '$'})
                   </Text>
@@ -126,26 +119,24 @@ export default function NewTripModal() {
             })}
           </View>
 
-          <Text style={[styles.sectionLabel, { color: palette.text, marginTop: 18 }]}>
+          <Text className="font-semibold text-[13px] mt-4 mb-1.5 text-ink dark:text-ink-dark">
             Cover photo
           </Text>
-          <View style={styles.coverRow}>
+          <View className="flex-row gap-2.5 mt-1">
             {PRESET_COVERS.map((item) => {
               const isSelected = coverUrl === item.url;
               return (
                 <Pressable
                   key={item.label}
                   onPress={() => setCoverUrl(item.url)}
-                  style={[
-                    styles.coverOption,
-                    {
-                      borderColor: isSelected ? palette.accent : palette.border,
-                      borderWidth: isSelected ? 2 : 1,
-                    },
-                  ]}
+                  className={`flex-1 rounded-lg overflow-hidden items-center pb-1.5 ${
+                    isSelected
+                      ? 'border-2 border-ink dark:border-ink-dark'
+                      : 'border border-hairline dark:border-hairline-dark'
+                  }`}
                 >
-                  <Image source={{ uri: item.url }} style={styles.coverThumb} />
-                  <Text style={[styles.coverLabel, { color: palette.text }]}>
+                  <Image source={{ uri: item.url }} className="w-full h-[54px] mb-1" />
+                  <Text className="font-medium text-[11px] text-ink dark:text-ink-dark">
                     {item.label}
                   </Text>
                 </Pressable>
@@ -158,77 +149,10 @@ export default function NewTripModal() {
             onPress={handleCreate}
             variant="primary"
             size="lg"
-            style={{ marginTop: 26 }}
+            className="mt-6"
           />
         </ScrollView>
       </KeyboardAwareView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-  },
-  title: {
-    fontFamily: fonts.bold,
-    fontSize: 19,
-    letterSpacing: -0.3,
-  },
-  closeBtn: { padding: 4 },
-  scroll: { padding: 18, paddingBottom: 40 },
-  sectionLabel: {
-    fontFamily: fonts.semibold,
-    fontSize: 13,
-    marginTop: 14,
-    marginBottom: 4,
-  },
-  sectionHelp: {
-    fontFamily: fonts.regular,
-    fontSize: 12,
-    marginBottom: 10,
-    lineHeight: 17,
-  },
-  currencyRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  currencyChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  currencyChipText: {
-    fontFamily: fonts.semibold,
-    fontSize: 13,
-  },
-  coverRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 6,
-  },
-  coverOption: {
-    flex: 1,
-    borderRadius: 8,
-    overflow: 'hidden',
-    alignItems: 'center',
-    paddingBottom: 6,
-  },
-  coverThumb: {
-    width: '100%',
-    height: 54,
-    marginBottom: 4,
-  },
-  coverLabel: {
-    fontFamily: fonts.medium,
-    fontSize: 11,
-  },
-});

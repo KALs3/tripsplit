@@ -1,12 +1,7 @@
 import { router } from 'expo-router';
 import { ArrowRight, Compass, UserCheck } from 'lucide-react-native';
 import React, { useState } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -14,13 +9,12 @@ import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { KeyboardAwareView } from '../../components/ui/KeyboardAwareView';
 import { TicketDivider } from '../../components/ui/TicketDivider';
-import { fonts } from '../../constants/typography';
 import { useTheme } from '../../hooks/useTheme';
 import { supabase } from '../../lib/supabase';
 import { useAppStore } from '../../store/useAppStore';
 
 export default function LoginScreen() {
-  const { palette, colors } = useTheme();
+  const { palette } = useTheme();
 
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
@@ -90,39 +84,34 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: palette.background }]}>
+    <SafeAreaView className="flex-1 bg-canvas dark:bg-canvas-dark">
       <KeyboardAwareView>
         <ScrollView
-          contentContainerStyle={styles.scrollContainer}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 28, paddingBottom: 40 }}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
           {/* Minimal Monochrome Brand Header */}
-          <View style={styles.brandContainer}>
-            <View
-              style={[
-                styles.logoBox,
-                { backgroundColor: palette.accent },
-              ]}
-            >
+          <View className="items-start mb-6">
+            <View className="w-[52px] h-[52px] rounded-[10px] bg-ink dark:bg-ink-dark items-center justify-center mb-3.5">
               <Compass size={28} color={palette.accentText} strokeWidth={2} />
             </View>
-            <Text style={[styles.brandTitle, { color: palette.text }]}>
+            <Text className="font-bold text-[30px] tracking-tight text-ink dark:text-ink-dark">
               TripSplit
             </Text>
-            <Text style={[styles.brandSubtitle, { color: palette.textMuted }]}>
+            <Text className="font-sans text-[15px] mt-1 leading-[22px] text-muted dark:text-muted-dark">
               Shared trip ledger and instant debt settlement
             </Text>
           </View>
 
           {/* Demo Ticket Card */}
-          <Card style={styles.demoTicket}>
-            <View style={styles.demoHeader}>
-              <View>
-                <Text style={[styles.demoTitle, { color: palette.text }]}>
+          <Card className="p-4 mb-2">
+            <View className="flex-row items-center justify-between gap-2.5">
+              <View className="flex-1">
+                <Text className="font-semibold text-[16px] tracking-tight text-ink dark:text-ink-dark">
                   Tokyo & Kyoto sample trip
                 </Text>
-                <Text style={[styles.demoMeta, { color: palette.textMuted }]}>
+                <Text className="font-sans text-[13px] mt-0.5 text-muted dark:text-muted-dark">
                   4 travelers, live ledger, offline sync
                 </Text>
               </View>
@@ -140,16 +129,16 @@ export default function LoginScreen() {
             />
           </Card>
 
-          <View style={styles.dividerRow}>
-            <View style={[styles.dividerLine, { backgroundColor: palette.border }]} />
-            <Text style={[styles.dividerText, { color: palette.textMuted }]}>
+          <View className="flex-row items-center my-4">
+            <View className="flex-1 h-px bg-hairline dark:bg-hairline-dark" />
+            <Text className="font-medium text-[12px] px-2.5 text-muted dark:text-muted-dark">
               or continue with email
             </Text>
-            <View style={[styles.dividerLine, { backgroundColor: palette.border }]} />
+            <View className="flex-1 h-px bg-hairline dark:bg-hairline-dark" />
           </View>
 
           {/* Email / Password Form */}
-          <Card style={styles.formCard}>
+          <Card className="p-4">
             {isSignUp && (
               <Input
                 label="Full name"
@@ -177,7 +166,7 @@ export default function LoginScreen() {
             />
 
             {errorMessage ? (
-              <Text style={[styles.errorBanner, { color: colors.danger }]}>
+              <Text className="font-medium text-[13px] mt-1.5 mb-1 text-debt dark:text-debt-dark">
                 {errorMessage}
               </Text>
             ) : null}
@@ -189,7 +178,7 @@ export default function LoginScreen() {
               variant="outline"
               size="md"
               icon={<ArrowRight size={16} color={palette.text} />}
-              style={{ marginTop: 10 }}
+              className="mt-2.5"
             />
 
             <Button
@@ -204,7 +193,7 @@ export default function LoginScreen() {
               }}
               variant="ghost"
               size="sm"
-              style={{ marginTop: 6 }}
+              className="mt-1.5"
             />
           </Card>
         </ScrollView>
@@ -212,80 +201,3 @@ export default function LoginScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
-  scrollContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 28,
-    paddingBottom: 40,
-  },
-  brandContainer: {
-    alignItems: 'flex-start',
-    marginBottom: 24,
-  },
-  logoBox: {
-    width: 52,
-    height: 52,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 14,
-  },
-  brandTitle: {
-    fontFamily: fonts.bold,
-    fontSize: 30,
-    letterSpacing: -0.8,
-  },
-  brandSubtitle: {
-    fontFamily: fonts.regular,
-    fontSize: 15,
-    marginTop: 4,
-    lineHeight: 22,
-  },
-  demoTicket: {
-    padding: 16,
-    marginBottom: 8,
-  },
-  demoHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  demoTitle: {
-    fontFamily: fonts.semibold,
-    fontSize: 16,
-    letterSpacing: -0.2,
-  },
-  demoMeta: {
-    fontFamily: fonts.regular,
-    fontSize: 13,
-    marginTop: 2,
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 16,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-  },
-  dividerText: {
-    fontFamily: fonts.medium,
-    fontSize: 12,
-    paddingHorizontal: 10,
-  },
-  formCard: {
-    padding: 16,
-  },
-  errorBanner: {
-    fontFamily: fonts.medium,
-    fontSize: 13,
-    marginTop: 6,
-    marginBottom: 4,
-  },
-});

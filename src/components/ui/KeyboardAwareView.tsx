@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface KeyboardAwareViewProps {
   children: React.ReactNode;
+  className?: string;
   style?: StyleProp<ViewStyle>;
   /** Extra vertical offset on iOS if rendered below a native header */
   iosVerticalOffset?: number;
@@ -18,14 +19,10 @@ interface KeyboardAwareViewProps {
 
 /**
  * Cross-platform keyboard-avoiding container tailored for Expo Edge-to-Edge.
- *
- * - On iOS: uses KeyboardAvoidingView with behavior="padding" (smooth native timing).
- * - On Android: listens directly to keyboardDidShow / keyboardDidHide and applies
- *   exact bottom padding minus the SafeArea bottom inset so Edge-to-Edge layouts
- *   shrink cleanly above the keyboard without covering inputs or shifting headers.
  */
 export function KeyboardAwareView({
   children,
+  className = '',
   style,
   iosVerticalOffset = 0,
 }: KeyboardAwareViewProps) {
@@ -53,7 +50,8 @@ export function KeyboardAwareView({
       <KeyboardAvoidingView
         behavior="padding"
         keyboardVerticalOffset={iosVerticalOffset}
-        style={[{ flex: 1 }, style]}
+        className={`flex-1 ${className}`}
+        style={style}
       >
         {children}
       </KeyboardAvoidingView>
@@ -65,5 +63,9 @@ export function KeyboardAwareView({
       ? Math.max(0, androidKeyboardHeight - insets.bottom)
       : 0;
 
-  return <View style={[{ flex: 1, paddingBottom }, style]}>{children}</View>;
+  return (
+    <View className={`flex-1 ${className}`} style={[{ paddingBottom }, style]}>
+      {children}
+    </View>
+  );
 }

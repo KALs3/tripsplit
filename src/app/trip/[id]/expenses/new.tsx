@@ -10,15 +10,7 @@ import {
   X,
 } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
-import {
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Badge } from '../../../../components/ui/Badge';
 import { Button } from '../../../../components/ui/Button';
@@ -27,7 +19,7 @@ import { CategoryIcon } from '../../../../components/ui/CategoryIcon';
 import { Input } from '../../../../components/ui/Input';
 import { KeyboardAwareView } from '../../../../components/ui/KeyboardAwareView';
 import { EXPENSE_CATEGORIES } from '../../../../constants/categories';
-import { fonts, tabularNums } from '../../../../constants/typography';
+import { tabularNums } from '../../../../constants/typography';
 import {
   calculateSplits,
   CURRENCY_METADATA,
@@ -56,7 +48,7 @@ const SPLIT_TABS: { id: SplitMethod; label: string }[] = [
 
 export default function AddExpenseModal() {
   const { id, expenseId } = useLocalSearchParams<{ id: string; expenseId?: string }>();
-  const { isDark, palette, colors } = useTheme();
+  const { palette } = useTheme();
 
   const trips = useAppStore((s) => s.trips);
   const members = useAppStore((s) => s.members);
@@ -75,7 +67,6 @@ export default function AddExpenseModal() {
   const currentUserId = user?.id || 'user_me';
   const baseCurrency = trip?.baseCurrency || 'USD';
 
-  // Form fields (pre-populated when editing)
   const [quickInput, setQuickInput] = useState('');
   const [title, setTitle] = useState(() => editingExpense?.title ?? '');
   const [amountText, setAmountText] = useState(() =>
@@ -350,34 +341,32 @@ export default function AddExpenseModal() {
     return m.userId === currentUserId ? 'You' : m.displayName.split(' ')[0];
   };
 
-  const creditColor = isDark ? colors.successDark : colors.success;
-  const debtColor = isDark ? colors.dangerDark : colors.danger;
   const currSymbol = CURRENCY_METADATA[currency]?.symbol || currency;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
-      <View style={[styles.header, { borderBottomColor: palette.border }]}>
-        <Text style={[styles.headerTitle, { color: palette.text }]}>
+    <SafeAreaView className="flex-1 bg-canvas dark:bg-canvas-dark">
+      <View className="flex-row items-center justify-between px-[18px] py-3.5 border-b border-hairline dark:border-hairline-dark">
+        <Text className="font-bold text-[19px] tracking-tight text-ink dark:text-ink-dark">
           {editingExpense ? 'Edit expense' : 'Log expense'}
         </Text>
-        <Pressable onPress={() => router.back()} style={styles.closeBtn}>
+        <Pressable onPress={() => router.back()} className="p-1">
           <X size={21} color={palette.text} />
         </Pressable>
       </View>
 
       <KeyboardAwareView>
         <ScrollView
-          contentContainerStyle={styles.scroll}
+          contentContainerStyle={{ padding: 16, paddingBottom: 44 }}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
           {/* Amount-First Hero */}
-          <Card style={styles.amountHeroCard}>
-            <Text style={[styles.amountPrompt, { color: palette.textMuted }]}>
+          <Card className="items-center py-[18px] mb-2.5">
+            <Text className="font-medium text-[12px] mb-1 text-muted dark:text-muted-dark">
               Amount ({currency})
             </Text>
-            <View style={styles.amountInputRow}>
-              <Text style={[styles.currencyPrefix, { color: palette.textMuted }]}>
+            <View className="flex-row items-center justify-center mb-3.5">
+              <Text className="font-bold text-[28px] mr-1 text-muted dark:text-muted-dark">
                 {currSymbol}
               </Text>
               <TextInput
@@ -389,14 +378,15 @@ export default function AddExpenseModal() {
                   setAmountText(val);
                   setFormError('');
                 }}
-                style={[styles.heroAmountInput, tabularNums, { color: palette.text }]}
+                style={tabularNums}
+                className="font-bold text-[38px] tracking-tight min-w-[120px] text-center py-0.5 text-ink dark:text-ink-dark"
               />
             </View>
 
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.currencyChipsRow}
+              contentContainerStyle={{ gap: 8, paddingHorizontal: 8 }}
             >
               {['USD', 'EUR', 'GBP', 'JPY', 'EGP', 'CAD'].map((curr) => {
                 const selected = currency === curr;
@@ -404,19 +394,18 @@ export default function AddExpenseModal() {
                   <Pressable
                     key={curr}
                     onPress={() => void handleSelectCurrency(curr)}
-                    style={[
-                      styles.chip,
-                      {
-                        backgroundColor: selected ? palette.accent : palette.surface,
-                        borderColor: selected ? palette.accent : palette.border,
-                      },
-                    ]}
+                    className={`px-3 py-2 rounded-lg border ${
+                      selected
+                        ? 'bg-ink dark:bg-ink-dark border-ink dark:border-ink-dark'
+                        : 'bg-surface dark:bg-surface-dark border-hairline dark:border-hairline-dark'
+                    }`}
                   >
                     <Text
-                      style={[
-                        styles.chipText,
-                        { color: selected ? palette.accentText : palette.text },
-                      ]}
+                      className={`font-semibold text-[12px] ${
+                        selected
+                          ? 'text-ink-dark dark:text-ink'
+                          : 'text-ink dark:text-ink-dark'
+                      }`}
                     >
                       {curr}
                     </Text>
@@ -438,30 +427,26 @@ export default function AddExpenseModal() {
 
           {/* Smart Quick-Add Bar */}
           {!editingExpense && (
-            <Card style={styles.quickAddCard}>
-              <View style={styles.quickAddHeader}>
+            <Card className="p-3 mb-2">
+              <View className="flex-row items-center gap-1.5 mb-2">
                 <Sparkles size={13} color={palette.text} />
-                <Text style={[styles.quickAddTitle, { color: palette.text }]}>
+                <Text className="font-semibold text-[12px] text-ink dark:text-ink-dark">
                   Quick-add parser
                 </Text>
               </View>
-              <View style={styles.quickAddRow}>
+              <View className="flex-row gap-2 items-center">
                 <TextInput
                   placeholder='"Ramen 48 split between me and Kenji"'
                   placeholderTextColor={palette.textMuted}
                   value={quickInput}
                   onChangeText={setQuickInput}
-                  style={[
-                    styles.quickAddInput,
-                    { color: palette.text, backgroundColor: palette.surface },
-                  ]}
+                  className="flex-1 font-sans text-[13px] rounded-lg px-2.5 h-[38px] bg-surface dark:bg-surface-dark text-ink dark:text-ink-dark"
                 />
                 <Button title="Fill" onPress={handleQuickParse} variant="primary" size="sm" />
               </View>
             </Card>
           )}
 
-          {/* Title */}
           <Input
             label="Description"
             placeholder="Sushi dinner, Airport train"
@@ -472,12 +457,13 @@ export default function AddExpenseModal() {
             }}
           />
 
-          {/* Category Picker */}
-          <Text style={[styles.sectionLabel, { color: palette.text }]}>Category</Text>
+          <Text className="font-semibold text-[13px] mt-3 mb-1.5 text-ink dark:text-ink-dark">
+            Category
+          </Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.chipsRow}
+            contentContainerStyle={{ gap: 8, paddingVertical: 4 }}
           >
             {EXPENSE_CATEGORIES.map((cat) => {
               const selected = category === cat.id;
@@ -485,13 +471,11 @@ export default function AddExpenseModal() {
                 <Pressable
                   key={cat.id}
                   onPress={() => setCategory(cat.id)}
-                  style={[
-                    styles.chipIconBtn,
-                    {
-                      backgroundColor: selected ? palette.accent : palette.card,
-                      borderColor: selected ? palette.accent : palette.border,
-                    },
-                  ]}
+                  className={`flex-row items-center gap-1.5 px-[11px] py-2 rounded-lg border ${
+                    selected
+                      ? 'bg-ink dark:bg-ink-dark border-ink dark:border-ink-dark'
+                      : 'bg-card dark:bg-card-dark border-hairline dark:border-hairline-dark'
+                  }`}
                 >
                   <CategoryIcon
                     category={cat.id}
@@ -499,10 +483,11 @@ export default function AddExpenseModal() {
                     color={selected ? palette.accentText : palette.text}
                   />
                   <Text
-                    style={[
-                      styles.chipText,
-                      { color: selected ? palette.accentText : palette.text },
-                    ]}
+                    className={`font-semibold text-[12px] ${
+                      selected
+                        ? 'text-ink-dark dark:text-ink'
+                        : 'text-ink dark:text-ink-dark'
+                    }`}
                   >
                     {cat.shortLabel}
                   </Text>
@@ -511,28 +496,28 @@ export default function AddExpenseModal() {
             })}
           </ScrollView>
 
-          {/* Paid By Selector */}
-          <Text style={[styles.sectionLabel, { color: palette.text }]}>Paid by</Text>
-          <View style={styles.payerRow}>
+          <Text className="font-semibold text-[13px] mt-3 mb-1.5 text-ink dark:text-ink-dark">
+            Paid by
+          </Text>
+          <View className="flex-row flex-wrap gap-2 py-1">
             {tripMembers.map((member) => {
               const selected = paidBy === member.userId;
               return (
                 <Pressable
                   key={member.userId}
                   onPress={() => setPaidBy(member.userId)}
-                  style={[
-                    styles.chip,
-                    {
-                      backgroundColor: selected ? palette.accent : palette.card,
-                      borderColor: selected ? palette.accent : palette.border,
-                    },
-                  ]}
+                  className={`px-3 py-2 rounded-lg border ${
+                    selected
+                      ? 'bg-ink dark:bg-ink-dark border-ink dark:border-ink-dark'
+                      : 'bg-card dark:bg-card-dark border-hairline dark:border-hairline-dark'
+                  }`}
                 >
                   <Text
-                    style={[
-                      styles.chipText,
-                      { color: selected ? palette.accentText : palette.text },
-                    ]}
+                    className={`font-semibold text-[12px] ${
+                      selected
+                        ? 'text-ink-dark dark:text-ink'
+                        : 'text-ink dark:text-ink-dark'
+                    }`}
                   >
                     {getMemberLabel(member.userId)}
                   </Text>
@@ -541,35 +526,26 @@ export default function AddExpenseModal() {
             })}
           </View>
 
-          {/* Split Method Tabs */}
-          <Text style={[styles.sectionLabel, { color: palette.text, marginTop: 16 }]}>
+          <Text className="font-semibold text-[13px] mt-4 mb-1.5 text-ink dark:text-ink-dark">
             Split method
           </Text>
-          <View
-            style={[
-              styles.segmentedControl,
-              { backgroundColor: palette.surface, borderColor: palette.border },
-            ]}
-          >
+          <View className="flex-row rounded-lg border border-hairline dark:border-hairline-dark bg-surface dark:bg-surface-dark p-[3px] mb-2">
             {SPLIT_TABS.map((tab) => {
               const active = splitMethod === tab.id;
               return (
                 <Pressable
                   key={tab.id}
                   onPress={() => setSplitMethod(tab.id)}
-                  style={[
-                    styles.segmentBtn,
-                    active && { backgroundColor: palette.card },
-                  ]}
+                  className={`flex-1 py-2 rounded-[6px] items-center ${
+                    active ? 'bg-card dark:bg-card-dark' : ''
+                  }`}
                 >
                   <Text
-                    style={[
-                      styles.segmentText,
-                      {
-                        color: active ? palette.text : palette.textMuted,
-                        fontFamily: active ? fonts.bold : fonts.medium,
-                      },
-                    ]}
+                    className={`text-[13px] ${
+                      active
+                        ? 'font-bold text-ink dark:text-ink-dark'
+                        : 'font-medium text-muted dark:text-muted-dark'
+                    }`}
                   >
                     {tab.label}
                   </Text>
@@ -578,11 +554,10 @@ export default function AddExpenseModal() {
             })}
           </View>
 
-          {/* Split Details Ledger Card */}
-          <Card style={styles.splitCard}>
+          <Card className="p-0 overflow-hidden">
             {splitMethod === 'EXACT' && totalMinor > 0 && (
-              <View style={[styles.statusBanner, { borderBottomColor: palette.border }]}>
-                <Text style={[styles.statusText, { color: palette.textMuted }]}>
+              <View className="flex-row items-center justify-between px-3.5 py-2.5 border-b border-hairline dark:border-hairline-dark">
+                <Text className="font-medium text-[12px] text-muted dark:text-muted-dark">
                   Remaining to allocate
                 </Text>
                 <Badge
@@ -593,8 +568,8 @@ export default function AddExpenseModal() {
             )}
 
             {splitMethod === 'PERCENTAGE' && (
-              <View style={[styles.statusBanner, { borderBottomColor: palette.border }]}>
-                <Text style={[styles.statusText, { color: palette.textMuted }]}>
+              <View className="flex-row items-center justify-between px-3.5 py-2.5 border-b border-hairline dark:border-hairline-dark">
+                <Text className="font-medium text-[12px] text-muted dark:text-muted-dark">
                   Allocated total
                 </Text>
                 <Badge
@@ -614,20 +589,21 @@ export default function AddExpenseModal() {
               return (
                 <View
                   key={member.userId}
-                  style={[
-                    styles.memberSplitRow,
-                    index < tripMembers.length - 1 && {
-                      borderBottomWidth: 1,
-                      borderBottomColor: palette.border,
-                    },
-                  ]}
+                  className={`flex-row items-center justify-between px-3.5 py-[11px] ${
+                    index < tripMembers.length - 1
+                      ? 'border-b border-hairline dark:border-hairline-dark'
+                      : ''
+                  }`}
                 >
-                  <View style={styles.memberNameWrap}>
-                    <Text style={[styles.memberName, { color: palette.text }]}>
+                  <View className="flex-1 mr-2.5">
+                    <Text className="font-semibold text-[14px] text-ink dark:text-ink-dark">
                       {member.displayName}
                     </Text>
                     {previewItem && (
-                      <Text style={[styles.previewShare, tabularNums, { color: creditColor }]}>
+                      <Text
+                        style={tabularNums}
+                        className="font-bold text-[12px] mt-0.5 text-credit dark:text-credit-dark"
+                      >
                         {formatMoney(previewItem.shareMinor, currency)}
                       </Text>
                     )}
@@ -636,17 +612,11 @@ export default function AddExpenseModal() {
                   {splitMethod === 'EQUAL' && (
                     <Pressable
                       onPress={() => toggleEqualParticipant(member.userId)}
-                      style={[
-                        styles.checkBox,
-                        {
-                          backgroundColor: isIncludedEqual
-                            ? palette.accent
-                            : 'transparent',
-                          borderColor: isIncludedEqual
-                            ? palette.accent
-                            : palette.borderStrong,
-                        },
-                      ]}
+                      className={`w-6 h-6 rounded-lg border-[1.5px] items-center justify-center ${
+                        isIncludedEqual
+                          ? 'bg-ink dark:bg-ink-dark border-ink dark:border-ink-dark'
+                          : 'bg-transparent border-hairline-dark/40 dark:border-hairline-dark'
+                      }`}
                     >
                       {isIncludedEqual && <Check size={14} color={palette.accentText} />}
                     </Pressable>
@@ -661,20 +631,13 @@ export default function AddExpenseModal() {
                       onChangeText={(val) =>
                         setExactTexts((prev) => ({ ...prev, [member.userId]: val }))
                       }
-                      style={[
-                        styles.inlineInput,
-                        tabularNums,
-                        {
-                          color: palette.text,
-                          borderColor: palette.border,
-                          backgroundColor: palette.surface,
-                        },
-                      ]}
+                      style={tabularNums}
+                      className="w-[84px] h-9 rounded-lg border border-hairline dark:border-hairline-dark bg-surface dark:bg-surface-dark px-2.5 text-right font-semibold text-[14px] text-ink dark:text-ink-dark"
                     />
                   )}
 
                   {splitMethod === 'PERCENTAGE' && (
-                    <View style={styles.pctWrap}>
+                    <View className="flex-row items-center gap-1.5">
                       <TextInput
                         placeholder="0"
                         placeholderTextColor={palette.textMuted}
@@ -686,34 +649,32 @@ export default function AddExpenseModal() {
                             [member.userId]: val,
                           }))
                         }
-                        style={[
-                          styles.inlineInput,
-                          tabularNums,
-                          {
-                            color: palette.text,
-                            borderColor: palette.border,
-                            backgroundColor: palette.surface,
-                          },
-                        ]}
+                        style={tabularNums}
+                        className="w-[84px] h-9 rounded-lg border border-hairline dark:border-hairline-dark bg-surface dark:bg-surface-dark px-2.5 text-right font-semibold text-[14px] text-ink dark:text-ink-dark"
                       />
-                      <Text style={[styles.unitText, { color: palette.textMuted }]}>%</Text>
+                      <Text className="font-semibold text-[14px] text-muted dark:text-muted-dark">
+                        %
+                      </Text>
                     </View>
                   )}
 
                   {splitMethod === 'SHARES' && (
-                    <View style={styles.stepperRow}>
+                    <View className="flex-row items-center gap-2.5">
                       <Pressable
                         onPress={() => adjustShareCount(member.userId, -1)}
-                        style={[styles.stepBtn, { backgroundColor: palette.surface }]}
+                        className="w-[30px] h-[30px] rounded-lg bg-surface dark:bg-surface-dark items-center justify-center"
                       >
                         <Minus size={14} color={palette.text} />
                       </Pressable>
-                      <Text style={[styles.shareCountText, tabularNums, { color: palette.text }]}>
+                      <Text
+                        style={tabularNums}
+                        className="font-bold text-[14px] min-w-[26px] text-center text-ink dark:text-ink-dark"
+                      >
                         {memberShares}x
                       </Text>
                       <Pressable
                         onPress={() => adjustShareCount(member.userId, 1)}
-                        style={[styles.stepBtn, { backgroundColor: palette.surface }]}
+                        className="w-[30px] h-[30px] rounded-lg bg-surface dark:bg-surface-dark items-center justify-center"
                       >
                         <Plus size={14} color={palette.text} />
                       </Pressable>
@@ -724,7 +685,7 @@ export default function AddExpenseModal() {
             })}
 
             {splitPreview.error && (
-              <Text style={[styles.errorText, { color: debtColor, paddingHorizontal: 14, paddingBottom: 12 }]}>
+              <Text className="font-semibold text-[13px] px-3.5 pb-3 pt-2 text-debt dark:text-debt-dark">
                 {splitPreview.error}
               </Text>
             )}
@@ -737,14 +698,14 @@ export default function AddExpenseModal() {
             onChangeText={setNote}
           />
 
-          <Text style={[styles.sectionLabel, { color: palette.text }]}>
+          <Text className="font-semibold text-[13px] mt-3 mb-1.5 text-ink dark:text-ink-dark">
             Receipt photo (optional)
           </Text>
           {receiptUrl ? (
-            <Card style={{ padding: 8 }}>
+            <Card className="p-2">
               <Image
                 source={{ uri: receiptUrl }}
-                style={{ width: '100%', height: 150, borderRadius: 8 }}
+                className="w-full h-[150px] rounded-lg"
                 resizeMode="cover"
               />
               <Button
@@ -752,18 +713,18 @@ export default function AddExpenseModal() {
                 onPress={() => setReceiptUrl(null)}
                 variant="ghost"
                 size="sm"
-                style={{ marginTop: 6 }}
+                className="mt-1.5"
               />
             </Card>
           ) : (
-            <View style={{ flexDirection: 'row', gap: 10 }}>
+            <View className="flex-row gap-2.5">
               <Button
                 title="Snap receipt"
                 onPress={() => void handlePickReceipt(true)}
                 variant="outline"
                 size="sm"
                 icon={<Camera size={15} color={palette.text} />}
-                style={{ flex: 1 }}
+                className="flex-1"
               />
               <Button
                 title="Choose photo"
@@ -771,13 +732,15 @@ export default function AddExpenseModal() {
                 variant="outline"
                 size="sm"
                 icon={<ImageIcon size={15} color={palette.text} />}
-                style={{ flex: 1 }}
+                className="flex-1"
               />
             </View>
           )}
 
           {formError ? (
-            <Text style={[styles.errorText, { color: debtColor }]}>{formError}</Text>
+            <Text className="font-semibold text-[13px] mt-2 text-debt dark:text-debt-dark">
+              {formError}
+            </Text>
           ) : null}
 
           <Button
@@ -785,181 +748,10 @@ export default function AddExpenseModal() {
             onPress={handleSave}
             variant="primary"
             size="lg"
-            style={{ marginTop: 20 }}
+            className="mt-5"
           />
         </ScrollView>
       </KeyboardAwareView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-  },
-  headerTitle: { fontFamily: fonts.bold, fontSize: 19, letterSpacing: -0.3 },
-  closeBtn: { padding: 4 },
-  scroll: { padding: 16, paddingBottom: 44 },
-  amountHeroCard: {
-    alignItems: 'center',
-    paddingVertical: 18,
-    marginBottom: 10,
-  },
-  amountPrompt: {
-    fontFamily: fonts.medium,
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  amountInputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 14,
-  },
-  currencyPrefix: {
-    fontFamily: fonts.bold,
-    fontSize: 28,
-    marginRight: 4,
-  },
-  heroAmountInput: {
-    fontFamily: fonts.bold,
-    fontSize: 38,
-    letterSpacing: -1,
-    minWidth: 120,
-    textAlign: 'center',
-    paddingVertical: 2,
-  },
-  currencyChipsRow: {
-    gap: 8,
-    paddingHorizontal: 8,
-  },
-  quickAddCard: {
-    padding: 12,
-    marginBottom: 8,
-  },
-  quickAddHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 8,
-  },
-  quickAddTitle: {
-    fontFamily: fonts.semibold,
-    fontSize: 12,
-  },
-  quickAddRow: {
-    flexDirection: 'row',
-    gap: 8,
-    alignItems: 'center',
-  },
-  quickAddInput: {
-    flex: 1,
-    fontFamily: fonts.regular,
-    fontSize: 13,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    height: 38,
-  },
-  chipsRow: { gap: 8, paddingVertical: 4 },
-  payerRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingVertical: 4 },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  chipIconBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 11,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  chipText: { fontFamily: fonts.semibold, fontSize: 12 },
-  sectionLabel: {
-    fontFamily: fonts.semibold,
-    fontSize: 13,
-    marginTop: 12,
-    marginBottom: 6,
-  },
-  segmentedControl: {
-    flexDirection: 'row',
-    borderRadius: 8,
-    borderWidth: 1,
-    padding: 3,
-    marginBottom: 8,
-  },
-  segmentBtn: {
-    flex: 1,
-    paddingVertical: 8,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  segmentText: { fontSize: 13 },
-  splitCard: {
-    padding: 0,
-    overflow: 'hidden',
-  },
-  statusBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-  },
-  statusText: { fontFamily: fonts.medium, fontSize: 12 },
-  memberSplitRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-  },
-  memberNameWrap: { flex: 1, marginRight: 10 },
-  memberName: { fontFamily: fonts.semibold, fontSize: 14 },
-  previewShare: { fontFamily: fonts.bold, fontSize: 12, marginTop: 2 },
-  checkBox: {
-    width: 24,
-    height: 24,
-    borderRadius: 8,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  inlineInput: {
-    width: 84,
-    height: 36,
-    borderRadius: 8,
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    textAlign: 'right',
-    fontFamily: fonts.semibold,
-    fontSize: 14,
-  },
-  pctWrap: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  unitText: { fontFamily: fonts.semibold, fontSize: 14 },
-  stepperRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  stepBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  shareCountText: {
-    fontFamily: fonts.bold,
-    fontSize: 14,
-    minWidth: 26,
-    textAlign: 'center',
-  },
-  errorText: { fontFamily: fonts.semibold, fontSize: 13, marginTop: 8 },
-});

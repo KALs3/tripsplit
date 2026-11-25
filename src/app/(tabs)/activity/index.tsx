@@ -1,15 +1,10 @@
 import { ArrowUpRight } from 'lucide-react-native';
 import React from 'react';
-import {
-  FlatList,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { FlatList, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card } from '../../../components/ui/Card';
 import { CategoryIcon } from '../../../components/ui/CategoryIcon';
-import { fonts, tabularNums } from '../../../constants/typography';
+import { tabularNums } from '../../../constants/typography';
 import { formatMoney } from '../../../domain';
 import { ExpenseCategory } from '../../../domain/types';
 import { useTheme } from '../../../hooks/useTheme';
@@ -58,11 +53,13 @@ export default function ActivityScreen() {
   return (
     <SafeAreaView
       edges={['top', 'left', 'right']}
-      style={[styles.container, { backgroundColor: palette.background }]}
+      className="flex-1 bg-canvas dark:bg-canvas-dark"
     >
-      <View style={[styles.header, { borderBottomColor: palette.border }]}>
-        <Text style={[styles.headerTitle, { color: palette.text }]}>Activity</Text>
-        <Text style={[styles.headerSubtitle, { color: palette.textMuted }]}>
+      <View className="px-[18px] pt-2.5 pb-3.5 border-b border-hairline dark:border-hairline-dark">
+        <Text className="font-bold text-[22px] tracking-tight text-ink dark:text-ink-dark">
+          Activity
+        </Text>
+        <Text className="font-sans text-[13px] mt-0.5 text-muted dark:text-muted-dark">
           Expenses and settlements across your trips
         </Text>
       </View>
@@ -70,31 +67,32 @@ export default function ActivityScreen() {
       <FlatList
         data={feed}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={{ padding: 16, paddingBottom: 110 }}
         renderItem={({ item }) => (
-          <Card style={styles.activityCard}>
-            <View style={styles.cardHeader}>
-              <View style={[styles.iconWell, { backgroundColor: palette.surface }]}>
+          <Card className="my-1 p-[13px]">
+            <View className="flex-row items-center">
+              <View className="w-9 h-9 rounded-lg bg-surface dark:bg-surface-dark items-center justify-center mr-3">
                 {item.type === 'expense' ? (
                   <CategoryIcon category={item.category} size={17} color={palette.text} />
                 ) : (
                   <ArrowUpRight size={17} color={creditColor} strokeWidth={2.2} />
                 )}
               </View>
-              <View style={styles.textContainer}>
-                <Text style={[styles.title, { color: palette.text }]}>{item.title}</Text>
-                <Text style={[styles.subtitle, { color: palette.textMuted }]}>
+              <View className="flex-1 mr-2.5">
+                <Text className="font-semibold text-[14px] tracking-tight text-ink dark:text-ink-dark">
+                  {item.title}
+                </Text>
+                <Text className="font-sans text-[12px] mt-0.5 text-muted dark:text-muted-dark">
                   {item.subtitle}
                 </Text>
               </View>
               <Text
-                style={[
-                  styles.amount,
-                  tabularNums,
-                  {
-                    color: item.type === 'expense' ? palette.text : creditColor,
-                  },
-                ]}
+                style={tabularNums}
+                className={`font-bold text-[14px] ${
+                  item.type === 'expense'
+                    ? 'text-ink dark:text-ink-dark'
+                    : 'text-credit dark:text-credit-dark'
+                }`}
               >
                 {formatMoney(item.amountMinor, item.currency)}
               </Text>
@@ -102,8 +100,8 @@ export default function ActivityScreen() {
           </Card>
         )}
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={[styles.emptyText, { color: palette.textMuted }]}>
+          <View className="items-center py-[60px]">
+            <Text className="font-sans text-[14px] text-muted dark:text-muted-dark">
               No recent activity yet.
             </Text>
           </View>
@@ -112,71 +110,3 @@ export default function ActivityScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    paddingHorizontal: 18,
-    paddingTop: 10,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-  },
-  headerTitle: {
-    fontFamily: fonts.bold,
-    fontSize: 22,
-    letterSpacing: -0.5,
-  },
-  headerSubtitle: {
-    fontFamily: fonts.regular,
-    fontSize: 13,
-    marginTop: 2,
-  },
-  list: {
-    padding: 16,
-    paddingBottom: 110,
-  },
-  activityCard: {
-    marginVertical: 4,
-    padding: 13,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconWell: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  textContainer: {
-    flex: 1,
-    marginRight: 10,
-  },
-  title: {
-    fontFamily: fonts.semibold,
-    fontSize: 14,
-    letterSpacing: -0.1,
-  },
-  subtitle: {
-    fontFamily: fonts.regular,
-    fontSize: 12,
-    marginTop: 2,
-  },
-  amount: {
-    fontFamily: fonts.bold,
-    fontSize: 14,
-  },
-  empty: {
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  emptyText: {
-    fontFamily: fonts.regular,
-    fontSize: 14,
-  },
-});
