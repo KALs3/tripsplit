@@ -46,3 +46,10 @@ example
 
 # Added by MD Pretty View — Markdown Preview Enhanced pan/zoom assets
 .crossnote/
+
+# Local planning docs & agent config
+AGENTS.md
+.agents/
+skills-lock.json
+MVP_ARCHITECTURE_REFERENCE.md
+TripSplit Product and Technical Spec.md

@@ -33,7 +33,7 @@ export const ar = {
   },
   auth: {
     appName: 'TripSplit',
-    subtitle: 'تقسيم مصاريف السفر بأسلوب بسيط وواضح وهادئ.',
+    subtitle: 'تقسيم مصاريف السفر بأسلوب بسيط وواضح .',
     signIn: 'تسجيل الدخول',
     createAccount: 'إنشاء حساب',
     yourName: 'الاسم',
@@ -220,7 +220,7 @@ export const ar = {
     editExpense: 'تعديل مصروف',
     logExpense: 'إضافة مصروف',
     quickAddTitle: 'إضافة سريعة',
-    quickAddPlaceholder: 'مثال: عشاء 240 بيني وبين سارة',
+    quickAddPlaceholder: 'مثال: عشاء 240 بيني وبين احمد',
     parse: 'تحليل',
     quickAddHint: 'يستخرج العنوان والمبلغ والفئة والدافع والمشاركين دون اتصال.',
     amountLabel: 'المبلغ',

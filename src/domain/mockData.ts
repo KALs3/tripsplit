@@ -29,8 +29,8 @@ export interface MockTripMember {
 
 export const DEMO_USER: MockProfile = {
   id: 'user_me',
-  displayName: 'Alex Rivera (You)',
-  avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+  displayName: 'KAL (You)',
+  avatarUrl: 'https://images.unsplash.com/photo-1794434036545-92b3d1cf9aef?w=150&h=150&fit=crop&crop=faces',
   defaultCurrency: 'USD',
 };
 
@@ -39,8 +39,8 @@ export const DEMO_MEMBERS: MockTripMember[] = [
     tripId: 'trip_tokyo',
     userId: 'user_me',
     role: 'owner',
-    displayName: 'Alex Rivera (You)',
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+    displayName: 'KAL',
+    avatarUrl: 'https://images.unsplash.com/photo-1794434036545-92b3d1cf9aef?w=150&h=150&fit=crop&crop=faces',
   },
   {
     tripId: 'trip_tokyo',
@@ -53,7 +53,7 @@ export const DEMO_MEMBERS: MockTripMember[] = [
     tripId: 'trip_tokyo',
     userId: 'user_sarah',
     role: 'member',
-    displayName: 'Sarah Chen',
+    displayName: 'john smith',
     avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
   },
   {
