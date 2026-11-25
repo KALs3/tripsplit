@@ -10,15 +10,20 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
-import { useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useTheme } from '../hooks/useTheme';
 import { useAppStore } from '../store/useAppStore';
 
 void SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const isDark = useColorScheme() === 'dark';
+  const { isDark } = useTheme();
   const setNetworkOnline = useAppStore((s) => s.setNetworkOnline);
+  const hydrateThemePreference = useAppStore((s) => s.hydrateThemePreference);
+
+  useEffect(() => {
+    void hydrateThemePreference();
+  }, [hydrateThemePreference]);
 
   const [fontsLoaded, fontError] = useFonts({
     SpaceGrotesk_400Regular,

@@ -29,7 +29,7 @@ import { useAppStore } from '../../../store/useAppStore';
 
 export default function TripInsightsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { isDark, palette } = useTheme();
+  const { isDark, palette, colors } = useTheme();
 
   const trips = useAppStore((s) => s.trips);
   const members = useAppStore((s) => s.members);
@@ -111,7 +111,7 @@ export default function TripInsightsScreen() {
             ...acc.segments,
             {
               category: item.category,
-              color: isDark ? meta.colorDark : meta.color,
+              color: meta.chartColor,
               strokeDasharray: `${segmentLength} ${circumference}`,
               strokeDashoffset,
             },
@@ -121,7 +121,7 @@ export default function TripInsightsScreen() {
       },
       { segments: [], cumulativePercent: 0 }
     ).segments;
-  }, [categoryBreakdown, circumference, isDark]);
+  }, [categoryBreakdown, circumference]);
 
   if (!trip) {
     return (
@@ -133,6 +133,10 @@ export default function TripInsightsScreen() {
       </SafeAreaView>
     );
   }
+
+  const paidChartColor = isDark ? colors.successDark : colors.success;
+  const shareChartColor = isDark ? '#60A5FA' : '#2563EB';
+  const dailyChartColor = isDark ? '#A78BFA' : '#7C3AED';
 
   const maxMemberSpend = memberSpending.reduce(
     (max, m) => Math.max(max, m.paidBaseMinor, m.consumedBaseMinor),
@@ -250,7 +254,7 @@ export default function TripInsightsScreen() {
               <View style={styles.legendList}>
                 {categoryBreakdown.map((item, idx) => {
                   const meta = getCategoryMeta(item.category);
-                  const sliceColor = isDark ? meta.colorDark : meta.color;
+                  const sliceColor = meta.chartColor;
                   return (
                     <View
                       key={item.category}
@@ -266,7 +270,7 @@ export default function TripInsightsScreen() {
                         <View
                           style={[styles.colorSwatch, { backgroundColor: sliceColor }]}
                         />
-                        <CategoryIcon category={item.category} size={15} color={palette.text} />
+                        <CategoryIcon category={item.category} size={15} color={sliceColor} />
                         <Text style={[styles.legendName, { color: palette.text }]}>
                           {meta.label}
                         </Text>
@@ -300,13 +304,13 @@ export default function TripInsightsScreen() {
 
           <View style={styles.subLegendRow}>
             <View style={styles.subLegendItem}>
-              <View style={[styles.miniDot, { backgroundColor: palette.text }]} />
+              <View style={[styles.miniDot, { backgroundColor: paidChartColor }]} />
               <Text style={[styles.subLegendText, { color: palette.textMuted }]}>
                 Paid upfront
               </Text>
             </View>
             <View style={styles.subLegendItem}>
-              <View style={[styles.miniDot, { backgroundColor: palette.textMuted }]} />
+              <View style={[styles.miniDot, { backgroundColor: shareChartColor }]} />
               <Text style={[styles.subLegendText, { color: palette.textMuted }]}>
                 Actual share
               </Text>
@@ -337,7 +341,7 @@ export default function TripInsightsScreen() {
                       styles.barFill,
                       {
                         width: `${m.paidBaseMinor === 0 ? 0 : Math.max(4, paidPct)}%`,
-                        backgroundColor: palette.text,
+                        backgroundColor: paidChartColor,
                       },
                     ]}
                   />
@@ -353,7 +357,7 @@ export default function TripInsightsScreen() {
                       styles.barFill,
                       {
                         width: `${m.consumedBaseMinor === 0 ? 0 : Math.max(4, consumedPct)}%`,
-                        backgroundColor: palette.textMuted,
+                        backgroundColor: shareChartColor,
                       },
                     ]}
                   />
@@ -384,7 +388,7 @@ export default function TripInsightsScreen() {
                         styles.dayFill,
                         {
                           width: `${Math.max(8, widthPct)}%`,
-                          backgroundColor: palette.text,
+                          backgroundColor: dailyChartColor,
                         },
                       ]}
                     />

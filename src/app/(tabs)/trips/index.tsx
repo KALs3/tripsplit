@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
   listContainer: {
     paddingHorizontal: 16,
     paddingTop: 4,
-    paddingBottom: 28,
+    paddingBottom: 110,
     gap: 14,
   },
   tripCard: {

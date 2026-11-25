@@ -8,6 +8,8 @@ export interface CategoryMeta {
   emoji: string; // Retained for plain-text Share summaries
   color: string;
   colorDark: string;
+  /** Distinct vibrant chart color reserved exclusively for the Insights tab */
+  chartColor: string;
 }
 
 export const EXPENSE_CATEGORIES: CategoryMeta[] = [
@@ -18,6 +20,7 @@ export const EXPENSE_CATEGORIES: CategoryMeta[] = [
     emoji: '🍜',
     color: colors.categories.food,
     colorDark: colors.categoriesDark.food,
+    chartColor: '#F97316',
   },
   {
     id: 'transport',
@@ -26,6 +29,7 @@ export const EXPENSE_CATEGORIES: CategoryMeta[] = [
     emoji: '🚄',
     color: colors.categories.transport,
     colorDark: colors.categoriesDark.transport,
+    chartColor: '#2563EB',
   },
   {
     id: 'lodging',
@@ -34,6 +38,7 @@ export const EXPENSE_CATEGORIES: CategoryMeta[] = [
     emoji: '🏨',
     color: colors.categories.lodging,
     colorDark: colors.categoriesDark.lodging,
+    chartColor: '#7C3AED',
   },
   {
     id: 'activities',
@@ -42,6 +47,7 @@ export const EXPENSE_CATEGORIES: CategoryMeta[] = [
     emoji: '🎟️',
     color: colors.categories.activities,
     colorDark: colors.categoriesDark.activities,
+    chartColor: '#EC4899',
   },
   {
     id: 'shopping',
@@ -50,6 +56,7 @@ export const EXPENSE_CATEGORIES: CategoryMeta[] = [
     emoji: '🛍️',
     color: colors.categories.shopping,
     colorDark: colors.categoriesDark.shopping,
+    chartColor: '#10B981',
   },
   {
     id: 'other',
@@ -58,6 +65,7 @@ export const EXPENSE_CATEGORIES: CategoryMeta[] = [
     emoji: '🧾',
     color: colors.categories.other,
     colorDark: colors.categoriesDark.other,
+    chartColor: '#64748B',
   },
 ];
 

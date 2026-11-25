@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   },
   list: {
     padding: 16,
-    paddingBottom: 32,
+    paddingBottom: 110,
   },
   activityCard: {
     marginVertical: 4,

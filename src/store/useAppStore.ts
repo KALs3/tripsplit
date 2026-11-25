@@ -34,6 +34,9 @@ export interface UserSession {
   defaultCurrency: string;
 }
 
+export type ThemePreference = 'system' | 'light' | 'dark';
+
+const THEME_STORAGE_KEY = 'tripsplit_theme_pref';
 const outbox = new OutboxQueue(AsyncStorage);
 
 interface AppState {
@@ -41,6 +44,9 @@ interface AppState {
   user: UserSession | null;
   isGuestDemo: boolean;
   isLoading: boolean;
+
+  // Theme preference
+  themePreference: ThemePreference;
 
   // Sync & Offline state
   isNetworkOnline: boolean;
@@ -57,6 +63,8 @@ interface AppState {
   places: PlaceRecord[];
 
   // Actions
+  setThemePreference: (pref: ThemePreference) => void;
+  hydrateThemePreference: () => Promise<void>;
   loginAsGuest: () => void;
   setUser: (user: UserSession | null) => void;
   signOut: () => void;
@@ -118,6 +126,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   isGuestDemo: false,
   isLoading: false,
 
+  themePreference: 'system',
+
   isNetworkOnline: true,
   isOfflineSimulated: false,
   syncStatus: 'synced',
@@ -129,6 +139,22 @@ export const useAppStore = create<AppState>((set, get) => ({
   expenses: [],
   payments: [],
   places: [],
+
+  setThemePreference: (pref) => {
+    set({ themePreference: pref });
+    void AsyncStorage.setItem(THEME_STORAGE_KEY, pref).catch(() => {});
+  },
+
+  hydrateThemePreference: async () => {
+    try {
+      const saved = await AsyncStorage.getItem(THEME_STORAGE_KEY);
+      if (saved === 'light' || saved === 'dark' || saved === 'system') {
+        set({ themePreference: saved });
+      }
+    } catch {
+      // Ignore storage error
+    }
+  },
 
   loginAsGuest: () => {
     void outbox.clear();

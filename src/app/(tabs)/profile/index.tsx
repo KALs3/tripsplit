@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
-import { DollarSign, LogOut, User, WifiOff } from 'lucide-react-native';
+import { DollarSign, LogOut, Moon, Sun, User, WifiOff } from 'lucide-react-native';
 import React from 'react';
 import {
   Image,
+  Pressable,
   ScrollView,
   StyleSheet,
   Switch,
@@ -15,16 +16,23 @@ import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { fonts, tabularNums } from '../../../constants/typography';
 import { useTheme } from '../../../hooks/useTheme';
-import { useAppStore } from '../../../store/useAppStore';
+import { ThemePreference, useAppStore } from '../../../store/useAppStore';
+
+const THEME_OPTIONS: { id: ThemePreference; label: string }[] = [
+  { id: 'system', label: 'System' },
+  { id: 'light', label: 'Light' },
+  { id: 'dark', label: 'Dark' },
+];
 
 export default function ProfileScreen() {
-  const { palette, colors } = useTheme();
+  const { isDark, palette, colors, themePreference } = useTheme();
 
   const user = useAppStore((s) => s.user);
   const isGuestDemo = useAppStore((s) => s.isGuestDemo);
   const isOfflineSimulated = useAppStore((s) => s.isOfflineSimulated);
   const pendingMutationsCount = useAppStore((s) => s.pendingMutationsCount);
   const toggleSimulateOffline = useAppStore((s) => s.toggleSimulateOffline);
+  const setThemePreference = useAppStore((s) => s.setThemePreference);
   const signOut = useAppStore((s) => s.signOut);
 
   const handleSignOut = () => {
@@ -70,9 +78,64 @@ export default function ProfileScreen() {
           </View>
         </Card>
 
-        {/* Preferences & Offline Outbox Simulator */}
+        {/* Preferences & Appearance */}
         <Card style={styles.settingsCard}>
-          <View style={styles.settingRow}>
+          {/* Theme Switcher */}
+          <View style={styles.appearanceBlock}>
+            <View style={styles.settingIconTitle}>
+              {isDark ? (
+                <Moon size={18} color={palette.textMuted} />
+              ) : (
+                <Sun size={18} color={palette.textMuted} />
+              )}
+              <Text style={[styles.settingLabel, { color: palette.text }]}>Appearance</Text>
+            </View>
+
+            <View
+              style={[
+                styles.themeSegment,
+                { backgroundColor: palette.surface, borderColor: palette.border },
+              ]}
+            >
+              {THEME_OPTIONS.map((opt) => {
+                const active = themePreference === opt.id;
+                return (
+                  <Pressable
+                    key={opt.id}
+                    onPress={() => setThemePreference(opt.id)}
+                    style={[
+                      styles.themeSegmentBtn,
+                      active && { backgroundColor: palette.card },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.themeSegmentText,
+                        {
+                          color: active ? palette.text : palette.textMuted,
+                          fontFamily: active ? fonts.bold : fonts.medium,
+                        },
+                      ]}
+                    >
+                      {opt.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
+          <View
+            style={[
+              styles.settingRow,
+              {
+                marginTop: 14,
+                paddingTop: 14,
+                borderTopWidth: 1,
+                borderTopColor: palette.border,
+              },
+            ]}
+          >
             <View style={styles.settingIconTitle}>
               <DollarSign size={18} color={palette.textMuted} />
               <Text style={[styles.settingLabel, { color: palette.text }]}>Base currency</Text>
@@ -140,7 +203,7 @@ const styles = StyleSheet.create({
   },
   scroll: {
     padding: 16,
-    paddingBottom: 40,
+    paddingBottom: 110,
   },
   userCard: {
     padding: 16,
@@ -182,6 +245,24 @@ const styles = StyleSheet.create({
   settingsCard: {
     padding: 16,
     marginTop: 6,
+  },
+  appearanceBlock: {
+    gap: 10,
+  },
+  themeSegment: {
+    flexDirection: 'row',
+    borderRadius: 8,
+    borderWidth: 1,
+    padding: 3,
+  },
+  themeSegmentBtn: {
+    flex: 1,
+    paddingVertical: 7,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  themeSegmentText: {
+    fontSize: 13,
   },
   settingRow: {
     flexDirection: 'row',
