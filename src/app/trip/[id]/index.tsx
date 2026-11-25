@@ -2,9 +2,11 @@ import { router, useLocalSearchParams } from 'expo-router';
 import {
   ArrowLeft,
   ArrowUpRight,
+  Camera,
   Plus,
   Receipt,
   Search,
+  Settings,
   X,
 } from 'lucide-react-native';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -325,20 +327,46 @@ export default function TripDashboardScreen() {
                       overflowTextColor="#FFFFFF"
                     />
                   </Pressable>
+                  <Pressable
+                    onPress={() =>
+                      router.push({ pathname: '/trip/[id]/settings', params: { id: trip.id } })
+                    }
+                    className="w-9 h-9 rounded-full bg-white items-center justify-center active:opacity-85"
+                    accessibilityLabel="Trip settings and cover photo"
+                  >
+                    <Settings size={17} color="#09090B" />
+                  </Pressable>
                 </View>
               </View>
 
               {/* Overlaid Title & Dates */}
-              <View className="mt-7">
-                <Text
-                  className="font-bold text-[28px] text-white tracking-tight"
-                  numberOfLines={1}
-                >
-                  {trip.name}
-                </Text>
-                <Text className="font-medium text-[13px] text-zinc-100 mt-0.5">
-                  {dateRangeLabel}
-                </Text>
+              <View className="mt-7 flex-row items-end justify-between gap-3">
+                <View className="flex-1">
+                  <Text
+                    className="font-bold text-[28px] text-white tracking-tight"
+                    numberOfLines={1}
+                  >
+                    {trip.name}
+                  </Text>
+                  <Text className="font-medium text-[13px] text-zinc-100 mt-0.5">
+                    {dateRangeLabel}
+                  </Text>
+                </View>
+
+                {!trip.coverUrl && (
+                  <Pressable
+                    onPress={() =>
+                      router.push({ pathname: '/trip/[id]/settings', params: { id: trip.id } })
+                    }
+                    className="flex-row items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-white/15 border border-white/25 active:opacity-80"
+                    accessibilityLabel="Attach cover photo"
+                  >
+                    <Camera size={13} color="#FFFFFF" />
+                    <Text className="font-semibold text-[11px] text-white">
+                      Add cover
+                    </Text>
+                  </Pressable>
+                )}
               </View>
             </View>
           </View>

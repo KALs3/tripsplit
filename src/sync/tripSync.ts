@@ -62,6 +62,32 @@ export async function executeSupabaseMutation(
       break;
     }
 
+    case 'UPDATE_TRIP': {
+      const { tripId, name, coverUrl } = mutation.payload;
+      const updates: Record<string, string | null> = {};
+      if (name !== undefined) updates.name = name;
+      if (coverUrl !== undefined) updates.cover_url = coverUrl || null;
+
+      if (Object.keys(updates).length > 0) {
+        const { error } = await supabase
+          .from('trips')
+          .update(updates as never)
+          .eq('id', tripId);
+        if (error) throw new Error(error.message);
+      }
+      break;
+    }
+
+    case 'DELETE_TRIP': {
+      const { tripId } = mutation.payload;
+      const { error } = await supabase
+        .from('trips')
+        .delete()
+        .eq('id', tripId);
+      if (error) throw new Error(error.message);
+      break;
+    }
+
     case 'UPSERT_EXPENSE': {
       const { expense, createdBy } = mutation.payload;
       const { error: expErr } = await supabase.from('expenses').upsert(

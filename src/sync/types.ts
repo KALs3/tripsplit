@@ -18,6 +18,18 @@ export type OutboxMutation =
   | {
       mutationId: string;
       createdAt: string;
+      type: 'UPDATE_TRIP';
+      payload: { tripId: string; name?: string; coverUrl?: string };
+    }
+  | {
+      mutationId: string;
+      createdAt: string;
+      type: 'DELETE_TRIP';
+      payload: { tripId: string };
+    }
+  | {
+      mutationId: string;
+      createdAt: string;
       type: 'UPSERT_EXPENSE';
       payload: { expense: ExpenseRecord; createdBy: string };
     }

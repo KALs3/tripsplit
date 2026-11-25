@@ -76,6 +76,8 @@ interface AppState {
   flushOutbox: () => Promise<void>;
 
   addTrip: (trip: Omit<MockTrip, 'id' | 'inviteCode' | 'archived'>) => MockTrip;
+  updateTrip: (tripId: string, updates: { name?: string; coverUrl?: string }) => void;
+  deleteTrip: (tripId: string) => void;
   addExpense: (expense: Omit<ExpenseRecord, 'id'>) => ExpenseRecord;
   updateExpense: (expense: ExpenseRecord) => void;
   deleteExpense: (expenseId: string) => void;
@@ -338,6 +340,55 @@ export const useAppStore = create<AppState>((set, get) => ({
     );
 
     return newTrip;
+  },
+
+  updateTrip: (tripId, updates) => {
+    const state = get();
+    const target = state.trips.find((t) => t.id === tripId);
+    if (!target) return;
+
+    set({
+      trips: state.trips.map((t) => (t.id === tripId ? { ...t, ...updates } : t)),
+    });
+
+    void enqueueAndMaybeFlush(
+      {
+        mutationId: generateClientUuid(),
+        createdAt: new Date().toISOString(),
+        type: 'UPDATE_TRIP',
+        payload: { tripId, ...updates },
+      },
+      get,
+      set
+    );
+  },
+
+  deleteTrip: (tripId) => {
+    const state = get();
+    const remainingTrips = state.trips.filter((t) => t.id !== tripId);
+
+    set({
+      trips: remainingTrips,
+      members: state.members.filter((m) => m.tripId !== tripId),
+      expenses: state.expenses.filter((e) => e.tripId !== tripId),
+      payments: state.payments.filter((p) => p.tripId !== tripId),
+      places: state.places.filter((p) => p.tripId !== tripId),
+      activeTripId:
+        state.activeTripId === tripId
+          ? remainingTrips[0]?.id ?? null
+          : state.activeTripId,
+    });
+
+    void enqueueAndMaybeFlush(
+      {
+        mutationId: generateClientUuid(),
+        createdAt: new Date().toISOString(),
+        type: 'DELETE_TRIP',
+        payload: { tripId },
+      },
+      get,
+      set
+    );
   },
 
   addExpense: (expenseData) => {

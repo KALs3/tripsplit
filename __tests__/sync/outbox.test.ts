@@ -134,4 +134,35 @@ describe('Offline-First Outbox Queue (outbox.ts)', () => {
     expect(replayedIds).toEqual(['mut-2', 'mut-3']);
     expect(await outbox.load()).toEqual([]);
   });
+
+  it('queues and replays UPDATE_TRIP and DELETE_TRIP mutations', async () => {
+    const outbox = new OutboxQueue(createMemoryStorage());
+    const replayed: OutboxMutation[] = [];
+
+    const updateMut: OutboxMutation = {
+      mutationId: generateClientUuid(),
+      createdAt: '2026-11-25T00:05:00Z',
+      type: 'UPDATE_TRIP',
+      payload: { tripId: 'trip_1', name: 'Amalfi Summer', coverUrl: 'file:///cover.jpg' },
+    };
+
+    const deleteMut: OutboxMutation = {
+      mutationId: generateClientUuid(),
+      createdAt: '2026-11-25T00:06:00Z',
+      type: 'DELETE_TRIP',
+      payload: { tripId: 'trip_1' },
+    };
+
+    await outbox.enqueue(updateMut);
+    await outbox.enqueue(deleteMut);
+
+    const res = await outbox.flush(async (mut) => {
+      replayed.push(mut);
+    });
+
+    expect(res.error).toBeNull();
+    expect(res.processedCount).toBe(2);
+    expect(replayed.map((m) => m.type)).toEqual(['UPDATE_TRIP', 'DELETE_TRIP']);
+    expect(await outbox.load()).toEqual([]);
+  });
 });

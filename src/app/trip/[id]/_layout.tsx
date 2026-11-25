@@ -34,6 +34,13 @@ export default function TripLayout() {
             animation: 'slide_from_bottom',
           }}
         />
+        <Stack.Screen
+          name="settings"
+          options={{
+            presentation: 'modal',
+            animation: 'slide_from_bottom',
+          }}
+        />
         <Stack.Screen name="expenses/[expenseId]" />
       </Stack>
     </View>
