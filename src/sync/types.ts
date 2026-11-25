@@ -1,5 +1,5 @@
 import { MockTrip } from '../domain/mockData';
-import { ExpenseRecord, PaymentRecord } from '../domain/types';
+import { ExpenseRecord, PaymentRecord, PlaceRecord } from '../domain/types';
 
 export type SyncStatus = 'synced' | 'syncing' | 'offline' | 'error';
 
@@ -38,4 +38,16 @@ export type OutboxMutation =
       createdAt: string;
       type: 'DELETE_PAYMENT';
       payload: { paymentId: string; tripId: string; deletedAt: string };
+    }
+  | {
+      mutationId: string;
+      createdAt: string;
+      type: 'CREATE_PLACE';
+      payload: { place: PlaceRecord };
+    }
+  | {
+      mutationId: string;
+      createdAt: string;
+      type: 'DELETE_PLACE';
+      payload: { placeId: string; tripId: string };
     };

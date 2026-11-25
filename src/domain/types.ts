@@ -74,8 +74,22 @@ export interface ExpenseRecord {
   paidBy: string;
   spentAt?: string;
   note?: string;
+  receiptUrl?: string;
+  placeId?: string;
   splits: SplitResult[];
   deletedAt?: string | null;
+}
+
+export interface PlaceRecord {
+  id: string;
+  tripId: string;
+  name: string;
+  lat: number;
+  lng: number;
+  category: ExpenseCategory;
+  note?: string;
+  createdBy: string;
+  createdAt: string;
 }
 
 export interface PaymentRecord {

@@ -1,4 +1,4 @@
-import { ExpenseRecord, PaymentRecord } from './types';
+import { ExpenseRecord, PaymentRecord, PlaceRecord } from './types';
 
 export interface MockProfile {
   id: string;
@@ -159,5 +159,52 @@ export const DEMO_PAYMENTS: PaymentRecord[] = [
     amountMinor: 5000, // $50.00 partial settlement
     currency: 'USD',
     fxRateToBase: 1.0,
+  },
+];
+
+export const DEMO_PLACES: PlaceRecord[] = [
+  {
+    id: 'place_shibuya',
+    tripId: 'trip_tokyo',
+    name: 'Ichiran Ramen Shibuya',
+    lat: 35.6611,
+    lng: 139.7005,
+    category: 'food',
+    note: 'Late night tonkotsu bowls after arriving',
+    createdBy: 'user_kenji',
+    createdAt: '2026-11-11T20:15:00Z',
+  },
+  {
+    id: 'place_teamlab',
+    tripId: 'trip_tokyo',
+    name: 'teamLab Planets TOKYO',
+    lat: 35.6491,
+    lng: 139.7898,
+    category: 'activities',
+    note: 'Water rooms & floating flower garden',
+    createdBy: 'user_marcus',
+    createdAt: '2026-11-10T14:00:00Z',
+  },
+  {
+    id: 'place_tokyo_stn',
+    tripId: 'trip_tokyo',
+    name: 'Tokyo Station (Shinkansen)',
+    lat: 35.6812,
+    lng: 139.7671,
+    category: 'transport',
+    note: 'Platform 16 Nozomi Express to Kyoto',
+    createdBy: 'user_me',
+    createdAt: '2026-11-12T09:30:00Z',
+  },
+  {
+    id: 'place_gion',
+    tripId: 'trip_tokyo',
+    name: 'Kyoto Machiya Villa (Gion)',
+    lat: 35.0037,
+    lng: 135.7785,
+    category: 'lodging',
+    note: 'Traditional wooden townhouse stay',
+    createdBy: 'user_sarah',
+    createdAt: '2026-11-12T15:00:00Z',
   },
 ];

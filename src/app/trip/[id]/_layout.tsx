@@ -12,6 +12,8 @@ export default function TripLayout() {
       <Stack.Screen name="index" />
       <Stack.Screen name="balances" />
       <Stack.Screen name="members" />
+      <Stack.Screen name="insights" />
+      <Stack.Screen name="map" />
       <Stack.Screen
         name="settle"
         options={{

@@ -1,7 +1,9 @@
+import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Check, Minus, Plus, X } from 'lucide-react-native';
+import { Camera, Check, Image as ImageIcon, Minus, Plus, Sparkles, X } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
 import {
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -23,6 +25,7 @@ import {
   calculateSplits,
   CURRENCY_METADATA,
   formatMoney,
+  parseQuickExpense,
   SplitValidationError,
   toMinorUnits,
 } from '../../../../domain';
@@ -56,8 +59,10 @@ export default function AddExpenseModal() {
   const baseCurrency = trip?.baseCurrency || 'USD';
 
   // Form fields
+  const [quickInput, setQuickInput] = useState('');
   const [title, setTitle] = useState('');
   const [amountText, setAmountText] = useState('');
+  const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const [currency, setCurrency] = useState(baseCurrency);
   const [fxRateText, setFxRateText] = useState('1.0');
   const [category, setCategory] = useState<ExpenseCategory>('food');
@@ -205,11 +210,55 @@ export default function AddExpenseModal() {
         paidBy,
         spentAt: new Date().toISOString(),
         note: note.trim() || undefined,
+        receiptUrl: receiptUrl || undefined,
         splits: finalSplits,
       });
       router.back();
     } catch (err: any) {
       setFormError(err.message || 'Could not calculate splits.');
+    }
+  };
+
+  const handleQuickParse = () => {
+    if (!quickInput.trim()) return;
+    const parsed = parseQuickExpense(quickInput, tripMembers, currentUserId);
+    setTitle(parsed.title);
+    if (parsed.amountMajor) {
+      setAmountText(String(parsed.amountMajor));
+    }
+    setCategory(parsed.category);
+    setPaidBy(parsed.paidBy);
+    setSplitMethod('EQUAL');
+    setEqualParticipants(parsed.participantIds);
+    setFormError('');
+  };
+
+  const handlePickReceipt = async (fromCamera: boolean) => {
+    try {
+      if (fromCamera) {
+        const perm = await ImagePicker.requestCameraPermissionsAsync();
+        if (!perm.granted) {
+          setFormError('Camera permission is needed to snap a receipt.');
+          return;
+        }
+        const res = await ImagePicker.launchCameraAsync({
+          mediaTypes: ['images'],
+          quality: 0.7,
+        });
+        if (!res.canceled && res.assets[0]) {
+          setReceiptUrl(res.assets[0].uri);
+        }
+      } else {
+        const res = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ['images'],
+          quality: 0.7,
+        });
+        if (!res.canceled && res.assets[0]) {
+          setReceiptUrl(res.assets[0].uri);
+        }
+      }
+    } catch {
+      setFormError('Receipt picker is unavailable on this simulator.');
     }
   };
 
@@ -251,6 +300,41 @@ export default function AddExpenseModal() {
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Smart Quick-Add Bar */}
+          <Card
+            style={{
+              padding: 12,
+              marginBottom: 14,
+              borderColor: isDark ? colors.primaryDark : colors.primaryLight,
+              borderWidth: 1.5,
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+              <Sparkles size={14} color={colors.primary} />
+              <Text style={{ fontSize: 12, fontWeight: '700', color: colors.primary }}>
+                Quick-Add Helper
+              </Text>
+            </View>
+            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+              <TextInput
+                placeholder='e.g. "Ramen 48 split between me and Kenji"'
+                placeholderTextColor={palette.textMuted}
+                value={quickInput}
+                onChangeText={setQuickInput}
+                style={{
+                  flex: 1,
+                  fontSize: 13,
+                  color: palette.text,
+                  backgroundColor: palette.surface,
+                  borderRadius: 10,
+                  paddingHorizontal: 10,
+                  height: 38,
+                }}
+              />
+              <Button title="Fill" onPress={handleQuickParse} variant="primary" size="sm" />
+            </View>
+          </Card>
+
           {/* Basic Details */}
           <Input
             label="What was this for?"
@@ -575,6 +659,46 @@ export default function AddExpenseModal() {
             value={note}
             onChangeText={setNote}
           />
+
+          {/* Receipt Photo Attachment */}
+          <Text style={[styles.sectionLabel, { color: palette.text }]}>
+            Receipt Photo (Optional)
+          </Text>
+          {receiptUrl ? (
+            <Card style={{ padding: 10 }}>
+              <Image
+                source={{ uri: receiptUrl }}
+                style={{ width: '100%', height: 150, borderRadius: 10 }}
+                resizeMode="cover"
+              />
+              <Button
+                title="Remove Receipt"
+                onPress={() => setReceiptUrl(null)}
+                variant="ghost"
+                size="sm"
+                style={{ marginTop: 8 }}
+              />
+            </Card>
+          ) : (
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <Button
+                title="Snap Receipt"
+                onPress={() => void handlePickReceipt(true)}
+                variant="outline"
+                size="sm"
+                icon={<Camera size={15} color={colors.primary} />}
+                style={{ flex: 1 }}
+              />
+              <Button
+                title="Choose Photo"
+                onPress={() => void handlePickReceipt(false)}
+                variant="outline"
+                size="sm"
+                icon={<ImageIcon size={15} color={colors.primary} />}
+                style={{ flex: 1 }}
+              />
+            </View>
+          )}
 
           {formError ? <Text style={styles.errorText}>{formError}</Text> : null}
 

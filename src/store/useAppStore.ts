@@ -5,12 +5,19 @@ import {
   DEMO_EXPENSES,
   DEMO_MEMBERS,
   DEMO_PAYMENTS,
+  DEMO_PLACES,
   DEMO_TRIP,
   DEMO_USER,
   MockTrip,
   MockTripMember,
 } from '../domain/mockData';
-import { ExpenseRecord, NetBalance, PaymentRecord, SettlementTransfer } from '../domain/types';
+import {
+  ExpenseRecord,
+  NetBalance,
+  PaymentRecord,
+  PlaceRecord,
+  SettlementTransfer,
+} from '../domain/types';
 import { generateClientUuid, OutboxQueue } from '../sync/outbox';
 import {
   executeSupabaseMutation,
@@ -47,6 +54,7 @@ interface AppState {
   members: MockTripMember[];
   expenses: ExpenseRecord[];
   payments: PaymentRecord[];
+  places: PlaceRecord[];
 
   // Actions
   loginAsGuest: () => void;
@@ -64,6 +72,8 @@ interface AppState {
   deleteExpense: (expenseId: string) => void;
   addPayment: (payment: Omit<PaymentRecord, 'id'>) => PaymentRecord;
   deletePayment: (paymentId: string) => void;
+  addPlace: (place: Omit<PlaceRecord, 'id' | 'createdAt'>) => PlaceRecord;
+  deletePlace: (placeId: string) => void;
   addMemberToTrip: (tripId: string, displayName: string) => MockTripMember;
   removeMemberFromTrip: (tripId: string, userId: string) => void;
   joinTripByCode: (inviteCode: string) => { trip?: MockTrip; error?: string };
@@ -118,6 +128,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   members: [],
   expenses: [],
   payments: [],
+  places: [],
 
   loginAsGuest: () => {
     void outbox.clear();
@@ -132,6 +143,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       members: DEMO_MEMBERS,
       expenses: [...DEMO_EXPENSES],
       payments: [...DEMO_PAYMENTS],
+      places: [...DEMO_PLACES],
     });
   },
 
@@ -155,6 +167,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       members: [],
       expenses: [],
       payments: [],
+      places: [],
     });
   },
 
@@ -211,6 +224,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         members: snapshot.members,
         expenses: snapshot.expenses,
         payments: snapshot.payments,
+        places: snapshot.places,
         pendingMutationsCount: pending.length,
         syncStatus: pending.length > 0 ? 'offline' : 'synced',
         isLoading: false,
@@ -411,6 +425,53 @@ export const useAppStore = create<AppState>((set, get) => ({
           createdAt: deletedAt,
           type: 'DELETE_PAYMENT',
           payload: { paymentId, tripId: target.tripId, deletedAt },
+        },
+        get,
+        set
+      );
+    }
+  },
+
+  addPlace: (placeData) => {
+    const state = get();
+    const newPlace: PlaceRecord = {
+      ...placeData,
+      id: generateClientUuid(),
+      createdAt: new Date().toISOString(),
+    };
+
+    set({
+      places: [newPlace, ...state.places],
+    });
+
+    void enqueueAndMaybeFlush(
+      {
+        mutationId: generateClientUuid(),
+        createdAt: newPlace.createdAt,
+        type: 'CREATE_PLACE',
+        payload: { place: newPlace },
+      },
+      get,
+      set
+    );
+
+    return newPlace;
+  },
+
+  deletePlace: (placeId: string) => {
+    const state = get();
+    const target = state.places.find((p) => p.id === placeId);
+    set({
+      places: state.places.filter((p) => p.id !== placeId),
+    });
+
+    if (target) {
+      void enqueueAndMaybeFlush(
+        {
+          mutationId: generateClientUuid(),
+          createdAt: new Date().toISOString(),
+          type: 'DELETE_PLACE',
+          payload: { placeId, tripId: target.tripId },
         },
         get,
         set

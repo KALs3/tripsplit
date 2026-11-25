@@ -3,6 +3,7 @@ import { ArrowLeft, Calendar, FileText, Trash2, User } from 'lucide-react-native
 import React from 'react';
 import {
   Alert,
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -185,6 +186,21 @@ export default function ExpenseDetailScreen() {
             </View>
           ))}
         </Card>
+
+        {expense.receiptUrl && (
+          <>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>
+              Attached Receipt
+            </Text>
+            <Card style={{ padding: 10 }}>
+              <Image
+                source={{ uri: expense.receiptUrl }}
+                style={{ width: '100%', height: 220, borderRadius: 10 }}
+                resizeMode="cover"
+              />
+            </Card>
+          </>
+        )}
 
         <Button
           title="Delete Expense"

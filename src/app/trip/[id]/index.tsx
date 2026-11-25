@@ -2,6 +2,8 @@ import { router, useLocalSearchParams } from 'expo-router';
 import {
   ArrowLeft,
   ArrowRight,
+  MapPin,
+  PieChart,
   Plus,
   Receipt,
   Scale,
@@ -305,7 +307,7 @@ export default function TripDashboardScreen() {
           </View>
         </Card>
 
-        {/* Quick Actions Row */}
+        {/* Quick Actions Grid */}
         <View style={styles.quickActionsRow}>
           <Button
             title="Settle Up"
@@ -325,6 +327,28 @@ export default function TripDashboardScreen() {
             variant="secondary"
             size="sm"
             icon={<Users size={15} color={palette.text} />}
+            style={{ flex: 1 }}
+          />
+        </View>
+        <View style={[styles.quickActionsRow, { marginTop: 0, marginBottom: 8 }]}>
+          <Button
+            title="Insights"
+            onPress={() =>
+              router.push({ pathname: '/trip/[id]/insights', params: { id: trip.id } })
+            }
+            variant="secondary"
+            size="sm"
+            icon={<PieChart size={15} color={palette.text} />}
+            style={{ flex: 1 }}
+          />
+          <Button
+            title="Trip Map"
+            onPress={() =>
+              router.push({ pathname: '/trip/[id]/map', params: { id: trip.id } })
+            }
+            variant="secondary"
+            size="sm"
+            icon={<MapPin size={15} color={palette.text} />}
             style={{ flex: 1 }}
           />
         </View>

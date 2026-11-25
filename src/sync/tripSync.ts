@@ -1,5 +1,5 @@
 import { MockTrip, MockTripMember } from '../domain/mockData';
-import { ExpenseCategory, ExpenseRecord, PaymentRecord } from '../domain/types';
+import { ExpenseCategory, ExpenseRecord, PaymentRecord, PlaceRecord } from '../domain/types';
 import { supabase } from '../lib/supabase';
 import { OutboxMutation } from './types';
 
@@ -143,6 +143,35 @@ export async function executeSupabaseMutation(
       if (error) throw new Error(error.message);
       break;
     }
+
+    case 'CREATE_PLACE': {
+      const { place } = mutation.payload;
+      const { error } = await supabase.from('places').upsert(
+        {
+          id: place.id,
+          trip_id: place.tripId,
+          name: place.name,
+          lat: place.lat,
+          lng: place.lng,
+          category: place.category,
+          note: place.note || null,
+          created_by: place.createdBy,
+        } as never,
+        { onConflict: 'id' }
+      );
+      if (error) throw new Error(error.message);
+      break;
+    }
+
+    case 'DELETE_PLACE': {
+      const { placeId } = mutation.payload;
+      const { error } = await supabase
+        .from('places')
+        .delete()
+        .eq('id', placeId);
+      if (error) throw new Error(error.message);
+      break;
+    }
   }
 }
 
@@ -151,6 +180,7 @@ export interface RemoteTripsSnapshot {
   members: MockTripMember[];
   expenses: ExpenseRecord[];
   payments: PaymentRecord[];
+  places: PlaceRecord[];
 }
 
 /**
@@ -179,12 +209,12 @@ export async function fetchUserTripsSnapshot(): Promise<RemoteTripsSnapshot> {
   }));
 
   if (trips.length === 0) {
-    return { trips: [], members: [], expenses: [], payments: [] };
+    return { trips: [], members: [], expenses: [], payments: [], places: [] };
   }
 
   const tripIds = trips.map((t) => t.id);
 
-  const [membersRes, expensesRes, paymentsRes] = await Promise.all([
+  const [membersRes, expensesRes, paymentsRes, placesRes] = await Promise.all([
     supabase
       .from('trip_members')
       .select('trip_id, user_id, role, profiles(display_name, avatar_url)')
@@ -199,11 +229,17 @@ export async function fetchUserTripsSnapshot(): Promise<RemoteTripsSnapshot> {
       .select('*')
       .in('trip_id', tripIds)
       .order('paid_at', { ascending: false }),
+    supabase
+      .from('places')
+      .select('*')
+      .in('trip_id', tripIds)
+      .order('created_at', { ascending: false }),
   ]);
 
   if (membersRes.error) throw new Error(membersRes.error.message);
   if (expensesRes.error) throw new Error(expensesRes.error.message);
   if (paymentsRes.error) throw new Error(paymentsRes.error.message);
+  if (placesRes.error) throw new Error(placesRes.error.message);
 
   const members: MockTripMember[] = (membersRes.data || []).map((row: any) => ({
     tripId: row.trip_id,
@@ -242,7 +278,19 @@ export async function fetchUserTripsSnapshot(): Promise<RemoteTripsSnapshot> {
     deletedAt: row.deleted_at,
   }));
 
-  return { trips, members, expenses, payments };
+  const places: PlaceRecord[] = (placesRes.data || []).map((row: any) => ({
+    id: row.id,
+    tripId: row.trip_id,
+    name: row.name,
+    lat: Number(row.lat),
+    lng: Number(row.lng),
+    category: row.category as ExpenseCategory,
+    note: row.note || undefined,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+  }));
+
+  return { trips, members, expenses, payments, places };
 }
 
 /**
@@ -285,6 +333,16 @@ export function subscribeToTripRealtime(
         event: '*',
         schema: 'public',
         table: 'trip_members',
+        filter: `trip_id=eq.${tripId}`,
+      },
+      onRemoteChange
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'places',
         filter: `trip_id=eq.${tripId}`,
       },
       onRemoteChange
