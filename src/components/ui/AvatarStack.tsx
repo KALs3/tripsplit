@@ -1,6 +1,6 @@
 import React from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
-import { fonts } from '../../constants/typography';
+import { fonts, tabularNums } from '../../constants/typography';
 import { useTheme } from '../../hooks/useTheme';
 
 export interface AvatarPerson {
@@ -13,6 +13,10 @@ interface AvatarStackProps {
   members: AvatarPerson[];
   maxVisible?: number;
   size?: number;
+  /** Border color separating overlapping avatars */
+  ringColor?: string;
+  /** Optional text color for "+N" overflow label rendered beside the stack */
+  overflowTextColor?: string;
 }
 
 /**
@@ -20,12 +24,15 @@ interface AvatarStackProps {
  */
 export function AvatarStack({
   members,
-  maxVisible = 4,
+  maxVisible = 3,
   size = 26,
+  ringColor,
+  overflowTextColor,
 }: AvatarStackProps) {
   const { palette } = useTheme();
   const visible = members.slice(0, maxVisible);
   const overflow = members.length - visible.length;
+  const borderCol = ringColor ?? palette.card;
 
   return (
     <View style={styles.row}>
@@ -43,7 +50,7 @@ export function AvatarStack({
           borderRadius: size / 2,
           marginLeft: index === 0 ? 0 : -Math.round(size * 0.28),
           borderWidth: 1.5,
-          borderColor: palette.card,
+          borderColor: borderCol,
         };
 
         return member.avatarUrl ? (
@@ -74,32 +81,44 @@ export function AvatarStack({
       })}
 
       {overflow > 0 && (
-        <View
-          style={[
-            styles.fallback,
-            {
-              width: size,
-              height: size,
-              borderRadius: size / 2,
-              marginLeft: -Math.round(size * 0.28),
-              borderWidth: 1.5,
-              borderColor: palette.card,
-              backgroundColor: palette.accent,
-            },
-          ]}
-        >
+        overflowTextColor ? (
           <Text
             style={[
-              styles.initials,
-              {
-                color: palette.accentText,
-                fontSize: Math.max(9, Math.round(size * 0.35)),
-              },
+              styles.overflowText,
+              tabularNums,
+              { color: overflowTextColor },
             ]}
           >
             +{overflow}
           </Text>
-        </View>
+        ) : (
+          <View
+            style={[
+              styles.fallback,
+              {
+                width: size,
+                height: size,
+                borderRadius: size / 2,
+                marginLeft: -Math.round(size * 0.28),
+                borderWidth: 1.5,
+                borderColor: borderCol,
+                backgroundColor: palette.accent,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.initials,
+                {
+                  color: palette.accentText,
+                  fontSize: Math.max(9, Math.round(size * 0.35)),
+                },
+              ]}
+            >
+              +{overflow}
+            </Text>
+          </View>
+        )
       )}
     </View>
   );
@@ -116,5 +135,10 @@ const styles = StyleSheet.create({
   },
   initials: {
     fontFamily: fonts.bold,
+  },
+  overflowText: {
+    fontFamily: fonts.semibold,
+    fontSize: 12,
+    marginLeft: 6,
   },
 });

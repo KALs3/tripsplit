@@ -1,14 +1,11 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   ArrowLeft,
-  ArrowRight,
   ArrowUpRight,
-  MapPin,
-  PieChart,
   Plus,
   Receipt,
-  Scale,
   Search,
+  X,
 } from 'lucide-react-native';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -23,19 +20,12 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AvatarStack } from '../../../components/ui/AvatarStack';
 import { Button } from '../../../components/ui/Button';
-import { Card } from '../../../components/ui/Card';
 import { CategoryIcon } from '../../../components/ui/CategoryIcon';
 import { KeyboardAwareView } from '../../../components/ui/KeyboardAwareView';
 import { SyncStatusBadge } from '../../../components/ui/SyncStatusBadge';
-import { TicketDivider } from '../../../components/ui/TicketDivider';
 import { EXPENSE_CATEGORIES } from '../../../constants/categories';
 import { fonts, tabularNums } from '../../../constants/typography';
-import {
-  calculateNetBalances,
-  convertToBaseMinor,
-  formatMoney,
-  simplifyDebts,
-} from '../../../domain';
+import { calculateNetBalances, formatMoney } from '../../../domain';
 import { ExpenseCategory, ExpenseRecord, PaymentRecord } from '../../../domain/types';
 import { useTheme } from '../../../hooks/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
@@ -63,6 +53,7 @@ export default function TripDashboardScreen() {
     });
   }, [id, isGuestDemo, hydrateFromRemote]);
 
+  const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<ExpenseCategory | 'all'>('all');
 
@@ -77,26 +68,15 @@ export default function TripDashboardScreen() {
   const getMemberName = (userId: string) => {
     const member = tripMembers.find((m) => m.userId === userId);
     if (!member) return 'Unknown';
-    return member.userId === currentUserId ? 'You' : member.displayName.split(' ')[0];
+    return member.userId === currentUserId ? 'you' : member.displayName.split(' ')[0];
   };
 
-  const { settlements, totalSpendMinor, userNetMinor } = useMemo(() => {
+  const userNetMinor = useMemo(() => {
     const tripExpenses = expenses.filter((e) => e.tripId === id && !e.deletedAt);
     const tripPayments = payments.filter((p) => p.tripId === id && !p.deletedAt);
     const memberIds = tripMembers.map((m) => m.userId);
-
     const balances = calculateNetBalances(memberIds, tripExpenses, tripPayments);
-    const simplified = simplifyDebts(balances);
-    const totalSpend = tripExpenses.reduce(
-      (sum, e) => sum + convertToBaseMinor(e.amountMinor, e.fxRateToBase),
-      0
-    );
-
-    return {
-      settlements: simplified,
-      totalSpendMinor: totalSpend,
-      userNetMinor: balances.get(currentUserId) ?? 0,
-    };
+    return balances.get(currentUserId) ?? 0;
   }, [id, expenses, payments, tripMembers, currentUserId]);
 
   const activeExpenses = useMemo(() => {
@@ -111,6 +91,26 @@ export default function TripDashboardScreen() {
         return matchesSearch && matchesCategory;
       });
   }, [expenses, id, searchQuery, selectedCategory]);
+
+  // Group active expenses by short date label (e.g. "Nov 12")
+  const groupedExpenses = useMemo(() => {
+    const groups: { dateLabel: string; items: ExpenseRecord[] }[] = [];
+    for (const exp of activeExpenses) {
+      const label = exp.spentAt
+        ? new Date(exp.spentAt).toLocaleDateString(undefined, {
+            month: 'short',
+            day: 'numeric',
+          })
+        : 'Recent';
+      const existing = groups.find((g) => g.dateLabel === label);
+      if (existing) {
+        existing.items.push(exp);
+      } else {
+        groups.push({ dateLabel: label, items: [exp] });
+      }
+    }
+    return groups;
+  }, [activeExpenses]);
 
   const activePayments = useMemo(() => {
     return payments.filter((p) => p.tripId === id && !p.deletedAt);
@@ -141,7 +141,21 @@ export default function TripDashboardScreen() {
   const isDebt = userNetMinor < 0;
   const isUserSettled = userNetMinor === 0;
 
-  const renderLedgerExpense = (expense: ExpenseRecord, index: number, total: number) => {
+  const dateRangeLabel = (() => {
+    if (!trip.startDate) return `${tripMembers.length} members`;
+    const start = new Date(trip.startDate).toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+    });
+    if (!trip.endDate) return `${start} · ${tripMembers.length} members`;
+    const end = new Date(trip.endDate).toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+    });
+    return `${start} – ${end} · ${tripMembers.length} members`;
+  })();
+
+  const renderLedgerExpense = (expense: ExpenseRecord, isLast: boolean) => {
     const payerName = getMemberName(expense.paidBy);
     const userSplit = expense.splits.find((s) => s.userId === currentUserId);
     const userShareMinor = userSplit?.shareMinor ?? 0;
@@ -151,12 +165,25 @@ export default function TripDashboardScreen() {
       ? expense.amountMinor - userShareMinor
       : userShareMinor;
 
-    const dateLabel = expense.spentAt
-      ? new Date(expense.spentAt).toLocaleDateString(undefined, {
-          month: 'short',
-          day: 'numeric',
-        })
-      : '';
+    const subText =
+      expense.splits.length > 1 && !youPaid
+        ? `Paid by ${payerName}`
+        : youPaid
+        ? 'Paid by you'
+        : `Split ${expense.splits.length} ways`;
+
+    const amountColor = isUserSettled
+      ? palette.textMuted
+      : youPaid
+      ? creditColor
+      : debtColor;
+
+    const formattedImpact =
+      personalImpactMinor === 0
+        ? formatMoney(0, expense.currency)
+        : youPaid
+        ? `+${formatMoney(personalImpactMinor, expense.currency)}`
+        : `-${formatMoney(personalImpactMinor, expense.currency)}`;
 
     return (
       <Pressable
@@ -169,67 +196,38 @@ export default function TripDashboardScreen() {
         }
         style={[
           styles.ledgerRow,
-          index < total - 1 && {
+          !isLast && {
             borderBottomWidth: 1,
             borderBottomColor: palette.border,
           },
         ]}
       >
-        <View style={[styles.iconWell, { backgroundColor: palette.surface }]}>
-          <CategoryIcon category={expense.category} size={17} color={palette.text} />
+        <View style={styles.iconCol}>
+          <CategoryIcon category={expense.category} size={20} color={palette.text} />
         </View>
 
         <View style={styles.expenseMeta}>
           <Text style={[styles.expenseTitle, { color: palette.text }]} numberOfLines={1}>
             {expense.title}
           </Text>
-          <Text style={[styles.expenseSub, tabularNums, { color: palette.textMuted }]}>
-            {payerName} paid {formatMoney(expense.amountMinor, expense.currency)}
-            {dateLabel ? `  ${dateLabel}` : ''}
+          <Text style={[styles.expenseSub, { color: palette.textMuted }]}>
+            {subText}
           </Text>
         </View>
 
-        <View style={styles.expenseImpact}>
-          {personalImpactMinor === 0 ? (
-            <Text style={[styles.impactLabel, { color: palette.textMuted }]}>
-              not involved
-            </Text>
-          ) : isUserSettled ? (
-            <>
-              <Text style={[styles.impactLabel, { color: creditColor }]}>
-                settled
-              </Text>
-              <Text style={[styles.impactAmount, tabularNums, { color: palette.textMuted }]}>
-                {formatMoney(personalImpactMinor, expense.currency)}
-              </Text>
-            </>
-          ) : (
-            <>
-              <Text
-                style={[
-                  styles.impactLabel,
-                  { color: youPaid ? creditColor : debtColor },
-                ]}
-              >
-                {youPaid ? 'you lent' : 'you owe'}
-              </Text>
-              <Text
-                style={[
-                  styles.impactAmount,
-                  tabularNums,
-                  { color: youPaid ? creditColor : debtColor },
-                ]}
-              >
-                {formatMoney(personalImpactMinor, expense.currency)}
-              </Text>
-            </>
+        <View style={styles.impactCol}>
+          <Text style={[styles.impactAmount, tabularNums, { color: amountColor }]}>
+            {formattedImpact}
+          </Text>
+          {isUserSettled && personalImpactMinor > 0 && (
+            <Text style={[styles.settledTiny, { color: creditColor }]}>settled</Text>
           )}
         </View>
       </Pressable>
     );
   };
 
-  const renderLedgerPayment = (payment: PaymentRecord, index: number, total: number) => {
+  const renderLedgerPayment = (payment: PaymentRecord, isLast: boolean) => {
     const fromName = getMemberName(payment.fromUser);
     const toName = getMemberName(payment.toUser);
     return (
@@ -240,29 +238,26 @@ export default function TripDashboardScreen() {
         }
         style={[
           styles.ledgerRow,
-          index < total - 1 && {
+          !isLast && {
             borderBottomWidth: 1,
             borderBottomColor: palette.border,
           },
         ]}
       >
-        <View style={[styles.iconWell, { backgroundColor: palette.surface }]}>
-          <ArrowUpRight size={17} color={creditColor} strokeWidth={2.2} />
+        <View style={styles.iconCol}>
+          <ArrowUpRight size={20} color={creditColor} strokeWidth={2.2} />
         </View>
         <View style={styles.expenseMeta}>
           <Text style={[styles.expenseTitle, { color: palette.text }]} numberOfLines={1}>
-            {fromName} paid {toName}
+            {fromName === 'you' ? 'You' : fromName} paid {toName}
           </Text>
           <Text style={[styles.expenseSub, { color: palette.textMuted }]}>
-            Settlement transfer
+            Settlement recorded
           </Text>
         </View>
-        <View style={styles.expenseImpact}>
-          <Text style={[styles.impactLabel, { color: creditColor }]}>settled</Text>
-          <Text style={[styles.impactAmount, tabularNums, { color: creditColor }]}>
-            {formatMoney(payment.amountMinor, payment.currency)}
-          </Text>
-        </View>
+        <Text style={[styles.impactAmount, tabularNums, { color: creditColor }]}>
+          +{formatMoney(payment.amountMinor, payment.currency)}
+        </Text>
       </Pressable>
     );
   };
@@ -280,6 +275,7 @@ export default function TripDashboardScreen() {
           ]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
+          showsVerticalScrollIndicator={false}
         >
           {/* Full-Bleed Travel Cover Hero */}
           <View style={[styles.heroWrap, { paddingTop: Math.max(insets.top, 12) }]}>
@@ -294,330 +290,328 @@ export default function TripDashboardScreen() {
             <View style={styles.heroTopRow}>
               <Pressable
                 onPress={() => router.back()}
-                style={styles.heroIconBtn}
+                style={styles.heroBackCircle}
                 accessibilityLabel="Go back to trips"
               >
-                <ArrowLeft size={19} color="#FFFFFF" />
+                <ArrowLeft size={19} color="#09090B" />
               </Pressable>
 
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <SyncStatusBadge status={syncStatus} pendingCount={pendingMutationsCount} />
+                {(syncStatus !== 'synced' || pendingMutationsCount > 0) && (
+                  <SyncStatusBadge
+                    status={syncStatus}
+                    pendingCount={pendingMutationsCount}
+                  />
+                )}
                 <Pressable
                   onPress={() =>
                     router.push({ pathname: '/trip/[id]/members', params: { id: trip.id } })
                   }
-                  style={styles.heroMembersBtn}
+                  accessibilityLabel="View trip members"
                 >
-                  <AvatarStack members={tripMembers} size={22} maxVisible={3} />
+                  <AvatarStack
+                    members={tripMembers}
+                    size={30}
+                    maxVisible={2}
+                    ringColor="#FFFFFF"
+                    overflowTextColor="#FFFFFF"
+                  />
                 </Pressable>
               </View>
             </View>
 
-            {/* Hero Title Overlay */}
+            {/* Overlaid Title & Dates */}
             <View style={styles.heroBottom}>
               <Text style={styles.heroTitle} numberOfLines={1}>
                 {trip.name}
               </Text>
-              <Text style={styles.heroMeta}>
-                {tripMembers.length} travelers  Code {trip.inviteCode}
-              </Text>
+              <Text style={styles.heroMeta}>{dateRangeLabel}</Text>
             </View>
           </View>
 
-          <View style={styles.bodyPad}>
-            {/* Transit Ticket Balance Stub */}
-            <Card style={styles.ticketCard}>
-              <View style={styles.balanceRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.balanceCaption, { color: palette.textMuted }]}>
-                    {isOwed
-                      ? 'You are owed'
-                      : isDebt
-                      ? 'You owe'
-                      : 'Your net balance'}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.balanceHero,
-                      tabularNums,
-                      {
-                        color: isOwed
-                          ? creditColor
-                          : isDebt
-                          ? debtColor
-                          : palette.text,
-                      },
-                    ]}
-                  >
-                    {isOwed
-                      ? `+${formatMoney(userNetMinor, trip.baseCurrency)}`
-                      : isDebt
-                      ? formatMoney(userNetMinor, trip.baseCurrency)
-                      : formatMoney(0, trip.baseCurrency)}
-                  </Text>
-                  <Text style={[styles.totalSpendLine, tabularNums, { color: palette.textMuted }]}>
-                    Group spend {formatMoney(totalSpendMinor, trip.baseCurrency)}
-                  </Text>
-                </View>
-
-                <Button
-                  title="Settle up"
-                  onPress={() =>
-                    router.push({ pathname: '/trip/[id]/balances', params: { id: trip.id } })
-                  }
-                  variant={isDebt ? 'primary' : 'outline'}
-                  size="sm"
-                  icon={
-                    <Scale
-                      size={14}
-                      color={isDebt ? palette.accentText : palette.text}
-                    />
-                  }
-                />
-              </View>
-
-              <TicketDivider />
-
-              <View style={styles.transferHeaderRow}>
-                <Text style={[styles.transferTitle, { color: palette.text }]}>
-                  Simplified transfers ({settlements.length})
+          {/* Overlapping Sheet Container */}
+          <View
+            style={[
+              styles.sheetContainer,
+              { backgroundColor: palette.background },
+            ]}
+          >
+            {/* Hero Balance Block */}
+            <View style={styles.balanceSection}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.balanceCaption, { color: palette.textMuted }]}>
+                  Your Balance
                 </Text>
-                <Pressable
-                  onPress={() =>
-                    router.push({ pathname: '/trip/[id]/balances', params: { id: trip.id } })
-                  }
+                <Text
+                  style={[
+                    styles.balanceHero,
+                    tabularNums,
+                    {
+                      color: isOwed
+                        ? creditColor
+                        : isDebt
+                        ? debtColor
+                        : palette.text,
+                    },
+                  ]}
                 >
-                  <Text style={[styles.manageLink, { color: palette.textMuted }]}>
-                    View plan
-                  </Text>
-                </Pressable>
+                  {isOwed
+                    ? formatMoney(userNetMinor, trip.baseCurrency)
+                    : isDebt
+                    ? formatMoney(Math.abs(userNetMinor), trip.baseCurrency)
+                    : formatMoney(0, trip.baseCurrency)}
+                </Text>
+                <Text style={[styles.balanceStatusSub, { color: palette.text }]}>
+                  {isOwed
+                    ? "You're owed"
+                    : isDebt
+                    ? 'You owe'
+                    : 'All settled up'}
+                </Text>
               </View>
 
-              {settlements.length === 0 ? (
-                <Text style={[styles.settledNote, { color: creditColor }]}>
-                  All balances settled — zero transfers needed.
-                </Text>
-              ) : (
-                <View style={{ marginTop: 6 }}>
-                  {settlements.slice(0, 3).map((t, idx) => (
-                    <View
-                      key={`${t.fromUser}_${t.toUser}_${idx}`}
-                      style={styles.transferCompactRow}
-                    >
-                      <View style={styles.transferParties}>
-                        <Text style={[styles.transferParty, { color: debtColor }]}>
-                          {getMemberName(t.fromUser)}
-                        </Text>
-                        <ArrowRight size={13} color={palette.textMuted} />
-                        <Text style={[styles.transferParty, { color: creditColor }]}>
-                          {getMemberName(t.toUser)}
-                        </Text>
-                      </View>
-                      <Text style={[styles.transferAmt, tabularNums, { color: palette.text }]}>
-                        {formatMoney(t.amountMinor, trip.baseCurrency)}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-            </Card>
-
-            {/* Monochrome Inline Navigation Strip */}
-            <View
-              style={[
-                styles.subNavStrip,
-                { backgroundColor: palette.card, borderColor: palette.border },
-              ]}
-            >
               <Pressable
                 onPress={() =>
                   router.push({ pathname: '/trip/[id]/balances', params: { id: trip.id } })
                 }
-                style={styles.subNavBtn}
+                style={({ pressed }) => [
+                  styles.settlePillBtn,
+                  {
+                    backgroundColor: palette.accent,
+                    opacity: pressed ? 0.88 : 1,
+                  },
+                ]}
               >
-                <Scale size={15} color={palette.text} />
-                <Text style={[styles.subNavLabel, { color: palette.text }]}>Balances</Text>
+                <Text style={[styles.settlePillText, { color: palette.accentText }]}>
+                  Settle
+                </Text>
               </Pressable>
+            </View>
 
-              <View style={[styles.subNavSep, { backgroundColor: palette.border }]} />
+            {/* Clean Navigation Strip (Ledger | Balances | Map | Insights) */}
+            <View style={[styles.navTabsRow, { borderBottomColor: palette.border }]}>
+              <View
+                style={[
+                  styles.activeTabPill,
+                  {
+                    backgroundColor: palette.surface,
+                    borderColor: palette.border,
+                  },
+                ]}
+              >
+                <Text style={[styles.activeTabText, { color: palette.text }]}>
+                  Ledger
+                </Text>
+              </View>
 
               <Pressable
                 onPress={() =>
-                  router.push({ pathname: '/trip/[id]/insights', params: { id: trip.id } })
+                  router.push({ pathname: '/trip/[id]/balances', params: { id: trip.id } })
                 }
-                style={styles.subNavBtn}
+                style={styles.inactiveTabBtn}
               >
-                <PieChart size={15} color={palette.text} />
-                <Text style={[styles.subNavLabel, { color: palette.text }]}>Insights</Text>
+                <Text style={[styles.inactiveTabText, { color: palette.textMuted }]}>
+                  Balances
+                </Text>
               </Pressable>
-
-              <View style={[styles.subNavSep, { backgroundColor: palette.border }]} />
 
               <Pressable
                 onPress={() =>
                   router.push({ pathname: '/trip/[id]/map', params: { id: trip.id } })
                 }
-                style={styles.subNavBtn}
+                style={styles.inactiveTabBtn}
               >
-                <MapPin size={15} color={palette.text} />
-                <Text style={[styles.subNavLabel, { color: palette.text }]}>Map</Text>
+                <Text style={[styles.inactiveTabText, { color: palette.textMuted }]}>
+                  Map
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() =>
+                  router.push({ pathname: '/trip/[id]/insights', params: { id: trip.id } })
+                }
+                style={styles.inactiveTabBtn}
+              >
+                <Text style={[styles.inactiveTabText, { color: palette.textMuted }]}>
+                  Insights
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => {
+                  setShowSearch(!showSearch);
+                  if (showSearch) {
+                    setSearchQuery('');
+                    setSelectedCategory('all');
+                  }
+                }}
+                style={styles.searchIconToggle}
+                accessibilityLabel="Search and filter expenses"
+              >
+                {showSearch ? (
+                  <X size={16} color={palette.text} />
+                ) : (
+                  <Search size={16} color={palette.textMuted} />
+                )}
               </Pressable>
             </View>
 
-            {/* Settlements Ledger (if present) */}
-            {activePayments.length > 0 &&
-              selectedCategory === 'all' &&
-              !searchQuery.trim() && (
-                <View style={styles.sectionBlock}>
-                  <Text style={[styles.sectionHeading, { color: palette.text }]}>
-                    Settlements ({activePayments.length})
-                  </Text>
-                  <Card style={styles.ledgerCard}>
-                    {activePayments.map((p, idx) =>
-                      renderLedgerPayment(p, idx, activePayments.length)
-                    )}
-                  </Card>
-                </View>
-              )}
-
-            {/* Expenses Header & Search */}
-            <View style={styles.sectionBlock}>
-              <Text style={[styles.sectionHeading, { color: palette.text }]}>
-                Ledger ({activeExpenses.length})
-              </Text>
-
-              <View
-                style={[
-                  styles.searchBox,
-                  {
-                    backgroundColor: palette.card,
-                    borderColor: palette.border,
-                  },
-                ]}
-              >
-                <Search size={15} color={palette.textMuted} />
-                <TextInput
-                  placeholder="Search expenses..."
-                  placeholderTextColor={palette.textMuted}
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  style={[styles.searchInput, { color: palette.text }]}
-                />
-              </View>
-
-              {/* Category Filter Pills */}
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.filterPillsRow}
-              >
-                <Pressable
-                  onPress={() => setSelectedCategory('all')}
+            {/* Optional Expandable Search & Category Filter */}
+            {showSearch && (
+              <View style={styles.filterBlock}>
+                <View
                   style={[
-                    styles.filterPill,
+                    styles.searchBox,
                     {
-                      backgroundColor:
-                        selectedCategory === 'all' ? palette.accent : palette.card,
-                      borderColor:
-                        selectedCategory === 'all' ? palette.accent : palette.border,
+                      backgroundColor: palette.surface,
+                      borderColor: palette.border,
                     },
                   ]}
                 >
-                  <Text
+                  <Search size={15} color={palette.textMuted} />
+                  <TextInput
+                    placeholder="Search expenses..."
+                    placeholderTextColor={palette.textMuted}
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    autoFocus
+                    style={[styles.searchInput, { color: palette.text }]}
+                  />
+                </View>
+
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.filterPillsRow}
+                >
+                  <Pressable
+                    onPress={() => setSelectedCategory('all')}
                     style={[
-                      styles.filterPillText,
+                      styles.filterPill,
                       {
-                        color:
-                          selectedCategory === 'all'
-                            ? palette.accentText
-                            : palette.text,
+                        backgroundColor:
+                          selectedCategory === 'all' ? palette.accent : palette.surface,
                       },
                     ]}
                   >
-                    All
-                  </Text>
-                </Pressable>
-
-                {EXPENSE_CATEGORIES.map((cat) => {
-                  const active = selectedCategory === cat.id;
-                  return (
-                    <Pressable
-                      key={cat.id}
-                      onPress={() => setSelectedCategory(cat.id)}
+                    <Text
                       style={[
-                        styles.filterPill,
+                        styles.filterPillText,
                         {
-                          backgroundColor: active ? palette.accent : palette.card,
-                          borderColor: active ? palette.accent : palette.border,
+                          color:
+                            selectedCategory === 'all'
+                              ? palette.accentText
+                              : palette.text,
                         },
                       ]}
                     >
-                      <CategoryIcon
-                        category={cat.id}
-                        size={13}
-                        color={active ? palette.accentText : palette.text}
-                      />
-                      <Text
+                      All
+                    </Text>
+                  </Pressable>
+
+                  {EXPENSE_CATEGORIES.map((cat) => {
+                    const active = selectedCategory === cat.id;
+                    return (
+                      <Pressable
+                        key={cat.id}
+                        onPress={() => setSelectedCategory(cat.id)}
                         style={[
-                          styles.filterPillText,
-                          { color: active ? palette.accentText : palette.text },
+                          styles.filterPill,
+                          {
+                            backgroundColor: active ? palette.accent : palette.surface,
+                          },
                         ]}
                       >
-                        {cat.shortLabel}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
+                        <Text
+                          style={[
+                            styles.filterPillText,
+                            { color: active ? palette.accentText : palette.text },
+                          ]}
+                        >
+                          {cat.shortLabel}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            )}
 
-              {/* Single Hairline-Divided Ledger Card */}
-              {activeExpenses.length === 0 ? (
-                <Card style={styles.emptyExpensesCard}>
-                  <Receipt size={28} color={palette.textMuted} />
-                  <Text style={[styles.emptyTitle, { color: palette.text }]}>
-                    No expenses match
-                  </Text>
-                  <Text style={[styles.emptySubtitle, { color: palette.textMuted }]}>
-                    Log your first shared expense using the button below.
-                  </Text>
-                </Card>
-              ) : (
-                <Card style={styles.ledgerCard}>
-                  {activeExpenses.map((exp, idx) =>
-                    renderLedgerExpense(exp, idx, activeExpenses.length)
+            {/* Settlements Section (if recorded) */}
+            {activePayments.length > 0 &&
+              selectedCategory === 'all' &&
+              !searchQuery.trim() && (
+                <View style={styles.dateGroupBlock}>
+                  <View style={[styles.datePill, { backgroundColor: palette.surface }]}>
+                    <Text style={[styles.datePillText, { color: palette.textMuted }]}>
+                      Settlements
+                    </Text>
+                  </View>
+                  {activePayments.map((p, idx) =>
+                    renderLedgerPayment(p, idx === activePayments.length - 1)
                   )}
-                </Card>
+                </View>
               )}
-            </View>
+
+            {/* Date-Grouped Clean Ledger Rows */}
+            {groupedExpenses.length === 0 ? (
+              <View style={styles.emptyBox}>
+                <Receipt size={26} color={palette.textMuted} />
+                <Text style={[styles.emptyTitle, { color: palette.text }]}>
+                  No expenses match
+                </Text>
+                <Text style={[styles.emptySub, { color: palette.textMuted }]}>
+                  Tap + Log Expense below to add one.
+                </Text>
+              </View>
+            ) : (
+              groupedExpenses.map((group) => (
+                <View key={group.dateLabel} style={styles.dateGroupBlock}>
+                  <View style={[styles.datePill, { backgroundColor: palette.surface }]}>
+                    <Text style={[styles.datePillText, { color: palette.textMuted }]}>
+                      {group.dateLabel}
+                    </Text>
+                  </View>
+                  {group.items.map((exp, idx) =>
+                    renderLedgerExpense(exp, idx === group.items.length - 1)
+                  )}
+                </View>
+              ))
+            )}
           </View>
         </ScrollView>
       </KeyboardAwareView>
 
-      {/* Bottom Thumb-Zone Floating CTA */}
+      {/* Bottom Pill CTA */}
       <View
         style={[
           styles.floatingBar,
           {
             paddingBottom: Math.max(insets.bottom, 14),
-            backgroundColor: isDark
-              ? 'rgba(9, 9, 11, 0.92)'
-              : 'rgba(244, 244, 245, 0.94)',
-            borderTopColor: palette.border,
+            backgroundColor: palette.background,
           },
         ]}
       >
-        <Button
-          title="Log expense"
+        <Pressable
           onPress={() =>
             router.push({
               pathname: '/trip/[id]/expenses/new',
               params: { id: trip.id },
             })
           }
-          variant="primary"
-          size="lg"
-          icon={<Plus size={18} color={palette.accentText} />}
-        />
+          style={({ pressed }) => [
+            styles.floatingPillBtn,
+            {
+              backgroundColor: palette.accent,
+              opacity: pressed ? 0.9 : 1,
+            },
+          ]}
+        >
+          <Plus size={18} color={palette.accentText} strokeWidth={2.4} />
+          <Text style={[styles.floatingPillText, { color: palette.accentText }]}>
+            Log Expense
+          </Text>
+        </Pressable>
       </View>
     </SafeAreaView>
   );
@@ -641,10 +635,10 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   heroWrap: {
-    minHeight: 190,
+    minHeight: 248,
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingBottom: 18,
+    paddingBottom: 34,
     position: 'relative',
   },
   heroImage: {
@@ -669,140 +663,105 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(9, 9, 11, 0.48)',
+    backgroundColor: 'rgba(9, 9, 11, 0.36)',
   },
   heroTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 24,
   },
-  heroIconBtn: {
+  heroBackCircle: {
     width: 36,
     height: 36,
-    borderRadius: 8,
-    backgroundColor: 'rgba(9, 9, 11, 0.58)',
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heroMembersBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: 8,
-    backgroundColor: 'rgba(9, 9, 11, 0.58)',
-  },
   heroBottom: {
-    marginTop: 8,
+    marginTop: 28,
   },
   heroTitle: {
     fontFamily: fonts.bold,
-    fontSize: 26,
+    fontSize: 28,
     color: '#FFFFFF',
-    letterSpacing: -0.6,
+    letterSpacing: -0.7,
   },
   heroMeta: {
     fontFamily: fonts.medium,
     fontSize: 13,
-    color: '#E4E4E7',
+    color: '#F4F4F5',
     marginTop: 3,
   },
-  bodyPad: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
+  sheetContainer: {
+    marginTop: -18,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 18,
+    paddingTop: 20,
+    flex: 1,
   },
-  ticketCard: {
-    padding: 16,
-  },
-  balanceRow: {
+  balanceSection: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
+    marginBottom: 18,
   },
   balanceCaption: {
     fontFamily: fonts.medium,
-    fontSize: 12,
+    fontSize: 13,
   },
   balanceHero: {
     fontFamily: fonts.bold,
-    fontSize: 28,
-    letterSpacing: -0.7,
+    fontSize: 34,
+    letterSpacing: -1,
     marginTop: 2,
   },
-  totalSpendLine: {
-    fontFamily: fonts.regular,
-    fontSize: 12,
-    marginTop: 3,
+  balanceStatusSub: {
+    fontFamily: fonts.semibold,
+    fontSize: 13,
+    marginTop: 2,
   },
-  transferHeaderRow: {
+  settlePillBtn: {
+    paddingHorizontal: 22,
+    paddingVertical: 11,
+    borderRadius: 999,
+  },
+  settlePillText: {
+    fontFamily: fonts.semibold,
+    fontSize: 14,
+  },
+  navTabsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    gap: 6,
   },
-  transferTitle: {
+  activeTabPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  activeTabText: {
     fontFamily: fonts.semibold,
     fontSize: 13,
   },
-  manageLink: {
-    fontFamily: fonts.semibold,
-    fontSize: 12,
+  inactiveTabBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
-  settledNote: {
+  inactiveTabText: {
     fontFamily: fonts.medium,
     fontSize: 13,
-    marginTop: 6,
   },
-  transferCompactRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 5,
+  searchIconToggle: {
+    marginLeft: 'auto',
+    padding: 6,
   },
-  transferParties: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  transferParty: {
-    fontFamily: fonts.semibold,
-    fontSize: 13,
-  },
-  transferAmt: {
-    fontFamily: fonts.bold,
-    fontSize: 13,
-  },
-  subNavStrip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 10,
-    borderWidth: 1,
-    marginVertical: 6,
-    height: 44,
-  },
-  subNavBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    height: '100%',
-  },
-  subNavLabel: {
-    fontFamily: fonts.semibold,
-    fontSize: 13,
-  },
-  subNavSep: {
-    width: 1,
-    height: 20,
-  },
-  sectionBlock: {
+  filterBlock: {
     marginTop: 12,
-  },
-  sectionHeading: {
-    fontFamily: fonts.bold,
-    fontSize: 16,
-    letterSpacing: -0.3,
-    marginBottom: 8,
   },
   searchBox: {
     flexDirection: 'row',
@@ -810,9 +769,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 12,
-    height: 40,
+    height: 38,
     gap: 8,
-    marginBottom: 10,
+    marginBottom: 8,
   },
   searchInput: {
     flex: 1,
@@ -820,39 +779,41 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   filterPillsRow: {
-    gap: 8,
-    paddingBottom: 10,
+    gap: 6,
+    paddingBottom: 4,
   },
   filterPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
     paddingHorizontal: 11,
-    paddingVertical: 6,
+    paddingVertical: 5,
     borderRadius: 8,
-    borderWidth: 1,
   },
   filterPillText: {
     fontFamily: fonts.semibold,
     fontSize: 12,
   },
-  ledgerCard: {
-    padding: 0,
-    overflow: 'hidden',
+  dateGroupBlock: {
+    marginTop: 14,
+  },
+  datePill: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginBottom: 4,
+  },
+  datePillText: {
+    fontFamily: fonts.semibold,
+    fontSize: 12,
   },
   ledgerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
     paddingVertical: 13,
   },
-  iconWell: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    alignItems: 'center',
+  iconCol: {
+    width: 34,
+    alignItems: 'flex-start',
     justifyContent: 'center',
-    marginRight: 12,
   },
   expenseMeta: {
     flex: 1,
@@ -860,50 +821,59 @@ const styles = StyleSheet.create({
   },
   expenseTitle: {
     fontFamily: fonts.semibold,
-    fontSize: 14,
-    letterSpacing: -0.1,
+    fontSize: 15,
+    letterSpacing: -0.2,
   },
   expenseSub: {
     fontFamily: fonts.regular,
     fontSize: 12,
     marginTop: 2,
   },
-  expenseImpact: {
+  impactCol: {
     alignItems: 'flex-end',
   },
-  impactLabel: {
+  impactAmount: {
+    fontFamily: fonts.semibold,
+    fontSize: 15,
+  },
+  settledTiny: {
     fontFamily: fonts.medium,
     fontSize: 11,
-  },
-  impactAmount: {
-    fontFamily: fonts.bold,
-    fontSize: 14,
     marginTop: 1,
   },
-  emptyExpensesCard: {
+  emptyBox: {
     alignItems: 'center',
-    paddingVertical: 30,
-    paddingHorizontal: 20,
+    paddingVertical: 38,
   },
   emptyTitle: {
     fontFamily: fonts.bold,
     fontSize: 15,
     marginTop: 10,
   },
-  emptySubtitle: {
+  emptySub: {
     fontFamily: fonts.regular,
     fontSize: 13,
-    textAlign: 'center',
     marginTop: 4,
-    lineHeight: 19,
   },
   floatingBar: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
     paddingTop: 10,
-    borderTopWidth: 1,
+  },
+  floatingPillBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    height: 52,
+    borderRadius: 999,
+  },
+  floatingPillText: {
+    fontFamily: fonts.semibold,
+    fontSize: 16,
+    letterSpacing: -0.2,
   },
 });

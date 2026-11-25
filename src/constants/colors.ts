@@ -46,11 +46,11 @@ export const colors = {
     other: '#3F3F46',
   },
 
-  // Light Mode Palette (Daylight Paper & Jet Ink)
+  // Light Mode Palette (Pure White Canvas, Whisper Zinc Surfaces & Jet Ink)
   light: {
-    background: '#F4F4F5',
+    background: '#FFFFFF',
     card: '#FFFFFF',
-    surface: '#ECECEF',
+    surface: '#F4F4F5',
     border: '#E4E4E7',
     borderStrong: '#D4D4D8',
     text: '#09090B',
