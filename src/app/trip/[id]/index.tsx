@@ -26,6 +26,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
+import { KeyboardAwareView } from '../../../components/ui/KeyboardAwareView';
 import { SyncStatusBadge } from '../../../components/ui/SyncStatusBadge';
 import { EXPENSE_CATEGORIES, getCategoryMeta } from '../../../constants/categories';
 import { colors } from '../../../constants/colors';
@@ -248,7 +249,12 @@ export default function TripDashboardScreen() {
         />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <KeyboardAwareView>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
         {/* Cover Banner */}
         {trip.coverUrl ? (
           <Image source={{ uri: trip.coverUrl }} style={styles.coverBanner} />
@@ -524,7 +530,8 @@ export default function TripDashboardScreen() {
             {activeExpenses.map(renderExpenseRow)}
           </View>
         )}
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAwareView>
     </SafeAreaView>
   );
 }
