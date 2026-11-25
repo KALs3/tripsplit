@@ -1,6 +1,7 @@
 import React from 'react';
-import { StyleProp, Text, View, ViewStyle } from 'react-native';
+import { StyleProp, View, ViewStyle } from 'react-native';
 import { tabularNums } from '../../constants/typography';
+import { Text } from './Text';
 
 export type BadgeVariant = 'success' | 'danger' | 'warning' | 'info' | 'neutral';
 

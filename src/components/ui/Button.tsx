@@ -3,10 +3,10 @@ import {
   ActivityIndicator,
   Pressable,
   StyleProp,
-  Text,
   ViewStyle,
 } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
+import { Text } from './Text';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost';
 export type ButtonSize = 'sm' | 'md' | 'lg';
@@ -81,7 +81,7 @@ export function Button({
           <Text
             className={`font-semibold tracking-tight ${SIZE_CLASSES[size].text} ${
               disabled ? 'text-muted dark:text-muted-dark' : TEXT_CLASSES[variant]
-            } ${icon ? 'ml-2' : ''}`}
+            } ${icon ? 'ms-2' : ''}`}
           >
             {title}
           </Text>

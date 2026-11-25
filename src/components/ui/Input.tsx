@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import {
   StyleProp,
-  Text,
-  TextInput,
   TextInputProps,
   View,
   ViewStyle,
 } from 'react-native';
 import { useLocale } from '../../hooks/useLocale';
 import { useTheme } from '../../hooks/useTheme';
+import { Text } from './Text';
+import { TextInput } from './TextInput';
 
 interface InputProps extends TextInputProps {
   label?: string;

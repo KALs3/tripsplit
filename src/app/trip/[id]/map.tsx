@@ -8,7 +8,7 @@ import {
   Trash2,
 } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
-import { Linking, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { Linking, Platform, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Line, Rect } from 'react-native-svg';
 import { Badge } from '../../../components/ui/Badge';
@@ -17,6 +17,7 @@ import { Card } from '../../../components/ui/Card';
 import { CategoryIcon } from '../../../components/ui/CategoryIcon';
 import { Input } from '../../../components/ui/Input';
 import { KeyboardAwareView } from '../../../components/ui/KeyboardAwareView';
+import { Text } from '../../../components/ui/Text';
 import { EXPENSE_CATEGORIES } from '../../../constants/categories';
 import { tabularNums } from '../../../constants/typography';
 import { ExpenseCategory, PlaceRecord } from '../../../domain/types';

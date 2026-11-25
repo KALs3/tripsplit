@@ -1,10 +1,11 @@
 import * as ImagePicker from 'expo-image-picker';
 import { Camera, Image as ImageIcon, X } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { Image, Pressable, Text, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
 import { useLocale } from '../../hooks/useLocale';
 import { useTheme } from '../../hooks/useTheme';
 import { Button } from '../ui/Button';
+import { Text } from '../ui/Text';
 
 export const PRESET_COVERS = [
   {

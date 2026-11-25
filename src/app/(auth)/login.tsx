@@ -1,13 +1,14 @@
 import { router } from 'expo-router';
 import { ArrowRight, Compass, UserCheck } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { KeyboardAwareView } from '../../components/ui/KeyboardAwareView';
+import { Text } from '../../components/ui/Text';
 import { TicketDivider } from '../../components/ui/TicketDivider';
 import { useLocale } from '../../hooks/useLocale';
 import { useTheme } from '../../hooks/useTheme';

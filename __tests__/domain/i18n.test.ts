@@ -1,4 +1,5 @@
 import { formatMoney } from '../../src/domain';
+import { arabicFonts, resolveArabicTypography, tabularNums } from '../../src/constants/typography';
 import { ar } from '../../src/i18n/ar';
 import { en } from '../../src/i18n/en';
 
@@ -31,5 +32,37 @@ describe('i18n Localization Dictionaries (en.ts / ar.ts)', () => {
   it('formats money cleanly under Arabic locale with Western numerals', () => {
     const formatted = formatMoney(12550, 'EGP', 'ar-EG-u-nu-latn');
     expect(formatted).toContain('125.50');
+  });
+
+  it('switches font family to Cairo, strips negative tracking, and scales optical size in Arabic', () => {
+    const resolved = resolveArabicTypography(
+      'font-bold text-[12px] tracking-tight text-ink',
+      undefined,
+      true
+    );
+    expect(resolved.className).toContain('font-bold-ar');
+    expect(resolved.className).not.toContain('tracking-tight');
+    expect(resolved.style).toMatchObject({
+      fontFamily: arabicFonts.bold,
+      fontSize: 13.5,
+      lineHeight: 20,
+      letterSpacing: 0,
+    });
+  });
+
+  it('preserves numeric font size for tabular LTR figures in Arabic', () => {
+    const resolved = resolveArabicTypography(
+      'font-bold text-[34px]',
+      [tabularNums, { writingDirection: 'ltr' }],
+      true
+    );
+    expect(resolved.style).toEqual([
+      [tabularNums, { writingDirection: 'ltr' }],
+      expect.objectContaining({
+        fontFamily: arabicFonts.bold,
+        fontSize: 34,
+        letterSpacing: 0,
+      }),
+    ]);
   });
 });

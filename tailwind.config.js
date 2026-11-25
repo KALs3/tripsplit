@@ -10,10 +10,10 @@ module.exports = {
         medium: ['SpaceGrotesk_500Medium'],
         semibold: ['SpaceGrotesk_600SemiBold'],
         bold: ['SpaceGrotesk_700Bold'],
-        'sans-ar': ['IBMPlexSansArabic_400Regular'],
-        'medium-ar': ['IBMPlexSansArabic_500Medium'],
-        'semibold-ar': ['IBMPlexSansArabic_600SemiBold'],
-        'bold-ar': ['IBMPlexSansArabic_700Bold'],
+        'sans-ar': ['Cairo_400Regular'],
+        'medium-ar': ['Cairo_500Medium'],
+        'semibold-ar': ['Cairo_600SemiBold'],
+        'bold-ar': ['Cairo_700Bold'],
       },
       colors: {
         canvas: {

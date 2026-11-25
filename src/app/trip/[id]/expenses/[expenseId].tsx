@@ -1,12 +1,13 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Calendar, FileText, Pencil, Trash2, User } from 'lucide-react-native';
 import React from 'react';
-import { Alert, Image, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Image, Platform, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Badge } from '../../../../components/ui/Badge';
 import { Button } from '../../../../components/ui/Button';
 import { Card } from '../../../../components/ui/Card';
 import { CategoryIcon } from '../../../../components/ui/CategoryIcon';
+import { Text } from '../../../../components/ui/Text';
 import { TicketDivider } from '../../../../components/ui/TicketDivider';
 import { tabularNums } from '../../../../constants/typography';
 import { convertToBaseMinor } from '../../../../domain';

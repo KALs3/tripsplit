@@ -1,11 +1,12 @@
 import { router } from 'expo-router';
 import { Compass, Plus, QrCode } from 'lucide-react-native';
 import React from 'react';
-import { FlatList, Image, Pressable, Text, View } from 'react-native';
+import { FlatList, Image, Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AvatarStack } from '../../../components/ui/AvatarStack';
 import { Button } from '../../../components/ui/Button';
 import { SyncStatusBadge } from '../../../components/ui/SyncStatusBadge';
+import { Text } from '../../../components/ui/Text';
 import { tabularNums } from '../../../constants/typography';
 import { MockTrip } from '../../../domain/mockData';
 import { useLocale } from '../../../hooks/useLocale';

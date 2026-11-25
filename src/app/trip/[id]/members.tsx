@@ -16,7 +16,6 @@ import {
   Pressable,
   ScrollView,
   Share,
-  Text,
   View,
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
@@ -26,6 +25,7 @@ import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { Input } from '../../../components/ui/Input';
 import { KeyboardAwareView } from '../../../components/ui/KeyboardAwareView';
+import { Text } from '../../../components/ui/Text';
 import { TicketDivider } from '../../../components/ui/TicketDivider';
 import { tabularNums } from '../../../constants/typography';
 import { useLocale } from '../../../hooks/useLocale';

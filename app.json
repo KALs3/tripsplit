@@ -8,7 +8,13 @@
     "scheme": "tripsplit",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "infoPlist": {
+        "CFBundleLocalizations": [
+          "en",
+          "ar"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -17,7 +23,8 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.tripsplit"
     },
     "web": {
       "output": "server",
@@ -39,7 +46,10 @@
         {
           "supportsRTL": true,
           "allowDynamicLocaleChangesAndroid": true,
-          "supportedLocales": ["en", "ar"]
+          "supportedLocales": [
+            "en",
+            "ar"
+          ]
         }
       ]
     ],

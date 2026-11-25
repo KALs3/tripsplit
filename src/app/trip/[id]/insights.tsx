@@ -1,13 +1,14 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, BarChart3, PieChart, Share2 } from 'lucide-react-native';
 import React, { useMemo } from 'react';
-import { Pressable, ScrollView, Share, Text, View } from 'react-native';
+import { Pressable, ScrollView, Share, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { CategoryIcon } from '../../../components/ui/CategoryIcon';
+import { Text } from '../../../components/ui/Text';
 import { getCategoryMeta } from '../../../constants/categories';
 import { tabularNums } from '../../../constants/typography';
 import {

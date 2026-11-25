@@ -14,8 +14,6 @@ import {
   Image,
   Pressable,
   ScrollView,
-  Text,
-  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,6 +22,8 @@ import { Button } from '../../../components/ui/Button';
 import { CategoryIcon } from '../../../components/ui/CategoryIcon';
 import { KeyboardAwareView } from '../../../components/ui/KeyboardAwareView';
 import { SyncStatusBadge } from '../../../components/ui/SyncStatusBadge';
+import { Text } from '../../../components/ui/Text';
+import { TextInput } from '../../../components/ui/TextInput';
 import { EXPENSE_CATEGORIES } from '../../../constants/categories';
 import { tabularNums } from '../../../constants/typography';
 import { calculateNetBalances } from '../../../domain';

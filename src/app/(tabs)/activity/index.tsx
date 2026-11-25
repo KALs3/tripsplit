@@ -1,9 +1,10 @@
 import { ArrowUpRight } from 'lucide-react-native';
 import React from 'react';
-import { FlatList, Text, View } from 'react-native';
+import { FlatList, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card } from '../../../components/ui/Card';
 import { CategoryIcon } from '../../../components/ui/CategoryIcon';
+import { Text } from '../../../components/ui/Text';
 import { tabularNums } from '../../../constants/typography';
 import { ExpenseCategory } from '../../../domain/types';
 import { useLocale } from '../../../hooks/useLocale';

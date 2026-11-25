@@ -1,10 +1,11 @@
 import { Cloud, CloudOff, RefreshCw } from 'lucide-react-native';
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { tabularNums } from '../../constants/typography';
 import { useLocale } from '../../hooks/useLocale';
 import { useTheme } from '../../hooks/useTheme';
 import { SyncStatus } from '../../sync/types';
+import { Text } from './Text';
 
 interface SyncStatusBadgeProps {
   status: SyncStatus;

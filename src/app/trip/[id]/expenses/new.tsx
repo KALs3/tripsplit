@@ -10,7 +10,7 @@ import {
   X,
 } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
-import { Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Image, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Badge } from '../../../../components/ui/Badge';
 import { Button } from '../../../../components/ui/Button';
@@ -18,6 +18,8 @@ import { Card } from '../../../../components/ui/Card';
 import { CategoryIcon } from '../../../../components/ui/CategoryIcon';
 import { Input } from '../../../../components/ui/Input';
 import { KeyboardAwareView } from '../../../../components/ui/KeyboardAwareView';
+import { Text } from '../../../../components/ui/Text';
+import { TextInput } from '../../../../components/ui/TextInput';
 import { EXPENSE_CATEGORIES } from '../../../../constants/categories';
 import { tabularNums } from '../../../../constants/typography';
 import {

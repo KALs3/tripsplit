@@ -1,7 +1,8 @@
 import React from 'react';
-import { Image, Text, View } from 'react-native';
+import { Image, View } from 'react-native';
 import { tabularNums } from '../../constants/typography';
 import { useTheme } from '../../hooks/useTheme';
+import { Text } from './Text';
 
 export interface AvatarPerson {
   userId: string;
@@ -46,7 +47,7 @@ export function AvatarStack({
           width: size,
           height: size,
           borderRadius: size / 2,
-          marginLeft: index === 0 ? 0 : -Math.round(size * 0.28),
+          marginStart: index === 0 ? 0 : -Math.round(size * 0.28),
           borderWidth: 1.5,
           borderColor: borderCol,
         };
@@ -77,7 +78,7 @@ export function AvatarStack({
         (overflowTextColor ? (
           <Text
             style={[tabularNums, { color: overflowTextColor }]}
-            className="font-semibold text-[12px] ml-1.5"
+            className="font-semibold text-[12px] ms-1.5"
           >
             +{overflow}
           </Text>
@@ -87,7 +88,7 @@ export function AvatarStack({
               width: size,
               height: size,
               borderRadius: size / 2,
-              marginLeft: -Math.round(size * 0.28),
+              marginStart: -Math.round(size * 0.28),
               borderWidth: 1.5,
               borderColor: borderCol,
             }}

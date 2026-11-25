@@ -7,12 +7,13 @@ import {
   Trash2,
 } from 'lucide-react-native';
 import React, { useMemo } from 'react';
-import { Alert, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AvatarStack } from '../../../components/ui/AvatarStack';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
+import { Text } from '../../../components/ui/Text';
 import { TicketDivider } from '../../../components/ui/TicketDivider';
 import { tabularNums } from '../../../constants/typography';
 import {

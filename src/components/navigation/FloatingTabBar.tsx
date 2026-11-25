@@ -1,7 +1,8 @@
 import type { Tabs } from 'expo-router';
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
+import { Text } from '../ui/Text';
 
 export type FloatingTabBarProps = Parameters<
   NonNullable<React.ComponentProps<typeof Tabs>['tabBar']>

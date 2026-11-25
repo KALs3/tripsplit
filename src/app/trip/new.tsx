@@ -1,12 +1,13 @@
 import { router } from 'expo-router';
 import { X } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CoverPhotoField } from '../../components/trip/CoverPhotoField';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { KeyboardAwareView } from '../../components/ui/KeyboardAwareView';
+import { Text } from '../../components/ui/Text';
 import { CURRENCY_METADATA } from '../../domain';
 import { useLocale } from '../../hooks/useLocale';
 import { useTheme } from '../../hooks/useTheme';
