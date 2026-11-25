@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { KeyboardAwareView } from '../../components/ui/KeyboardAwareView';
 import { colors } from '../../constants/colors';
 import { CURRENCY_METADATA } from '../../domain';
 import { useAppStore } from '../../store/useAppStore';
@@ -62,7 +63,12 @@ export default function NewTripModal() {
         </Pressable>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <KeyboardAwareView>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
         <Input
           label="Trip Name"
           placeholder="e.g. Summer in Greece 🇬🇷"
@@ -152,7 +158,8 @@ export default function NewTripModal() {
           size="lg"
           style={{ marginTop: 28 }}
         />
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAwareView>
     </SafeAreaView>
   );
 }

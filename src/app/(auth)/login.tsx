@@ -2,8 +2,6 @@ import { router } from 'expo-router';
 import { Compass, Sparkles, UserCheck } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,6 +13,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
+import { KeyboardAwareView } from '../../components/ui/KeyboardAwareView';
 import { colors } from '../../constants/colors';
 import { supabase } from '../../lib/supabase';
 import { useAppStore } from '../../store/useAppStore';
@@ -93,13 +92,11 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: palette.background }]}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
+      <KeyboardAwareView>
         <ScrollView
           contentContainerStyle={styles.scrollContainer}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
           {/* Header Brand */}
           <View style={styles.brandContainer}>
@@ -207,7 +204,7 @@ export default function LoginScreen() {
             />
           </Card>
         </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAwareView>
     </SafeAreaView>
   );
 }

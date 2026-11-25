@@ -2,8 +2,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowRight, X } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -15,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { Input } from '../../../components/ui/Input';
+import { KeyboardAwareView } from '../../../components/ui/KeyboardAwareView';
 import { colors } from '../../../constants/colors';
 import { CURRENCY_METADATA, fromMinorUnits, toMinorUnits } from '../../../domain';
 import { useAppStore } from '../../../store/useAppStore';
@@ -111,11 +110,12 @@ export default function SettlePaymentModal() {
         </Pressable>
       </View>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-      >
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <KeyboardAwareView>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
           {/* Summary Banner */}
           <Card style={styles.summaryCard}>
             <View style={styles.directionRow}>
@@ -220,7 +220,7 @@ export default function SettlePaymentModal() {
             style={{ marginTop: 22 }}
           />
         </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAwareView>
     </SafeAreaView>
   );
 }

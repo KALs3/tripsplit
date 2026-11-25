@@ -4,8 +4,6 @@ import { Camera, Check, Image as ImageIcon, Minus, Plus, Sparkles, X } from 'luc
 import React, { useMemo, useState } from 'react';
 import {
   Image,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -19,6 +17,7 @@ import { Badge } from '../../../../components/ui/Badge';
 import { Button } from '../../../../components/ui/Button';
 import { Card } from '../../../../components/ui/Card';
 import { Input } from '../../../../components/ui/Input';
+import { KeyboardAwareView } from '../../../../components/ui/KeyboardAwareView';
 import { EXPENSE_CATEGORIES } from '../../../../constants/categories';
 import { colors } from '../../../../constants/colors';
 import {
@@ -292,13 +291,11 @@ export default function AddExpenseModal() {
         </Pressable>
       </View>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-      >
+      <KeyboardAwareView>
         <ScrollView
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
           {/* Smart Quick-Add Bar */}
           <Card
@@ -710,7 +707,7 @@ export default function AddExpenseModal() {
             style={{ marginTop: 18 }}
           />
         </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAwareView>
     </SafeAreaView>
   );
 }

@@ -2,9 +2,8 @@ import { router } from 'expo-router';
 import { QrCode, X } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   useColorScheme,
@@ -15,6 +14,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
+import { KeyboardAwareView } from '../../components/ui/KeyboardAwareView';
 import { colors } from '../../constants/colors';
 import { useAppStore } from '../../store/useAppStore';
 
@@ -48,10 +48,12 @@ export default function JoinTripModal() {
         </Pressable>
       </View>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.body}
-      >
+      <KeyboardAwareView>
+        <ScrollView
+          contentContainerStyle={styles.body}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
         <View style={[styles.iconBox, { backgroundColor: colors.primaryLight }]}>
           <QrCode size={34} color={colors.primary} />
         </View>
@@ -99,7 +101,8 @@ export default function JoinTripModal() {
             />
           </Card>
         )}
-      </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAwareView>
     </SafeAreaView>
   );
 }

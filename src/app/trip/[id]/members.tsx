@@ -27,6 +27,7 @@ import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { Input } from '../../../components/ui/Input';
+import { KeyboardAwareView } from '../../../components/ui/KeyboardAwareView';
 import { colors } from '../../../constants/colors';
 import { useAppStore } from '../../../store/useAppStore';
 
@@ -127,7 +128,12 @@ export default function TripMembersScreen() {
         <View style={{ width: 38 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <KeyboardAwareView>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
         {/* Invite Link & QR Card */}
         <Card style={styles.inviteCard}>
           <Text style={[styles.inviteHeading, { color: palette.text }]}>
@@ -266,7 +272,8 @@ export default function TripMembersScreen() {
             );
           })}
         </Card>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAwareView>
     </SafeAreaView>
   );
 }

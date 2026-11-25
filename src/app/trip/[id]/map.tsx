@@ -25,6 +25,7 @@ import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { Input } from '../../../components/ui/Input';
+import { KeyboardAwareView } from '../../../components/ui/KeyboardAwareView';
 import { EXPENSE_CATEGORIES, getCategoryMeta } from '../../../constants/categories';
 import { colors } from '../../../constants/colors';
 import { ExpenseCategory, PlaceRecord } from '../../../domain/types';
@@ -194,7 +195,12 @@ export default function TripMapScreen() {
         />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <KeyboardAwareView>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
         {/* Coordinate Map Canvas */}
         <Card style={styles.mapCard}>
           <View style={styles.mapHeaderRow}>
@@ -456,7 +462,8 @@ export default function TripMapScreen() {
             </Pressable>
           );
         })}
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAwareView>
     </SafeAreaView>
   );
 }
