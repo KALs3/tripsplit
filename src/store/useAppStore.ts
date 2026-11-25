@@ -42,6 +42,10 @@ interface AppState {
   updateExpense: (expense: ExpenseRecord) => void;
   deleteExpense: (expenseId: string) => void;
   addPayment: (payment: Omit<PaymentRecord, 'id'>) => PaymentRecord;
+  deletePayment: (paymentId: string) => void;
+  addMemberToTrip: (tripId: string, displayName: string) => MockTripMember;
+  removeMemberFromTrip: (tripId: string, userId: string) => void;
+  joinTripByCode: (inviteCode: string) => { trip?: MockTrip; error?: string };
   
   // Computed balance selectors
   getTripBalances: (tripId: string) => {
@@ -167,6 +171,119 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
 
     return newPayment;
+  },
+
+  deletePayment: (paymentId: string) => {
+    const state = get();
+    set({
+      payments: state.payments.map((p) =>
+        p.id === paymentId ? { ...p, deletedAt: new Date().toISOString() } : p
+      ),
+    });
+  },
+
+  addMemberToTrip: (tripId: string, displayName: string) => {
+    const state = get();
+    const newMember: MockTripMember = {
+      tripId,
+      userId: `user_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      role: 'member',
+      displayName: displayName.trim(),
+      avatarUrl: '',
+    };
+
+    set({
+      members: [...state.members, newMember],
+    });
+
+    return newMember;
+  },
+
+  removeMemberFromTrip: (tripId: string, userId: string) => {
+    const state = get();
+    set({
+      members: state.members.filter(
+        (m) => !(m.tripId === tripId && m.userId === userId)
+      ),
+    });
+  },
+
+  joinTripByCode: (inviteCode: string) => {
+    const state = get();
+    const normalized = inviteCode.trim().toUpperCase();
+    if (!normalized) {
+      return { error: 'Please enter an invite code.' };
+    }
+
+    const existing = state.trips.find(
+      (t) => t.inviteCode.toUpperCase() === normalized
+    );
+    if (existing) {
+      set({ activeTripId: existing.id });
+      return { trip: existing };
+    }
+
+    // In Demo Mode, allow joining sample invite code PARIS26 for instant evaluation
+    if (state.isGuestDemo && normalized === 'PARIS26') {
+      const currentUserId = state.user?.id || 'user_me';
+      const parisTrip: MockTrip = {
+        id: `trip_paris_${Date.now()}`,
+        name: 'Paris Weekend 🥐',
+        coverUrl: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800',
+        baseCurrency: 'EUR',
+        startDate: '2026-12-05',
+        endDate: '2026-12-08',
+        ownerId: 'user_claire',
+        archived: false,
+        inviteCode: 'PARIS26',
+      };
+
+      const parisMembers: MockTripMember[] = [
+        {
+          tripId: parisTrip.id,
+          userId: 'user_claire',
+          role: 'owner',
+          displayName: 'Claire Moreau',
+          avatarUrl: '',
+        },
+        {
+          tripId: parisTrip.id,
+          userId: currentUserId,
+          role: 'member',
+          displayName: state.user?.displayName || 'Alex Rivera (You)',
+          avatarUrl: state.user?.avatarUrl || '',
+        },
+      ];
+
+      const parisExpense: ExpenseRecord = {
+        id: `exp_paris_${Date.now()}`,
+        tripId: parisTrip.id,
+        title: 'Le Marais Bistro Dinner',
+        amountMinor: 9200, // €92.00
+        currency: 'EUR',
+        fxRateToBase: 1.0,
+        category: 'food',
+        paidBy: 'user_claire',
+        spentAt: new Date().toISOString(),
+        splits: [
+          { userId: 'user_claire', shareMinor: 4600 },
+          { userId: currentUserId, shareMinor: 4600 },
+        ],
+      };
+
+      set({
+        trips: [parisTrip, ...state.trips],
+        members: [...state.members, ...parisMembers],
+        expenses: [parisExpense, ...state.expenses],
+        activeTripId: parisTrip.id,
+      });
+
+      return { trip: parisTrip };
+    }
+
+    return {
+      error: `No trip found with code "${normalized}". Try "PARIS26" in Demo Mode.`,
+    };
   },
 
   getTripBalances: (tripId: string) => {

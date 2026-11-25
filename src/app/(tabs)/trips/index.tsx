@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Calendar, Plus, Users } from 'lucide-react-native';
+import { Calendar, Plus, QrCode, Users } from 'lucide-react-native';
 import React from 'react';
 import {
   FlatList,
@@ -114,13 +114,22 @@ export default function TripsListScreen() {
           </Text>
         </View>
 
-        <Button
-          title="New Trip"
-          onPress={() => router.push('/trip/new')}
-          variant="primary"
-          size="sm"
-          icon={<Plus size={16} color="#FFFFFF" />}
-        />
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <Button
+            title="Join"
+            onPress={() => router.push('/trip/join')}
+            variant="outline"
+            size="sm"
+            icon={<QrCode size={15} color={colors.primary} />}
+          />
+          <Button
+            title="New Trip"
+            onPress={() => router.push('/trip/new')}
+            variant="primary"
+            size="sm"
+            icon={<Plus size={16} color="#FFFFFF" />}
+          />
+        </View>
       </View>
 
       {/* Trips FlatList */}

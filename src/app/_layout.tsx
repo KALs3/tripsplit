@@ -25,6 +25,13 @@ export default function RootLayout() {
             animation: 'slide_from_bottom',
           }}
         />
+        <Stack.Screen
+          name="trip/join"
+          options={{
+            presentation: 'modal',
+            animation: 'slide_from_bottom',
+          }}
+        />
         <Stack.Screen name="trip/[id]" />
       </Stack>
     </>

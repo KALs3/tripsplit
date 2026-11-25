@@ -4,6 +4,7 @@ import {
   ArrowRight,
   Plus,
   Receipt,
+  Scale,
   Search,
   Sparkles,
   Users,
@@ -290,6 +291,30 @@ export default function TripDashboardScreen() {
           </View>
         </Card>
 
+        {/* Quick Actions Row */}
+        <View style={styles.quickActionsRow}>
+          <Button
+            title="Settle Up"
+            onPress={() =>
+              router.push({ pathname: '/trip/[id]/balances', params: { id: trip.id } })
+            }
+            variant="secondary"
+            size="sm"
+            icon={<Scale size={15} color={palette.text} />}
+            style={{ flex: 1 }}
+          />
+          <Button
+            title={`Members (${tripMembers.length})`}
+            onPress={() =>
+              router.push({ pathname: '/trip/[id]/members', params: { id: trip.id } })
+            }
+            variant="secondary"
+            size="sm"
+            icon={<Users size={15} color={palette.text} />}
+            style={{ flex: 1 }}
+          />
+        </View>
+
         {/* Simplified Settlement Plan Preview */}
         <Card
           style={[
@@ -306,7 +331,15 @@ export default function TripDashboardScreen() {
                 Simplified Settlement Plan
               </Text>
             </View>
-            <Badge label={`${settlements.length} transfers`} variant="info" />
+            <Pressable
+              onPress={() =>
+                router.push({ pathname: '/trip/[id]/balances', params: { id: trip.id } })
+              }
+            >
+              <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '700' }}>
+                Settle →
+              </Text>
+            </Pressable>
           </View>
 
           {settlements.length === 0 ? (
@@ -544,6 +577,11 @@ const styles = StyleSheet.create({
   },
   summaryBadgeRow: {
     marginTop: 14,
+  },
+  quickActionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginVertical: 6,
   },
   settlementCard: {
     borderWidth: 1.5,
