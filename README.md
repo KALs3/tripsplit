@@ -5,7 +5,8 @@
 Built with **React Native (Expo SDK 58)**, **TypeScript**, **Expo Router**, **NativeWind v4**, **Zustand**, **i18next**, and **Supabase (PostgreSQL + Row-Level Security + Realtime)**.
 
 ---
-
+![preview](/preview.png)
+---
 ## Key Features
 
 - **Pure Monochrome Design + Light/Dark Mode**: High-contrast monochrome UI built with NativeWind (`tailwindcss`), `SpaceGrotesk` typography with `tabular-nums`, floating pill bottom navigation, and persisted `System | Light | Dark` appearance preferences.
