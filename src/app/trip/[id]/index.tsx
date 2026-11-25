@@ -26,8 +26,9 @@ import { KeyboardAwareView } from '../../../components/ui/KeyboardAwareView';
 import { SyncStatusBadge } from '../../../components/ui/SyncStatusBadge';
 import { EXPENSE_CATEGORIES } from '../../../constants/categories';
 import { tabularNums } from '../../../constants/typography';
-import { calculateNetBalances, formatMoney } from '../../../domain';
+import { calculateNetBalances } from '../../../domain';
 import { ExpenseCategory, ExpenseRecord, PaymentRecord } from '../../../domain/types';
+import { useLocale } from '../../../hooks/useLocale';
 import { useTheme } from '../../../hooks/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
 import { subscribeToTripRealtime } from '../../../sync/tripSync';
@@ -35,6 +36,7 @@ import { subscribeToTripRealtime } from '../../../sync/tripSync';
 export default function TripDashboardScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { isDark, palette, colors } = useTheme();
+  const { t, isRTL, ltrTextStyle, flipRtlStyle, formatCurrency, formatDate } = useLocale();
   const insets = useSafeAreaInsets();
 
   const trips = useAppStore((s) => s.trips);
@@ -68,8 +70,10 @@ export default function TripDashboardScreen() {
 
   const getMemberName = (userId: string) => {
     const member = tripMembers.find((m) => m.userId === userId);
-    if (!member) return 'Unknown';
-    return member.userId === currentUserId ? 'you' : member.displayName.split(' ')[0];
+    if (!member) return t('common.unknown');
+    return member.userId === currentUserId
+      ? t('common.youLower')
+      : member.displayName.split(' ')[0];
   };
 
   const userNetMinor = useMemo(() => {
@@ -97,11 +101,11 @@ export default function TripDashboardScreen() {
     const groups: { dateLabel: string; items: ExpenseRecord[] }[] = [];
     for (const exp of activeExpenses) {
       const label = exp.spentAt
-        ? new Date(exp.spentAt).toLocaleDateString(undefined, {
+        ? formatDate(exp.spentAt, {
             month: 'short',
             day: 'numeric',
           })
-        : 'Recent';
+        : t('tripDashboard.recent');
       const existing = groups.find((g) => g.dateLabel === label);
       if (existing) {
         existing.items.push(exp);
@@ -110,7 +114,7 @@ export default function TripDashboardScreen() {
       }
     }
     return groups;
-  }, [activeExpenses]);
+  }, [activeExpenses, formatDate, t]);
 
   const activePayments = useMemo(() => {
     return payments.filter((p) => p.tripId === id && !p.deletedAt);
@@ -121,10 +125,10 @@ export default function TripDashboardScreen() {
       <SafeAreaView className="flex-1 bg-canvas dark:bg-canvas-dark">
         <View className="flex-1 items-center justify-center p-6">
           <Text className="font-bold text-[18px] text-ink dark:text-ink-dark">
-            Trip not found
+            {t('common.tripNotFound')}
           </Text>
           <Button
-            title="Back to trips"
+            title={t('common.backToTrips')}
             onPress={() => router.replace('/(tabs)/trips')}
             variant="primary"
             className="mt-4"
@@ -140,17 +144,18 @@ export default function TripDashboardScreen() {
   const isUserSettled = userNetMinor === 0;
 
   const dateRangeLabel = (() => {
-    if (!trip.startDate) return `${tripMembers.length} members`;
-    const start = new Date(trip.startDate).toLocaleDateString(undefined, {
+    const travelersText = t('members.title', { count: tripMembers.length });
+    if (!trip.startDate) return travelersText;
+    const start = formatDate(trip.startDate, {
       month: 'short',
       day: 'numeric',
     });
-    if (!trip.endDate) return `${start} · ${tripMembers.length} members`;
-    const end = new Date(trip.endDate).toLocaleDateString(undefined, {
+    if (!trip.endDate) return `${start} · ${travelersText}`;
+    const end = formatDate(trip.endDate, {
       month: 'short',
       day: 'numeric',
     });
-    return `${start} – ${end} · ${tripMembers.length} members`;
+    return `${start} – ${end} · ${travelersText}`;
   })();
 
   const renderLedgerExpense = (expense: ExpenseRecord, isLast: boolean) => {
@@ -165,10 +170,10 @@ export default function TripDashboardScreen() {
 
     const subText =
       expense.splits.length > 1 && !youPaid
-        ? `Paid by ${payerName}`
+        ? `${t('expenses.receiptPaidBy')} ${payerName}`
         : youPaid
-        ? 'Paid by you'
-        : `Split ${expense.splits.length} ways`;
+        ? t('tripDashboard.paidByYou')
+        : t('tripDashboard.splitWays', { count: expense.splits.length });
 
     const amountColorClass = isUserSettled
       ? 'text-muted dark:text-muted-dark'
@@ -178,10 +183,10 @@ export default function TripDashboardScreen() {
 
     const formattedImpact =
       personalImpactMinor === 0
-        ? formatMoney(0, expense.currency)
+        ? formatCurrency(0, expense.currency)
         : youPaid
-        ? `+${formatMoney(personalImpactMinor, expense.currency)}`
-        : `-${formatMoney(personalImpactMinor, expense.currency)}`;
+        ? `+${formatCurrency(personalImpactMinor, expense.currency)}`
+        : `-${formatCurrency(personalImpactMinor, expense.currency)}`;
 
     return (
       <Pressable
@@ -200,7 +205,7 @@ export default function TripDashboardScreen() {
           <CategoryIcon category={expense.category} size={20} color={palette.text} />
         </View>
 
-        <View className="flex-1 mr-2.5">
+        <View className="flex-1 me-2.5">
           <Text
             className="font-semibold text-[15px] tracking-tight text-ink dark:text-ink-dark"
             numberOfLines={1}
@@ -213,12 +218,15 @@ export default function TripDashboardScreen() {
         </View>
 
         <View className="items-end">
-          <Text style={tabularNums} className={`font-semibold text-[15px] ${amountColorClass}`}>
+          <Text
+            style={[tabularNums, ltrTextStyle]}
+            className={`font-semibold text-[15px] ${amountColorClass}`}
+          >
             {formattedImpact}
           </Text>
           {isUserSettled && personalImpactMinor > 0 && (
             <Text className="font-medium text-[11px] mt-[1px] text-credit dark:text-credit-dark">
-              settled
+              {t('common.settled')}
             </Text>
           )}
         </View>
@@ -242,22 +250,25 @@ export default function TripDashboardScreen() {
         <View className="w-[34px] items-start justify-center">
           <ArrowUpRight size={20} color={creditColor} strokeWidth={2.2} />
         </View>
-        <View className="flex-1 mr-2.5">
+        <View className="flex-1 me-2.5">
           <Text
             className="font-semibold text-[15px] tracking-tight text-ink dark:text-ink-dark"
             numberOfLines={1}
           >
-            {fromName === 'you' ? 'You' : fromName} paid {toName}
+            {t('balances.paidLine', {
+              from: fromName === t('common.youLower') ? t('common.you') : fromName,
+              to: toName,
+            })}
           </Text>
           <Text className="font-sans text-[12px] mt-0.5 text-muted dark:text-muted-dark">
-            Settlement recorded
+            {t('tripDashboard.settlementRecorded')}
           </Text>
         </View>
         <Text
-          style={tabularNums}
+          style={[tabularNums, ltrTextStyle]}
           className="font-semibold text-[15px] text-credit dark:text-credit-dark"
         >
-          +{formatMoney(payment.amountMinor, payment.currency)}
+          +{formatCurrency(payment.amountMinor, payment.currency)}
         </Text>
       </Pressable>
     );
@@ -301,9 +312,11 @@ export default function TripDashboardScreen() {
                 <Pressable
                   onPress={() => router.back()}
                   className="w-9 h-9 rounded-full bg-white items-center justify-center active:opacity-85"
-                  accessibilityLabel="Go back to trips"
+                  accessibilityLabel={t('common.backToTrips')}
                 >
-                  <ArrowLeft size={19} color="#09090B" />
+                  <View style={flipRtlStyle}>
+                    <ArrowLeft size={19} color="#09090B" />
+                  </View>
                 </Pressable>
 
                 <View className="flex-row items-center gap-2">
@@ -359,11 +372,11 @@ export default function TripDashboardScreen() {
                       router.push({ pathname: '/trip/[id]/settings', params: { id: trip.id } })
                     }
                     className="flex-row items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-white/15 border border-white/25 active:opacity-80"
-                    accessibilityLabel="Attach cover photo"
+                    accessibilityLabel={t('trips.addCover')}
                   >
                     <Camera size={13} color="#FFFFFF" />
                     <Text className="font-semibold text-[11px] text-white">
-                      Add cover
+                      {t('trips.addCover')}
                     </Text>
                   </Pressable>
                 )}
@@ -377,20 +390,24 @@ export default function TripDashboardScreen() {
             <View className="flex-row items-center justify-between mb-[18px]">
               <View className="flex-1">
                 <Text className="font-medium text-[13px] text-muted dark:text-muted-dark">
-                  Your Balance
+                  {t('tripDashboard.yourBalance')}
                 </Text>
                 <Text
-                  style={tabularNums}
-                  className={`font-bold text-[34px] tracking-tight mt-0.5 ${heroBalanceColorClass}`}
+                  style={[tabularNums, ltrTextStyle]}
+                  className={`font-bold text-[34px] tracking-tight mt-0.5 self-start ${heroBalanceColorClass}`}
                 >
                   {isOwed
-                    ? formatMoney(userNetMinor, trip.baseCurrency)
+                    ? formatCurrency(userNetMinor, trip.baseCurrency)
                     : isDebt
-                    ? formatMoney(Math.abs(userNetMinor), trip.baseCurrency)
-                    : formatMoney(0, trip.baseCurrency)}
+                    ? formatCurrency(Math.abs(userNetMinor), trip.baseCurrency)
+                    : formatCurrency(0, trip.baseCurrency)}
                 </Text>
                 <Text className="font-semibold text-[13px] mt-0.5 text-ink dark:text-ink-dark">
-                  {isOwed ? "You're owed" : isDebt ? 'You owe' : 'All settled up'}
+                  {isOwed
+                    ? t('tripDashboard.youAreOwed')
+                    : isDebt
+                    ? t('tripDashboard.youOwe')
+                    : t('tripDashboard.allSettledUp')}
                 </Text>
               </View>
 
@@ -401,7 +418,7 @@ export default function TripDashboardScreen() {
                 className="px-[22px] py-[11px] rounded-full bg-ink dark:bg-ink-dark active:opacity-85"
               >
                 <Text className="font-semibold text-[14px] text-ink-dark dark:text-ink">
-                  Settle
+                  {t('tripDashboard.settle')}
                 </Text>
               </Pressable>
             </View>
@@ -410,7 +427,7 @@ export default function TripDashboardScreen() {
             <View className="flex-row items-center pb-3 border-b border-hairline dark:border-hairline-dark gap-1.5">
               <View className="px-3 py-1.5 rounded-lg border border-hairline dark:border-hairline-dark bg-surface dark:bg-surface-dark">
                 <Text className="font-semibold text-[13px] text-ink dark:text-ink-dark">
-                  Ledger
+                  {t('tripDashboard.tabs.ledger')}
                 </Text>
               </View>
 
@@ -421,7 +438,7 @@ export default function TripDashboardScreen() {
                 className="px-2.5 py-1.5"
               >
                 <Text className="font-medium text-[13px] text-muted dark:text-muted-dark">
-                  Balances
+                  {t('tripDashboard.tabs.balances')}
                 </Text>
               </Pressable>
 
@@ -432,7 +449,7 @@ export default function TripDashboardScreen() {
                 className="px-2.5 py-1.5"
               >
                 <Text className="font-medium text-[13px] text-muted dark:text-muted-dark">
-                  Map
+                  {t('tripDashboard.tabs.map')}
                 </Text>
               </Pressable>
 
@@ -443,7 +460,7 @@ export default function TripDashboardScreen() {
                 className="px-2.5 py-1.5"
               >
                 <Text className="font-medium text-[13px] text-muted dark:text-muted-dark">
-                  Insights
+                  {t('tripDashboard.tabs.insights')}
                 </Text>
               </Pressable>
 
@@ -455,8 +472,8 @@ export default function TripDashboardScreen() {
                     setSelectedCategory('all');
                   }
                 }}
-                className="ml-auto p-1.5"
-                accessibilityLabel="Search and filter expenses"
+                className="ms-auto p-1.5"
+                accessibilityLabel={t('tripDashboard.searchPlaceholder')}
               >
                 {showSearch ? (
                   <X size={16} color={palette.text} />
@@ -472,10 +489,11 @@ export default function TripDashboardScreen() {
                 <View className="flex-row items-center border border-hairline dark:border-hairline-dark bg-surface dark:bg-surface-dark rounded-lg px-3 h-[38px] gap-2 mb-2">
                   <Search size={15} color={palette.textMuted} />
                   <TextInput
-                    placeholder="Search expenses..."
+                    placeholder={t('tripDashboard.searchPlaceholder')}
                     placeholderTextColor={palette.textMuted}
                     value={searchQuery}
                     onChangeText={setSearchQuery}
+                    textAlign={isRTL ? 'right' : 'left'}
                     autoFocus
                     className="flex-1 font-sans text-[14px] text-ink dark:text-ink-dark"
                   />
@@ -501,7 +519,7 @@ export default function TripDashboardScreen() {
                           : 'text-ink dark:text-ink-dark'
                       }`}
                     >
-                      All
+                      {t('tripDashboard.all')}
                     </Text>
                   </Pressable>
 
@@ -524,7 +542,7 @@ export default function TripDashboardScreen() {
                               : 'text-ink dark:text-ink-dark'
                           }`}
                         >
-                          {cat.shortLabel}
+                          {t(`categories.${cat.id}.shortLabel`)}
                         </Text>
                       </Pressable>
                     );
@@ -540,7 +558,7 @@ export default function TripDashboardScreen() {
                 <View className="mt-3.5">
                   <View className="self-start px-2.5 py-1 rounded-[6px] mb-1 bg-surface dark:bg-surface-dark">
                     <Text className="font-semibold text-[12px] text-muted dark:text-muted-dark">
-                      Settlements
+                      {t('tripDashboard.settlementsHeader')}
                     </Text>
                   </View>
                   {activePayments.map((p, idx) =>
@@ -554,10 +572,10 @@ export default function TripDashboardScreen() {
               <View className="items-center py-[38px]">
                 <Receipt size={26} color={palette.textMuted} />
                 <Text className="font-bold text-[15px] mt-2.5 text-ink dark:text-ink-dark">
-                  No expenses match
+                  {t('tripDashboard.emptyLedgerTitle')}
                 </Text>
-                <Text className="font-sans text-[13px] mt-1 text-muted dark:text-muted-dark">
-                  Tap + Log Expense below to add one.
+                <Text className="font-sans text-[13px] mt-1 text-center text-muted dark:text-muted-dark">
+                  {t('tripDashboard.emptyLedgerBody')}
                 </Text>
               </View>
             ) : (
@@ -594,7 +612,7 @@ export default function TripDashboardScreen() {
         >
           <Plus size={18} color={palette.accentText} strokeWidth={2.4} />
           <Text className="font-semibold text-[16px] tracking-tight text-ink-dark dark:text-ink">
-            Log Expense
+            {t('tripDashboard.logExpense')}
           </Text>
         </Pressable>
       </View>

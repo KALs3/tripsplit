@@ -8,11 +8,13 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { KeyboardAwareView } from '../../components/ui/KeyboardAwareView';
 import { CURRENCY_METADATA } from '../../domain';
+import { useLocale } from '../../hooks/useLocale';
 import { useTheme } from '../../hooks/useTheme';
 import { useAppStore } from '../../store/useAppStore';
 
 export default function NewTripModal() {
   const { palette } = useTheme();
+  const { t, rtlContainerStyle } = useLocale();
 
   const [name, setName] = useState('');
   const [baseCurrency, setBaseCurrency] = useState('USD');
@@ -24,7 +26,7 @@ export default function NewTripModal() {
 
   const handleCreate = () => {
     if (!name.trim()) {
-      setError('Enter a trip name.');
+      setError(t('trips.tripNameError'));
       return;
     }
 
@@ -41,10 +43,10 @@ export default function NewTripModal() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-canvas dark:bg-canvas-dark">
+    <SafeAreaView style={rtlContainerStyle} className="flex-1 bg-canvas dark:bg-canvas-dark">
       <View className="flex-row items-center justify-between px-[18px] py-3.5 border-b border-hairline dark:border-hairline-dark">
         <Text className="font-bold text-[19px] tracking-tight text-ink dark:text-ink-dark">
-          Create trip
+          {t('trips.newModalTitle')}
         </Text>
         <Pressable onPress={() => router.back()} className="p-1">
           <X size={21} color={palette.text} />
@@ -58,8 +60,8 @@ export default function NewTripModal() {
           keyboardDismissMode="on-drag"
         >
           <Input
-            label="Trip name"
-            placeholder="Summer in Greece"
+            label={t('trips.tripNameLabel')}
+            placeholder={t('trips.tripNamePlaceholder')}
             value={name}
             onChangeText={(val) => {
               setName(val);
@@ -69,13 +71,13 @@ export default function NewTripModal() {
           />
 
           <Text className="font-semibold text-[13px] mt-3.5 mb-1 text-ink dark:text-ink-dark">
-            Base currency
+            {t('trips.baseCurrency')}
           </Text>
           <Text className="font-sans text-[12px] mb-2.5 leading-[17px] text-muted dark:text-muted-dark">
-            All expenses and settlements are summarized in this currency.
+            {t('trips.baseCurrencyHint')}
           </Text>
           <View className="flex-row flex-wrap gap-2">
-            {['USD', 'EUR', 'GBP', 'EGP', 'JPY', 'CAD'].map((curr) => {
+            {['USD', 'EUR', 'GBP', 'EGP', 'AED', 'SAR', 'JPY', 'CAD'].map((curr) => {
               const isSelected = baseCurrency === curr;
               return (
                 <Pressable
@@ -104,7 +106,7 @@ export default function NewTripModal() {
           <CoverPhotoField value={coverUrl} onChange={setCoverUrl} />
 
           <Button
-            title="Create trip"
+            title={t('trips.createTripCta')}
             onPress={handleCreate}
             variant="primary"
             size="lg"

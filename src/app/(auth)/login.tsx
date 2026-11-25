@@ -9,12 +9,14 @@ import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { KeyboardAwareView } from '../../components/ui/KeyboardAwareView';
 import { TicketDivider } from '../../components/ui/TicketDivider';
+import { useLocale } from '../../hooks/useLocale';
 import { useTheme } from '../../hooks/useTheme';
 import { supabase } from '../../lib/supabase';
 import { useAppStore } from '../../store/useAppStore';
 
 export default function LoginScreen() {
   const { palette } = useTheme();
+  const { t, rtlContainerStyle, flipRtlStyle } = useLocale();
 
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
@@ -33,7 +35,7 @@ export default function LoginScreen() {
 
   const handleEmailAuth = async () => {
     if (!email || !password) {
-      setErrorMessage('Enter both email and password.');
+      setErrorMessage(t('auth.missingCredentials'));
       return;
     }
     setErrorMessage('');
@@ -77,14 +79,14 @@ export default function LoginScreen() {
         }
       }
     } catch (err: any) {
-      setErrorMessage(err.message || 'Authentication failed.');
+      setErrorMessage(err.message || t('auth.authFailed'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-canvas dark:bg-canvas-dark">
+    <SafeAreaView style={rtlContainerStyle} className="flex-1 bg-canvas dark:bg-canvas-dark">
       <KeyboardAwareView>
         <ScrollView
           contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 28, paddingBottom: 40 }}
@@ -97,10 +99,10 @@ export default function LoginScreen() {
               <Compass size={28} color={palette.accentText} strokeWidth={2} />
             </View>
             <Text className="font-bold text-[30px] tracking-tight text-ink dark:text-ink-dark">
-              TripSplit
+              {t('auth.appName')}
             </Text>
             <Text className="font-sans text-[15px] mt-1 leading-[22px] text-muted dark:text-muted-dark">
-              Shared trip ledger and instant debt settlement
+              {t('auth.subtitle')}
             </Text>
           </View>
 
@@ -109,10 +111,10 @@ export default function LoginScreen() {
             <View className="flex-row items-center justify-between gap-2.5">
               <View className="flex-1">
                 <Text className="font-semibold text-[16px] tracking-tight text-ink dark:text-ink-dark">
-                  Tokyo & Kyoto sample trip
+                  {t('auth.tryOfflineDemo')}
                 </Text>
                 <Text className="font-sans text-[13px] mt-0.5 text-muted dark:text-muted-dark">
-                  4 travelers, live ledger, offline sync
+                  {t('auth.demoHint')}
                 </Text>
               </View>
               <Badge label="TOKYO26" variant="neutral" />
@@ -121,7 +123,7 @@ export default function LoginScreen() {
             <TicketDivider />
 
             <Button
-              title="Try demo trip"
+              title={t('auth.tryOfflineDemo')}
               onPress={handleGuestDemo}
               variant="primary"
               size="md"
@@ -132,7 +134,7 @@ export default function LoginScreen() {
           <View className="flex-row items-center my-4">
             <View className="flex-1 h-px bg-hairline dark:bg-hairline-dark" />
             <Text className="font-medium text-[12px] px-2.5 text-muted dark:text-muted-dark">
-              or continue with email
+              {t('auth.or')}
             </Text>
             <View className="flex-1 h-px bg-hairline dark:bg-hairline-dark" />
           </View>
@@ -141,16 +143,16 @@ export default function LoginScreen() {
           <Card className="p-4">
             {isSignUp && (
               <Input
-                label="Full name"
-                placeholder="Jane Doe"
+                label={t('auth.yourName')}
+                placeholder={t('auth.yourNamePlaceholder')}
                 value={displayName}
                 onChangeText={setDisplayName}
                 autoCapitalize="words"
               />
             )}
             <Input
-              label="Email"
-              placeholder="name@example.com"
+              label={t('auth.email')}
+              placeholder={t('auth.emailPlaceholder')}
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
@@ -158,8 +160,8 @@ export default function LoginScreen() {
               autoCorrect={false}
             />
             <Input
-              label="Password"
-              placeholder="••••••••"
+              label={t('auth.password')}
+              placeholder={t('auth.passwordPlaceholder')}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
@@ -172,21 +174,21 @@ export default function LoginScreen() {
             ) : null}
 
             <Button
-              title={isSignUp ? 'Create account' : 'Sign in'}
+              title={isSignUp ? t('auth.createAccount') : t('auth.signIn')}
               onPress={handleEmailAuth}
               loading={loading}
               variant="outline"
               size="md"
-              icon={<ArrowRight size={16} color={palette.text} />}
+              icon={
+                <View style={flipRtlStyle}>
+                  <ArrowRight size={16} color={palette.text} />
+                </View>
+              }
               className="mt-2.5"
             />
 
             <Button
-              title={
-                isSignUp
-                  ? 'Already have an account? Sign in'
-                  : 'New here? Create an account'
-              }
+              title={isSignUp ? t('auth.switchToSignIn') : t('auth.switchToSignUp')}
               onPress={() => {
                 setIsSignUp(!isSignUp);
                 setErrorMessage('');

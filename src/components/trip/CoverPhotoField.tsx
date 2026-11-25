@@ -2,24 +2,25 @@ import * as ImagePicker from 'expo-image-picker';
 import { Camera, Image as ImageIcon, X } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
+import { useLocale } from '../../hooks/useLocale';
 import { useTheme } from '../../hooks/useTheme';
 import { Button } from '../ui/Button';
 
 export const PRESET_COVERS = [
   {
-    label: 'Tokyo',
+    id: 'Tokyo' as const,
     url: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=800',
   },
   {
-    label: 'Paris',
+    id: 'Paris' as const,
     url: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800',
   },
   {
-    label: 'Greece',
+    id: 'Greece' as const,
     url: 'https://images.unsplash.com/photo-1533105079780-92b9be482077?w=800',
   },
   {
-    label: 'Coast',
+    id: 'Coast' as const,
     url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800',
   },
 ];
@@ -34,6 +35,7 @@ interface CoverPhotoFieldProps {
  */
 export function CoverPhotoField({ value, onChange }: CoverPhotoFieldProps) {
   const { palette } = useTheme();
+  const { t } = useLocale();
   const [pickerError, setPickerError] = useState('');
 
   const handlePickPhoto = async (fromCamera: boolean) => {
@@ -42,7 +44,7 @@ export function CoverPhotoField({ value, onChange }: CoverPhotoFieldProps) {
       if (fromCamera) {
         const perm = await ImagePicker.requestCameraPermissionsAsync();
         if (!perm.granted) {
-          setPickerError('Camera permission is needed to take a cover photo.');
+          setPickerError(t('cover.cameraPermissionError'));
           return;
         }
         const res = await ImagePicker.launchCameraAsync({
@@ -66,7 +68,7 @@ export function CoverPhotoField({ value, onChange }: CoverPhotoFieldProps) {
         }
       }
     } catch {
-      setPickerError('Photo picker is unavailable on this device.');
+      setPickerError(t('cover.pickerUnavailable'));
     }
   };
 
@@ -74,10 +76,10 @@ export function CoverPhotoField({ value, onChange }: CoverPhotoFieldProps) {
     <View>
       <View className="flex-row items-center justify-between mt-4 mb-1.5">
         <Text className="font-semibold text-[13px] text-ink dark:text-ink-dark">
-          Cover photo
+          {t('cover.title')}
         </Text>
         <Text className="font-sans text-[12px] text-muted dark:text-muted-dark">
-          Optional
+          {t('common.optional')}
         </Text>
       </View>
 
@@ -93,18 +95,20 @@ export function CoverPhotoField({ value, onChange }: CoverPhotoFieldProps) {
             <View className="absolute inset-0 bg-black/25" />
             <Pressable
               onPress={() => onChange('')}
-              className="absolute top-2.5 right-2.5 flex-row items-center gap-1 px-2.5 py-1 rounded-full bg-black/75 active:opacity-80"
-              accessibilityLabel="Remove cover photo"
+              className="absolute top-2.5 end-2.5 flex-row items-center gap-1 px-2.5 py-1 rounded-full bg-black/75 active:opacity-80"
+              accessibilityLabel={t('cover.removeA11y')}
             >
               <X size={13} color="#FFFFFF" />
-              <Text className="font-semibold text-[11px] text-white">Remove</Text>
+              <Text className="font-semibold text-[11px] text-white">
+                {t('common.remove')}
+              </Text>
             </Pressable>
           </>
         ) : (
           <View className="items-center px-4">
             <ImageIcon size={22} color={palette.textMuted} />
             <Text className="font-medium text-[12px] text-muted dark:text-muted-dark mt-1.5 text-center">
-              No cover attached — monochrome header will be used
+              {t('cover.empty')}
             </Text>
           </View>
         )}
@@ -113,7 +117,7 @@ export function CoverPhotoField({ value, onChange }: CoverPhotoFieldProps) {
       {/* Attach from Device */}
       <View className="flex-row gap-2 mt-2.5">
         <Button
-          title="Choose photo"
+          title={t('cover.choosePhoto')}
           onPress={() => handlePickPhoto(false)}
           variant="secondary"
           size="sm"
@@ -121,7 +125,7 @@ export function CoverPhotoField({ value, onChange }: CoverPhotoFieldProps) {
           className="flex-1"
         />
         <Button
-          title="Take photo"
+          title={t('cover.takePhoto')}
           onPress={() => handlePickPhoto(true)}
           variant="secondary"
           size="sm"
@@ -138,14 +142,14 @@ export function CoverPhotoField({ value, onChange }: CoverPhotoFieldProps) {
 
       {/* Quick Presets */}
       <Text className="font-medium text-[11px] text-muted dark:text-muted-dark mt-3 mb-1.5">
-        Or pick a preset
+        {t('cover.presetsTitle')}
       </Text>
       <View className="flex-row gap-2">
         {PRESET_COVERS.map((item) => {
           const isSelected = value === item.url;
           return (
             <Pressable
-              key={item.label}
+              key={item.id}
               onPress={() => onChange(isSelected ? '' : item.url)}
               className={`flex-1 rounded-lg overflow-hidden items-center pb-1.5 bg-card dark:bg-card-dark ${
                 isSelected
@@ -159,7 +163,7 @@ export function CoverPhotoField({ value, onChange }: CoverPhotoFieldProps) {
                 className="w-full h-[46px] mb-1"
               />
               <Text className="font-medium text-[11px] text-ink dark:text-ink-dark">
-                {item.label}
+                {t(`cover.presets.${item.id}`)}
               </Text>
             </Pressable>
           );

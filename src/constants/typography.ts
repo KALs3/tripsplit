@@ -7,6 +7,13 @@ export const fonts = {
   bold: 'SpaceGrotesk_700Bold',
 } as const;
 
+export const arabicFonts = {
+  regular: 'IBMPlexSansArabic_400Regular',
+  medium: 'IBMPlexSansArabic_500Medium',
+  semibold: 'IBMPlexSansArabic_600SemiBold',
+  bold: 'IBMPlexSansArabic_700Bold',
+} as const;
+
 /**
  * Ensures monetary figures, percentages, and counts align pixel-for-pixel vertically.
  */

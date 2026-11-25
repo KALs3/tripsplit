@@ -1,6 +1,13 @@
 import '../../global.css';
 import '../lib/nativewind';
+import '../i18n';
 
+import {
+  IBMPlexSansArabic_400Regular,
+  IBMPlexSansArabic_500Medium,
+  IBMPlexSansArabic_600SemiBold,
+  IBMPlexSansArabic_700Bold,
+} from '@expo-google-fonts/ibm-plex-sans-arabic';
 import {
   SpaceGrotesk_400Regular,
   SpaceGrotesk_500Medium,
@@ -15,6 +22,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useLocale } from '../hooks/useLocale';
 import { useTheme } from '../hooks/useTheme';
 import { useAppStore } from '../store/useAppStore';
 
@@ -22,18 +30,25 @@ void SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const { isDark, palette } = useTheme();
+  const { rtlContainerStyle, isRTL } = useLocale();
   const setNetworkOnline = useAppStore((s) => s.setNetworkOnline);
   const hydrateThemePreference = useAppStore((s) => s.hydrateThemePreference);
+  const hydrateLanguagePreference = useAppStore((s) => s.hydrateLanguagePreference);
 
   useEffect(() => {
     void hydrateThemePreference();
-  }, [hydrateThemePreference]);
+    void hydrateLanguagePreference();
+  }, [hydrateThemePreference, hydrateLanguagePreference]);
 
   const [fontsLoaded, fontError] = useFonts({
     SpaceGrotesk_400Regular,
     SpaceGrotesk_500Medium,
     SpaceGrotesk_600SemiBold,
     SpaceGrotesk_700Bold,
+    IBMPlexSansArabic_400Regular,
+    IBMPlexSansArabic_500Medium,
+    IBMPlexSansArabic_600SemiBold,
+    IBMPlexSansArabic_700Bold,
   });
 
   useEffect(() => {
@@ -75,12 +90,15 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider className="flex-1 bg-canvas dark:bg-canvas-dark">
-      <View className="flex-1 bg-canvas dark:bg-canvas-dark">
+      <View
+        style={rtlContainerStyle}
+        className="flex-1 bg-canvas dark:bg-canvas-dark"
+      >
         <StatusBar style={isDark ? 'light' : 'dark'} />
         <Stack
           screenOptions={{
             headerShown: false,
-            animation: 'slide_from_right',
+            animation: isRTL ? 'slide_from_left' : 'slide_from_right',
             contentStyle: { backgroundColor: palette.background },
           }}
         >

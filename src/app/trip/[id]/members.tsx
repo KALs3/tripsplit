@@ -28,12 +28,14 @@ import { Input } from '../../../components/ui/Input';
 import { KeyboardAwareView } from '../../../components/ui/KeyboardAwareView';
 import { TicketDivider } from '../../../components/ui/TicketDivider';
 import { tabularNums } from '../../../constants/typography';
+import { useLocale } from '../../../hooks/useLocale';
 import { useTheme } from '../../../hooks/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
 
 export default function TripMembersScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { isDark, palette, colors } = useTheme();
+  const { t, flipRtlStyle, ltrTextStyle } = useLocale();
 
   const trips = useAppStore((s) => s.trips);
   const members = useAppStore((s) => s.members);
@@ -58,9 +60,9 @@ export default function TripMembersScreen() {
       <SafeAreaView className="flex-1 bg-canvas dark:bg-canvas-dark">
         <View className="flex-1 items-center justify-center">
           <Text className="font-bold text-[16px] text-ink dark:text-ink-dark">
-            Trip not found
+            {t('common.tripNotFound')}
           </Text>
-          <Button title="Back" onPress={() => router.back()} className="mt-3" />
+          <Button title={t('common.back')} onPress={() => router.back()} className="mt-3" />
         </View>
       </SafeAreaView>
     );
@@ -79,7 +81,11 @@ export default function TripMembersScreen() {
   const handleShareInvite = async () => {
     try {
       await Share.share({
-        message: `Join "${trip.name}" on TripSplit! Use code ${trip.inviteCode} or open: ${inviteLink}`,
+        message: t('members.shareMessage', {
+          tripName: trip.name,
+          code: trip.inviteCode,
+          link: inviteLink,
+        }),
       });
     } catch {
       // Dismissed
@@ -88,7 +94,7 @@ export default function TripMembersScreen() {
 
   const handleAddFriend = () => {
     if (!newFriendName.trim()) {
-      setNameError('Enter a name to add a traveler.');
+      setNameError(t('members.addTravelerError'));
       return;
     }
     addMemberToTrip(trip.id, newFriendName);
@@ -102,12 +108,12 @@ export default function TripMembersScreen() {
       return;
     }
     Alert.alert(
-      'Remove member',
-      `Remove ${displayName} from "${trip.name}"?`,
+      t('members.removeTitle'),
+      t('members.removeBody', { name: displayName, tripName: trip.name }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Remove',
+          text: t('common.remove'),
           style: 'destructive',
           onPress: () => removeMemberFromTrip(trip.id, memberId),
         },
@@ -122,10 +128,12 @@ export default function TripMembersScreen() {
           onPress={() => router.back()}
           className="w-9 h-9 rounded-lg bg-surface dark:bg-surface-dark items-center justify-center"
         >
-          <ArrowLeft size={19} color={palette.text} />
+          <View style={flipRtlStyle}>
+            <ArrowLeft size={19} color={palette.text} />
+          </View>
         </Pressable>
         <Text className="font-bold text-[17px] tracking-tight text-ink dark:text-ink-dark">
-          Travelers ({tripMembers.length})
+          {t('members.title', { count: tripMembers.length })}
         </Text>
         <View className="w-9" />
       </View>
@@ -139,10 +147,10 @@ export default function TripMembersScreen() {
           {/* Boarding Pass QR Invite Ticket */}
           <Card className="items-center p-4">
             <Text className="font-bold text-[17px] text-ink dark:text-ink-dark">
-              Trip invite pass
+              {t('members.inviteCodeTitle')}
             </Text>
             <Text className="font-sans text-[13px] text-center mt-0.5 mb-3.5 text-muted dark:text-muted-dark">
-              Scan or share this code to join {trip.name}.
+              {t('members.inviteSubtitle')}
             </Text>
 
             <View className="p-3 bg-white rounded-[10px] border border-hairline dark:border-hairline-dark">
@@ -158,7 +166,7 @@ export default function TripMembersScreen() {
 
             <View className="px-[18px] py-2 rounded-lg bg-surface dark:bg-surface-dark">
               <Text
-                style={tabularNums}
+                style={[tabularNums, ltrTextStyle]}
                 className="font-bold text-[18px] tracking-[2px] text-ink dark:text-ink-dark"
               >
                 {trip.inviteCode}
@@ -167,7 +175,7 @@ export default function TripMembersScreen() {
 
             <View className="flex-row gap-2.5 w-full mt-3.5">
               <Button
-                title={copied ? 'Copied' : 'Copy code'}
+                title={copied ? t('members.copied') : t('members.copyCode')}
                 onPress={handleCopyCode}
                 variant="outline"
                 size="sm"
@@ -181,7 +189,7 @@ export default function TripMembersScreen() {
                 className="flex-1"
               />
               <Button
-                title="Share link"
+                title={t('members.shareLink')}
                 onPress={handleShareInvite}
                 variant="primary"
                 size="sm"
@@ -194,12 +202,12 @@ export default function TripMembersScreen() {
           {/* Add Traveler */}
           <Card className="p-4">
             <Text className="font-bold text-[15px] mb-2.5 text-ink dark:text-ink-dark">
-              Add traveler directly
+              {t('members.addTravelerTitle')}
             </Text>
             <View className="flex-row items-start gap-2.5">
               <View className="flex-1">
                 <Input
-                  placeholder="Friend's name (e.g. Maya)"
+                  placeholder={t('members.addTravelerPlaceholder')}
                   value={newFriendName}
                   onChangeText={(val) => {
                     setNewFriendName(val);
@@ -210,7 +218,7 @@ export default function TripMembersScreen() {
                 />
               </View>
               <Button
-                title="Add"
+                title={t('common.add')}
                 onPress={handleAddFriend}
                 variant="primary"
                 size="md"
@@ -221,7 +229,7 @@ export default function TripMembersScreen() {
 
           {/* Members List */}
           <Text className="font-bold text-[16px] mt-3.5 mb-1.5 text-ink dark:text-ink-dark">
-            Current group
+            {t('members.currentGroup')}
           </Text>
           <Card className="p-0 overflow-hidden">
             {tripMembers.map((member, idx) => {
@@ -245,10 +253,10 @@ export default function TripMembersScreen() {
                   {member.avatarUrl ? (
                     <Image
                       source={{ uri: member.avatarUrl }}
-                      className="w-10 h-10 rounded-full mr-3"
+                      className="w-10 h-10 rounded-full me-3"
                     />
                   ) : (
-                    <View className="w-10 h-10 rounded-full bg-surface dark:bg-surface-dark items-center justify-center mr-3">
+                    <View className="w-10 h-10 rounded-full bg-surface dark:bg-surface-dark items-center justify-center me-3">
                       <Text className="font-bold text-[14px] text-ink dark:text-ink-dark">
                         {initials}
                       </Text>
@@ -257,20 +265,23 @@ export default function TripMembersScreen() {
 
                   <View className="flex-1">
                     <Text className="font-semibold text-[14px] text-ink dark:text-ink-dark">
-                      {member.displayName} {isSelf ? '(You)' : ''}
+                      {member.displayName} {isSelf ? `(${t('common.you')})` : ''}
                     </Text>
-                    <Badge
-                      label={member.role === 'owner' ? 'Owner' : 'Member'}
-                      variant="neutral"
-                      className="mt-1"
-                    />
+                    <View className="mt-1 self-start">
+                      <Badge
+                        label={
+                          member.role === 'owner' ? t('common.owner') : t('common.member')
+                        }
+                        variant="neutral"
+                      />
+                    </View>
                   </View>
 
                   {isOwner && member.role !== 'owner' && (
                     <Pressable
                       onPress={() => handleRemoveMember(member.userId, member.displayName)}
                       className="w-8 h-8 rounded-lg bg-surface dark:bg-surface-dark items-center justify-center"
-                      accessibilityLabel={`Remove ${member.displayName}`}
+                      accessibilityLabel={t('members.removeTitle')}
                     >
                       <Trash2 size={15} color={debtColor} />
                     </Pressable>

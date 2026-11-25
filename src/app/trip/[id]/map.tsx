@@ -20,12 +20,14 @@ import { KeyboardAwareView } from '../../../components/ui/KeyboardAwareView';
 import { EXPENSE_CATEGORIES } from '../../../constants/categories';
 import { tabularNums } from '../../../constants/typography';
 import { ExpenseCategory, PlaceRecord } from '../../../domain/types';
+import { useLocale } from '../../../hooks/useLocale';
 import { useTheme } from '../../../hooks/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
 
 export default function TripMapScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { isDark, palette, colors } = useTheme();
+  const { t, flipRtlStyle, ltrTextStyle } = useLocale();
 
   const trips = useAppStore((s) => s.trips);
   const places = useAppStore((s) => s.places);
@@ -91,7 +93,7 @@ export default function TripMapScreen() {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        setGpsError('Location permission denied. Using sample trip coordinates.');
+        setGpsError(t('map.permissionDenied'));
         setCoords({ lat: 35.6595, lng: 139.7004 });
         setShowAddForm(true);
         return;
@@ -104,7 +106,7 @@ export default function TripMapScreen() {
       });
       setShowAddForm(true);
     } catch {
-      setGpsError('GPS unavailable on this device. Using default coordinates.');
+      setGpsError(t('map.gpsUnavailable'));
       setCoords({ lat: 35.6595, lng: 139.7004 });
       setShowAddForm(true);
     } finally {
@@ -115,7 +117,7 @@ export default function TripMapScreen() {
   const handleSavePlace = () => {
     if (!trip) return;
     if (!placeName.trim()) {
-      setGpsError('Enter a place name.');
+      setGpsError(t('map.enterPlaceName'));
       return;
     }
 
@@ -156,9 +158,9 @@ export default function TripMapScreen() {
       <SafeAreaView className="flex-1 bg-canvas dark:bg-canvas-dark">
         <View className="flex-1 items-center justify-center">
           <Text className="font-bold text-[16px] text-ink dark:text-ink-dark">
-            Trip not found
+            {t('common.tripNotFound')}
           </Text>
-          <Button title="Back" onPress={() => router.back()} className="mt-3" />
+          <Button title={t('common.back')} onPress={() => router.back()} className="mt-3" />
         </View>
       </SafeAreaView>
     );
@@ -173,13 +175,15 @@ export default function TripMapScreen() {
           onPress={() => router.back()}
           className="w-9 h-9 rounded-lg bg-surface dark:bg-surface-dark items-center justify-center"
         >
-          <ArrowLeft size={19} color={palette.text} />
+          <View style={flipRtlStyle}>
+            <ArrowLeft size={19} color={palette.text} />
+          </View>
         </Pressable>
         <Text className="font-bold text-[17px] tracking-tight text-ink dark:text-ink-dark">
-          Trip map
+          {t('map.title')}
         </Text>
         <Button
-          title="Pin"
+          title={t('map.pin')}
           onPress={() => setShowAddForm(!showAddForm)}
           variant="primary"
           size="sm"
@@ -197,10 +201,10 @@ export default function TripMapScreen() {
           <Card className="p-3.5">
             <View className="flex-row items-center justify-between mb-3">
               <Text className="font-bold text-[15px] text-ink dark:text-ink-dark">
-                Pinned spots ({tripPlaces.length})
+                {t('map.pinnedSpots', { count: tripPlaces.length })}
               </Text>
               <Button
-                title={gpsLoading ? 'Locating...' : 'Pin GPS'}
+                title={gpsLoading ? t('map.locating') : t('map.pinGps')}
                 onPress={handleCaptureGps}
                 loading={gpsLoading}
                 variant="outline"
@@ -295,15 +299,15 @@ export default function TripMapScreen() {
                     {selectedPlace.name}
                   </Text>
                   <Text
-                    style={tabularNums}
-                    className="font-sans text-[12px] mt-0.5 text-muted dark:text-muted-dark"
+                    style={[tabularNums, ltrTextStyle]}
+                    className="font-sans text-[12px] mt-0.5 self-start text-muted dark:text-muted-dark"
                   >
                     {selectedPlace.lat.toFixed(4)}, {selectedPlace.lng.toFixed(4)}
-                    {selectedPlace.note ? `  ${selectedPlace.note}` : ''}
+                    {selectedPlace.note ? ` · ${selectedPlace.note}` : ''}
                   </Text>
                 </View>
                 <Button
-                  title="Directions"
+                  title={t('map.openInMaps')}
                   onPress={() => openExternalMaps(selectedPlace)}
                   variant="outline"
                   size="sm"
@@ -318,7 +322,7 @@ export default function TripMapScreen() {
             <Card className="p-4 border-ink dark:border-ink-dark">
               <View className="flex-row justify-between items-center mb-2">
                 <Text className="font-bold text-[16px] text-ink dark:text-ink-dark">
-                  Add map pin
+                  {t('map.pinNewSpot')}
                 </Text>
                 {coords && (
                   <Badge
@@ -329,8 +333,8 @@ export default function TripMapScreen() {
               </View>
 
               <Input
-                label="Place name"
-                placeholder="Senso-ji Temple"
+                label={t('map.placeNameLabel')}
+                placeholder={t('map.placeNamePlaceholder')}
                 value={placeName}
                 onChangeText={(val) => {
                   setPlaceName(val);
@@ -338,8 +342,8 @@ export default function TripMapScreen() {
                 }}
               />
               <Input
-                label="Note (optional)"
-                placeholder="Great spot for sunset photos"
+                label={t('map.noteLabel')}
+                placeholder={t('map.notePlaceholder')}
                 value={placeNote}
                 onChangeText={setPlaceNote}
               />
@@ -373,7 +377,7 @@ export default function TripMapScreen() {
                             : 'text-ink dark:text-ink-dark'
                         }`}
                       >
-                        {c.shortLabel}
+                        {t(`categories.${c.id}.shortLabel`)}
                       </Text>
                     </Pressable>
                   );
@@ -388,14 +392,14 @@ export default function TripMapScreen() {
 
               <View className="flex-row gap-2.5 mt-2.5">
                 <Button
-                  title="Cancel"
+                  title={t('common.cancel')}
                   onPress={() => setShowAddForm(false)}
                   variant="ghost"
                   size="sm"
                   className="flex-1"
                 />
                 <Button
-                  title="Save pin"
+                  title={t('map.savePin')}
                   onPress={handleSavePlace}
                   variant="primary"
                   size="sm"
@@ -407,57 +411,65 @@ export default function TripMapScreen() {
 
           {/* Saved Places List */}
           <Text className="font-bold text-[16px] mt-3.5 mb-1.5 text-ink dark:text-ink-dark">
-            Saved places
+            {t('map.pinnedSpots', { count: tripPlaces.length })}
           </Text>
-          <Card className="p-0 overflow-hidden">
-            {tripPlaces.map((place, idx) => {
-              const isSelected = selectedPlace?.id === place.id;
-              return (
-                <Pressable
-                  key={place.id}
-                  onPress={() => setSelectedPlaceId(place.id)}
-                  className={`flex-row items-center px-3.5 py-3 ${
-                    isSelected ? 'bg-surface dark:bg-surface-dark' : ''
-                  } ${
-                    idx < tripPlaces.length - 1
-                      ? 'border-b border-hairline dark:border-hairline-dark'
-                      : ''
-                  }`}
-                >
-                  <View
-                    className={`w-9 h-9 rounded-lg items-center justify-center mr-3 ${
-                      isSelected
-                        ? 'bg-ink dark:bg-ink-dark'
-                        : 'bg-surface dark:bg-surface-dark'
+          {tripPlaces.length === 0 ? (
+            <Card className="p-5 items-center">
+              <Text className="font-sans text-[13px] text-center text-muted dark:text-muted-dark">
+                {t('map.emptyBody')}
+              </Text>
+            </Card>
+          ) : (
+            <Card className="p-0 overflow-hidden">
+              {tripPlaces.map((place, idx) => {
+                const isSelected = selectedPlace?.id === place.id;
+                return (
+                  <Pressable
+                    key={place.id}
+                    onPress={() => setSelectedPlaceId(place.id)}
+                    className={`flex-row items-center px-3.5 py-3 ${
+                      isSelected ? 'bg-surface dark:bg-surface-dark' : ''
+                    } ${
+                      idx < tripPlaces.length - 1
+                        ? 'border-b border-hairline dark:border-hairline-dark'
+                        : ''
                     }`}
                   >
-                    <CategoryIcon
-                      category={place.category}
-                      size={16}
-                      color={isSelected ? palette.accentText : palette.text}
-                    />
-                  </View>
-                  <View className="flex-1 mr-2">
-                    <Text className="font-semibold text-[14px] text-ink dark:text-ink-dark">
-                      {place.name}
-                    </Text>
-                    {place.note ? (
-                      <Text className="font-sans text-[12px] mt-0.5 text-muted dark:text-muted-dark">
-                        {place.note}
+                    <View
+                      className={`w-9 h-9 rounded-lg items-center justify-center me-3 ${
+                        isSelected
+                          ? 'bg-ink dark:bg-ink-dark'
+                          : 'bg-surface dark:bg-surface-dark'
+                      }`}
+                    >
+                      <CategoryIcon
+                        category={place.category}
+                        size={16}
+                        color={isSelected ? palette.accentText : palette.text}
+                      />
+                    </View>
+                    <View className="flex-1 me-2">
+                      <Text className="font-semibold text-[14px] text-ink dark:text-ink-dark">
+                        {place.name}
                       </Text>
-                    ) : null}
-                  </View>
-                  <Pressable
-                    onPress={() => deletePlace(place.id)}
-                    className="w-8 h-8 rounded-lg bg-surface dark:bg-surface-dark items-center justify-center"
-                    accessibilityLabel={`Delete ${place.name}`}
-                  >
-                    <Trash2 size={14} color={debtColor} />
+                      {place.note ? (
+                        <Text className="font-sans text-[12px] mt-0.5 text-muted dark:text-muted-dark">
+                          {place.note}
+                        </Text>
+                      ) : null}
+                    </View>
+                    <Pressable
+                      onPress={() => deletePlace(place.id)}
+                      className="w-8 h-8 rounded-lg bg-surface dark:bg-surface-dark items-center justify-center"
+                      accessibilityLabel={`${t('common.delete')} ${place.name}`}
+                    >
+                      <Trash2 size={14} color={debtColor} />
+                    </Pressable>
                   </Pressable>
-                </Pressable>
-              );
-            })}
-          </Card>
+                );
+              })}
+            </Card>
+          )}
         </ScrollView>
       </KeyboardAwareView>
     </SafeAreaView>

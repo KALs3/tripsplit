@@ -8,11 +8,13 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { KeyboardAwareView } from '../../components/ui/KeyboardAwareView';
+import { useLocale } from '../../hooks/useLocale';
 import { useTheme } from '../../hooks/useTheme';
 import { useAppStore } from '../../store/useAppStore';
 
 export default function JoinTripModal() {
   const { palette } = useTheme();
+  const { t, rtlContainerStyle } = useLocale();
 
   const isGuestDemo = useAppStore((s) => s.isGuestDemo);
   const joinTripByCode = useAppStore((s) => s.joinTripByCode);
@@ -32,10 +34,10 @@ export default function JoinTripModal() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-canvas dark:bg-canvas-dark">
+    <SafeAreaView style={rtlContainerStyle} className="flex-1 bg-canvas dark:bg-canvas-dark">
       <View className="flex-row items-center justify-between px-[18px] py-3.5 border-b border-hairline dark:border-hairline-dark">
         <Text className="font-bold text-[19px] tracking-tight text-ink dark:text-ink-dark">
-          Join a trip
+          {t('trips.joinModalTitle')}
         </Text>
         <Pressable onPress={() => router.back()} className="p-1">
           <X size={21} color={palette.text} />
@@ -58,12 +60,12 @@ export default function JoinTripModal() {
           </View>
 
           <Text className="font-sans text-[14px] text-center mb-[18px] leading-5 text-muted dark:text-muted-dark">
-            Enter the invite code shared by a trip member.
+            {t('trips.joinHint')}
           </Text>
 
           <Input
-            label="Invite code"
-            placeholder="TOKYO26"
+            label={t('trips.inviteCodeLabel')}
+            placeholder={t('trips.inviteCodePlaceholder')}
             value={code}
             onChangeText={(val) => {
               setCode(val.toUpperCase());
@@ -76,7 +78,7 @@ export default function JoinTripModal() {
           />
 
           <Button
-            title="Join trip"
+            title={t('trips.joinTripCta')}
             onPress={() => handleJoin()}
             variant="primary"
             size="lg"
@@ -86,13 +88,13 @@ export default function JoinTripModal() {
           {isGuestDemo && (
             <Card className="w-full mt-5 p-3.5">
               <View className="flex-row items-center gap-2">
-                <Badge label="Demo" variant="neutral" />
+                <Badge label={t('common.demo')} variant="neutral" />
                 <Text className="flex-1 font-sans text-[13px] leading-[18px] text-ink dark:text-ink-dark">
-                  Try code PARIS26 to join a sample Paris trip in EUR.
+                  {t('trips.demoJoinBody')}
                 </Text>
               </View>
               <Button
-                title="Join PARIS26"
+                title={t('trips.demoJoinBtn')}
                 onPress={() => handleJoin('PARIS26')}
                 variant="outline"
                 size="sm"

@@ -33,7 +33,15 @@
           "imageWidth": 76
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-localization",
+        {
+          "supportsRTL": true,
+          "allowDynamicLocaleChangesAndroid": true,
+          "supportedLocales": ["en", "ar"]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

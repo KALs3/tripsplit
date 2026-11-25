@@ -120,4 +120,23 @@ describe('Quick-Add Natural Language Parser (quickAdd.ts)', () => {
     // Defaults to all members when only one person mentioned as payer
     expect(parsed.participantIds).toHaveLength(3);
   });
+
+  it('parses Arabic numerals, food keywords, and Arabic payer/participant phrases', () => {
+    const arMembers = [
+      { userId: 'user_me', displayName: 'أحمد' },
+      { userId: 'user_sara', displayName: 'سارة' },
+      { userId: 'user_omar', displayName: 'عمر' },
+    ];
+    const parsed = parseQuickExpense(
+      'عشاء بحري ٢٤٠.٥٠ بيني وبين سارة دفع عمر',
+      arMembers,
+      'user_me'
+    );
+
+    expect(parsed.title).toBe('عشاء بحري');
+    expect(parsed.amountMajor).toBe(240.5);
+    expect(parsed.category).toBe('food');
+    expect(parsed.paidBy).toBe('user_omar');
+    expect(parsed.participantIds).toEqual(['user_me', 'user_sara']);
+  });
 });

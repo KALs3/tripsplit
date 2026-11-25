@@ -7,13 +7,14 @@ import { AvatarStack } from '../../../components/ui/AvatarStack';
 import { Button } from '../../../components/ui/Button';
 import { SyncStatusBadge } from '../../../components/ui/SyncStatusBadge';
 import { tabularNums } from '../../../constants/typography';
-import { formatMoney } from '../../../domain';
 import { MockTrip } from '../../../domain/mockData';
+import { useLocale } from '../../../hooks/useLocale';
 import { useTheme } from '../../../hooks/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
 
 export default function TripsListScreen() {
   const { palette } = useTheme();
+  const { t, formatCurrency, ltrTextStyle } = useLocale();
 
   const trips = useAppStore((s) => s.trips);
   const members = useAppStore((s) => s.members);
@@ -82,14 +83,14 @@ export default function TripsListScreen() {
 
             <View className={`px-3 py-[5px] rounded-full ${pillBgClass}`}>
               <Text
-                style={tabularNums}
+                style={[tabularNums, ltrTextStyle]}
                 className={`font-bold text-[13px] ${pillTextClass}`}
               >
                 {isOwed
-                  ? `+${formatMoney(userNetMinor, item.baseCurrency)}`
+                  ? `+${formatCurrency(userNetMinor, item.baseCurrency)}`
                   : isDebt
-                  ? formatMoney(userNetMinor, item.baseCurrency)
-                  : 'Settled'}
+                  ? formatCurrency(userNetMinor, item.baseCurrency)
+                  : t('common.settled')}
               </Text>
             </View>
           </View>
@@ -107,7 +108,7 @@ export default function TripsListScreen() {
       <View className="flex-row items-center justify-between px-[18px] pt-2.5 pb-3">
         <View>
           <Text className="font-bold text-[30px] tracking-tight text-ink dark:text-ink-dark">
-            Trips
+            {t('trips.title')}
           </Text>
           {(syncStatus !== 'synced' || pendingMutationsCount > 0) && (
             <View className="mt-1">
@@ -123,7 +124,7 @@ export default function TripsListScreen() {
           <Pressable
             onPress={() => router.push('/trip/join')}
             className="w-[38px] h-[38px] rounded-full border border-hairline dark:border-hairline-dark bg-surface dark:bg-surface-dark items-center justify-center active:opacity-80"
-            accessibilityLabel="Join trip with code"
+            accessibilityLabel={t('trips.joinCodeA11y')}
           >
             <QrCode size={17} color={palette.text} />
           </Pressable>
@@ -131,7 +132,7 @@ export default function TripsListScreen() {
           <Pressable
             onPress={() => router.push('/trip/new')}
             className="w-[38px] h-[38px] rounded-full bg-ink dark:bg-ink-dark items-center justify-center active:opacity-85"
-            accessibilityLabel="Create new trip"
+            accessibilityLabel={t('trips.createTripA11y')}
           >
             <Plus size={20} color={palette.accentText} strokeWidth={2.4} />
           </Pressable>
@@ -153,13 +154,13 @@ export default function TripsListScreen() {
         ListEmptyComponent={
           <View className="items-center justify-center py-[60px] px-7">
             <Text className="font-bold text-[18px] mb-1.5 text-ink dark:text-ink-dark">
-              No trips yet
+              {t('trips.emptyTitle')}
             </Text>
             <Text className="font-sans text-[14px] text-center leading-5 text-muted dark:text-muted-dark">
-              Create a trip with friends or join an existing trip with an invite code.
+              {t('trips.emptyBody')}
             </Text>
             <Button
-              title="Create first trip"
+              title={t('trips.createFirstTrip')}
               onPress={() => router.push('/trip/new')}
               variant="primary"
               size="md"

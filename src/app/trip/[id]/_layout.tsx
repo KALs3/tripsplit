@@ -1,17 +1,19 @@
 import { Stack } from 'expo-router';
 import React from 'react';
 import { View } from 'react-native';
+import { useLocale } from '../../../hooks/useLocale';
 import { useTheme } from '../../../hooks/useTheme';
 
 export default function TripLayout() {
   const { palette } = useTheme();
+  const { rtlContainerStyle, isRTL } = useLocale();
 
   return (
-    <View className="flex-1 bg-canvas dark:bg-canvas-dark">
+    <View style={rtlContainerStyle} className="flex-1 bg-canvas dark:bg-canvas-dark">
       <Stack
         screenOptions={{
           headerShown: false,
-          animation: 'slide_from_right',
+          animation: isRTL ? 'slide_from_left' : 'slide_from_right',
           contentStyle: { backgroundColor: palette.background },
         }}
       >

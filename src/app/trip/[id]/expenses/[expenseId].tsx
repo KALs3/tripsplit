@@ -8,15 +8,16 @@ import { Button } from '../../../../components/ui/Button';
 import { Card } from '../../../../components/ui/Card';
 import { CategoryIcon } from '../../../../components/ui/CategoryIcon';
 import { TicketDivider } from '../../../../components/ui/TicketDivider';
-import { getCategoryMeta } from '../../../../constants/categories';
 import { tabularNums } from '../../../../constants/typography';
-import { convertToBaseMinor, formatMoney } from '../../../../domain';
+import { convertToBaseMinor } from '../../../../domain';
+import { useLocale } from '../../../../hooks/useLocale';
 import { useTheme } from '../../../../hooks/useTheme';
 import { useAppStore } from '../../../../store/useAppStore';
 
 export default function ExpenseDetailScreen() {
   const { id, expenseId } = useLocalSearchParams<{ id: string; expenseId: string }>();
   const { isDark, palette, colors } = useTheme();
+  const { t, flipRtlStyle, ltrTextStyle, formatCurrency, formatDate } = useLocale();
 
   const trips = useAppStore((s) => s.trips);
   const members = useAppStore((s) => s.members);
@@ -28,7 +29,7 @@ export default function ExpenseDetailScreen() {
   const tripMembers = members.filter((m) => m.tripId === id);
 
   const getMemberName = (userId: string) => {
-    return tripMembers.find((m) => m.userId === userId)?.displayName || 'Unknown';
+    return tripMembers.find((m) => m.userId === userId)?.displayName || t('common.unknown');
   };
 
   const handleDelete = () => {
@@ -40,12 +41,12 @@ export default function ExpenseDetailScreen() {
     }
 
     Alert.alert(
-      'Delete expense',
-      `Delete "${expense.title}"? Balances will recalculate immediately.`,
+      t('expenses.deleteExpenseTitle'),
+      t('expenses.deleteExpenseBody', { title: expense.title }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Delete',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: () => {
             deleteExpense(expense.id);
@@ -61,10 +62,10 @@ export default function ExpenseDetailScreen() {
       <SafeAreaView className="flex-1 bg-canvas dark:bg-canvas-dark">
         <View className="flex-1 items-center justify-center p-6">
           <Text className="font-bold text-[16px] text-ink dark:text-ink-dark">
-            Expense not found
+            {t('expenses.receiptNotFound')}
           </Text>
           <Button
-            title="Go back"
+            title={t('expenses.receiptGoBack')}
             onPress={() => router.back()}
             variant="primary"
             className="mt-3.5"
@@ -74,9 +75,9 @@ export default function ExpenseDetailScreen() {
     );
   }
 
-  const cat = getCategoryMeta(expense.category);
   const baseAmountMinor = convertToBaseMinor(expense.amountMinor, expense.fxRateToBase);
   const dangerFg = isDark ? colors.dangerDark : colors.danger;
+  const catId = expense.category || 'other';
 
   return (
     <SafeAreaView className="flex-1 bg-canvas dark:bg-canvas-dark">
@@ -85,10 +86,12 @@ export default function ExpenseDetailScreen() {
           onPress={() => router.back()}
           className="w-9 h-9 rounded-lg bg-surface dark:bg-surface-dark items-center justify-center"
         >
-          <ArrowLeft size={19} color={palette.text} />
+          <View style={flipRtlStyle}>
+            <ArrowLeft size={19} color={palette.text} />
+          </View>
         </Pressable>
         <Text className="font-bold text-[17px] tracking-tight text-ink dark:text-ink-dark">
-          Receipt stub
+          {t('expenses.receiptStubTitle')}
         </Text>
         <View className="flex-row gap-2">
           <Pressable
@@ -99,14 +102,14 @@ export default function ExpenseDetailScreen() {
               })
             }
             className="w-9 h-9 rounded-lg bg-surface dark:bg-surface-dark items-center justify-center"
-            accessibilityLabel="Edit expense"
+            accessibilityLabel={t('expenses.editExpense')}
           >
             <Pencil size={16} color={palette.text} />
           </Pressable>
           <Pressable
             onPress={handleDelete}
             className="w-9 h-9 rounded-lg bg-red-100 dark:bg-red-500/15 items-center justify-center"
-            accessibilityLabel="Delete expense"
+            accessibilityLabel={t('expenses.deleteExpenseTitle')}
           >
             <Trash2 size={17} color={dangerFg} />
           </Pressable>
@@ -120,24 +123,25 @@ export default function ExpenseDetailScreen() {
             <View className="w-11 h-11 rounded-lg bg-surface dark:bg-surface-dark items-center justify-center">
               <CategoryIcon category={expense.category} size={22} color={palette.text} />
             </View>
-            <Badge label={cat.label} variant="neutral" />
+            <Badge label={t(`categories.${catId}.label`)} variant="neutral" />
           </View>
 
           <Text className="font-bold text-[20px] tracking-tight text-ink dark:text-ink-dark">
             {expense.title}
           </Text>
           <Text
-            style={tabularNums}
-            className="font-bold text-[34px] mt-1 tracking-tight text-ink dark:text-ink-dark"
+            style={[tabularNums, ltrTextStyle]}
+            className="font-bold text-[34px] mt-1 tracking-tight self-start text-ink dark:text-ink-dark"
           >
-            {formatMoney(expense.amountMinor, expense.currency)}
+            {formatCurrency(expense.amountMinor, expense.currency)}
           </Text>
           {expense.currency !== trip.baseCurrency && (
             <Text
-              style={tabularNums}
-              className="font-sans text-[13px] mt-1 text-muted dark:text-muted-dark"
+              style={[tabularNums, ltrTextStyle]}
+              className="font-sans text-[13px] mt-1 self-start text-muted dark:text-muted-dark"
             >
-              {formatMoney(baseAmountMinor, trip.baseCurrency)} in {trip.baseCurrency} (FX{' '}
+              {formatCurrency(baseAmountMinor, trip.baseCurrency)} ·{' '}
+              {t('expenses.receiptBaseEquivalent', { currency: trip.baseCurrency })} (FX{' '}
               {expense.fxRateToBase})
             </Text>
           )}
@@ -146,8 +150,8 @@ export default function ExpenseDetailScreen() {
 
           <View className="flex-row items-center gap-2.5">
             <User size={15} color={palette.textMuted} />
-            <Text className="font-medium text-[13px] w-[60px] text-muted dark:text-muted-dark">
-              Paid by
+            <Text className="font-medium text-[13px] w-[72px] text-muted dark:text-muted-dark">
+              {t('expenses.receiptPaidBy')}
             </Text>
             <Text className="font-semibold text-[14px] flex-1 text-ink dark:text-ink-dark">
               {getMemberName(expense.paidBy)}
@@ -157,11 +161,11 @@ export default function ExpenseDetailScreen() {
           {expense.spentAt && (
             <View className="flex-row items-center gap-2.5 mt-2.5">
               <Calendar size={15} color={palette.textMuted} />
-              <Text className="font-medium text-[13px] w-[60px] text-muted dark:text-muted-dark">
-                Date
+              <Text className="font-medium text-[13px] w-[72px] text-muted dark:text-muted-dark">
+                {t('expenses.receiptDate')}
               </Text>
               <Text className="font-semibold text-[14px] flex-1 text-ink dark:text-ink-dark">
-                {new Date(expense.spentAt).toLocaleDateString()}
+                {formatDate(expense.spentAt)}
               </Text>
             </View>
           )}
@@ -169,8 +173,8 @@ export default function ExpenseDetailScreen() {
           {expense.note && (
             <View className="flex-row items-center gap-2.5 mt-2.5">
               <FileText size={15} color={palette.textMuted} />
-              <Text className="font-medium text-[13px] w-[60px] text-muted dark:text-muted-dark">
-                Note
+              <Text className="font-medium text-[13px] w-[72px] text-muted dark:text-muted-dark">
+                {t('expenses.receiptNotes')}
               </Text>
               <Text className="font-semibold text-[14px] flex-1 text-ink dark:text-ink-dark">
                 {expense.note}
@@ -181,7 +185,7 @@ export default function ExpenseDetailScreen() {
           <TicketDivider />
 
           <Text className="font-bold text-[14px] mb-1 text-ink dark:text-ink-dark">
-            Split breakdown ({expense.splits.length})
+            {t('expenses.receiptSplitBreakdown')} ({expense.splits.length})
           </Text>
           {expense.splits.map((split, idx) => (
             <View
@@ -196,10 +200,10 @@ export default function ExpenseDetailScreen() {
                 {getMemberName(split.userId)}
               </Text>
               <Text
-                style={tabularNums}
+                style={[tabularNums, ltrTextStyle]}
                 className="font-bold text-[14px] text-ink dark:text-ink-dark"
               >
-                {formatMoney(split.shareMinor, expense.currency)}
+                {formatCurrency(split.shareMinor, expense.currency)}
               </Text>
             </View>
           ))}
@@ -208,7 +212,7 @@ export default function ExpenseDetailScreen() {
         {expense.receiptUrl && (
           <View className="mt-2.5">
             <Text className="font-bold text-[15px] mb-1.5 text-ink dark:text-ink-dark">
-              Attached receipt
+              {t('expenses.receiptAttachedPhoto')}
             </Text>
             <Card className="p-2">
               <Image
@@ -221,11 +225,11 @@ export default function ExpenseDetailScreen() {
         )}
 
         <Button
-          title="Delete expense"
+          title={t('expenses.deleteExpenseTitle')}
           onPress={handleDelete}
           variant="danger"
           size="md"
-          icon={<Trash2 size={16} color="#FFFFFF" />}
+          icon={<Trash2 size={16} color={dangerFg} />}
           className="mt-[18px]"
         />
       </ScrollView>

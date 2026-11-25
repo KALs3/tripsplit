@@ -15,14 +15,15 @@ import {
   computeDailySpending,
   computeMemberSpending,
   convertToBaseMinor,
-  formatMoney,
 } from '../../../domain';
+import { useLocale } from '../../../hooks/useLocale';
 import { useTheme } from '../../../hooks/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
 
 export default function TripInsightsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { isDark, palette, colors } = useTheme();
+  const { t, flipRtlStyle, ltrTextStyle, formatCurrency } = useLocale();
 
   const trips = useAppStore((s) => s.trips);
   const members = useAppStore((s) => s.members);
@@ -72,8 +73,8 @@ export default function TripInsightsScreen() {
 
   const getMemberName = (userId: string) => {
     const m = tripMembers.find((member) => member.userId === userId);
-    if (!m) return 'Member';
-    return m.userId === currentUserId ? 'You' : m.displayName.split(' ')[0];
+    if (!m) return t('common.member');
+    return m.userId === currentUserId ? t('common.you') : m.displayName.split(' ')[0];
   };
 
   // Reserved chart color Donut geometry (starts at 12 o'clock without SVG rotation/origin)
@@ -121,9 +122,9 @@ export default function TripInsightsScreen() {
       <SafeAreaView className="flex-1 bg-canvas dark:bg-canvas-dark">
         <View className="flex-1 items-center justify-center">
           <Text className="font-bold text-[16px] text-ink dark:text-ink-dark">
-            Trip not found
+            {t('common.tripNotFound')}
           </Text>
-          <Button title="Back" onPress={() => router.back()} className="mt-3" />
+          <Button title={t('common.back')} onPress={() => router.back()} className="mt-3" />
         </View>
       </SafeAreaView>
     );
@@ -147,8 +148,7 @@ export default function TripInsightsScreen() {
     const topCategories = categoryBreakdown
       .slice(0, 3)
       .map((c) => {
-        const meta = getCategoryMeta(c.category);
-        return `• ${meta.label}: ${formatMoney(
+        return `• ${t(`categories.${c.category}.label`)}: ${formatCurrency(
           c.amountBaseMinor,
           trip.baseCurrency
         )} (${c.percentage.toFixed(0)}%)`;
@@ -156,10 +156,13 @@ export default function TripInsightsScreen() {
       .join('\n');
 
     const message = [
-      `${trip.name} — TripSplit Summary`,
-      `Total Spent: ${formatMoney(totalSpendMinor, trip.baseCurrency)} across ${tripExpenses.length} expenses`,
-      `Travelers: ${tripMembers.length}`,
-      topCategories ? `\nTop Categories:\n${topCategories}` : '',
+      t('insights.shareSummaryHeader', { tripName: trip.name }),
+      t('insights.shareTotalSpent', {
+        amount: formatCurrency(totalSpendMinor, trip.baseCurrency),
+        count: tripExpenses.length,
+      }),
+      t('insights.shareTravelers', { count: tripMembers.length }),
+      topCategories ? `\n${t('insights.shareTopCategories')}\n${topCategories}` : '',
     ]
       .filter(Boolean)
       .join('\n');
@@ -178,15 +181,17 @@ export default function TripInsightsScreen() {
           onPress={() => router.back()}
           className="w-9 h-9 rounded-lg bg-surface dark:bg-surface-dark items-center justify-center"
         >
-          <ArrowLeft size={19} color={palette.text} />
+          <View style={flipRtlStyle}>
+            <ArrowLeft size={19} color={palette.text} />
+          </View>
         </Pressable>
         <Text className="font-bold text-[17px] tracking-tight text-ink dark:text-ink-dark">
-          Insights
+          {t('insights.title')}
         </Text>
         <Pressable
           onPress={handleShareSummary}
           className="w-9 h-9 rounded-lg bg-surface dark:bg-surface-dark items-center justify-center"
-          accessibilityLabel="Share trip summary"
+          accessibilityLabel={t('insights.shareSummaryHeader', { tripName: trip.name })}
         >
           <Share2 size={17} color={palette.text} />
         </Pressable>
@@ -199,15 +204,18 @@ export default function TripInsightsScreen() {
             <View className="flex-row items-center gap-[7px]">
               <PieChart size={16} color={palette.text} />
               <Text className="font-bold text-[15px] text-ink dark:text-ink-dark">
-                Spending by category
+                {t('insights.spendingByCategory')}
               </Text>
             </View>
-            <Badge label={`${tripExpenses.length} expenses`} variant="neutral" />
+            <Badge
+              label={t('insights.expensesCount', { count: tripExpenses.length })}
+              variant="neutral"
+            />
           </View>
 
           {categoryBreakdown.length === 0 ? (
             <Text className="font-sans text-[13px] text-center py-5 text-muted dark:text-muted-dark">
-              Add expenses to view category analytics.
+              {t('insights.emptyCategories')}
             </Text>
           ) : (
             <>
@@ -238,13 +246,13 @@ export default function TripInsightsScreen() {
                 </Svg>
                 <View className="absolute items-center justify-center">
                   <Text className="font-medium text-[11px] text-muted dark:text-muted-dark">
-                    Total
+                    {t('insights.total')}
                   </Text>
                   <Text
-                    style={tabularNums}
+                    style={[tabularNums, ltrTextStyle]}
                     className="font-bold text-[16px] mt-0.5 text-ink dark:text-ink-dark"
                   >
-                    {formatMoney(totalSpendMinor, trip.baseCurrency)}
+                    {formatCurrency(totalSpendMinor, trip.baseCurrency)}
                   </Text>
                 </View>
               </View>
@@ -269,18 +277,18 @@ export default function TripInsightsScreen() {
                         />
                         <CategoryIcon category={item.category} size={15} color={sliceColor} />
                         <Text className="font-semibold text-[13px] text-ink dark:text-ink-dark">
-                          {meta.label}
+                          {t(`categories.${item.category}.label`)}
                         </Text>
                       </View>
                       <View className="items-end">
                         <Text
-                          style={tabularNums}
+                          style={[tabularNums, ltrTextStyle]}
                           className="font-bold text-[13px] text-ink dark:text-ink-dark"
                         >
-                          {formatMoney(item.amountBaseMinor, trip.baseCurrency)}
+                          {formatCurrency(item.amountBaseMinor, trip.baseCurrency)}
                         </Text>
                         <Text
-                          style={tabularNums}
+                          style={[tabularNums, ltrTextStyle]}
                           className="font-medium text-[11px] text-muted dark:text-muted-dark"
                         >
                           {item.percentage.toFixed(0)}%
@@ -300,7 +308,7 @@ export default function TripInsightsScreen() {
             <View className="flex-row items-center gap-[7px]">
               <BarChart3 size={16} color={palette.text} />
               <Text className="font-bold text-[15px] text-ink dark:text-ink-dark">
-                Paid vs. share by member
+                {t('insights.paidVsShare')}
               </Text>
             </View>
           </View>
@@ -312,7 +320,7 @@ export default function TripInsightsScreen() {
                 className="w-2 h-2 rounded-[2px]"
               />
               <Text className="font-medium text-[12px] text-muted dark:text-muted-dark">
-                Paid upfront
+                {t('insights.paid')}
               </Text>
             </View>
             <View className="flex-row items-center gap-1.5">
@@ -321,7 +329,7 @@ export default function TripInsightsScreen() {
                 className="w-2 h-2 rounded-[2px]"
               />
               <Text className="font-medium text-[12px] text-muted dark:text-muted-dark">
-                Actual share
+                {t('insights.share')}
               </Text>
             </View>
           </View>
@@ -339,11 +347,13 @@ export default function TripInsightsScreen() {
                     {getMemberName(m.userId)}
                   </Text>
                   <Text
-                    style={tabularNums}
+                    style={[tabularNums, ltrTextStyle]}
                     className="font-medium text-[11px] text-muted dark:text-muted-dark"
                   >
-                    Paid {formatMoney(m.paidBaseMinor, trip.baseCurrency)} / Share{' '}
-                    {formatMoney(m.consumedBaseMinor, trip.baseCurrency)}
+                    {`${formatCurrency(m.paidBaseMinor, trip.baseCurrency)} / ${formatCurrency(
+                      m.consumedBaseMinor,
+                      trip.baseCurrency
+                    )}`}
                   </Text>
                 </View>
 
@@ -374,7 +384,7 @@ export default function TripInsightsScreen() {
         {dailySpending.length > 0 && (
           <Card className="p-4 mb-2.5">
             <Text className="font-bold text-[15px] mb-3 text-ink dark:text-ink-dark">
-              Daily spend
+              {t('insights.dailySpending')}
             </Text>
             {dailySpending.map((day) => {
               const widthPct = Math.round(
@@ -383,7 +393,7 @@ export default function TripInsightsScreen() {
               return (
                 <View key={day.date} className="flex-row items-center gap-2.5 mb-2.5">
                   <Text
-                    style={tabularNums}
+                    style={[tabularNums, ltrTextStyle]}
                     className="w-11 font-medium text-[12px] text-muted dark:text-muted-dark"
                   >
                     {day.date.slice(5)}
@@ -398,10 +408,10 @@ export default function TripInsightsScreen() {
                     />
                   </View>
                   <Text
-                    style={tabularNums}
-                    className="w-[68px] text-right font-bold text-[12px] text-ink dark:text-ink-dark"
+                    style={[tabularNums, ltrTextStyle]}
+                    className="w-[74px] text-end font-bold text-[12px] text-ink dark:text-ink-dark"
                   >
-                    {formatMoney(day.amountBaseMinor, trip.baseCurrency)}
+                    {formatCurrency(day.amountBaseMinor, trip.baseCurrency)}
                   </Text>
                 </View>
               );
@@ -410,7 +420,7 @@ export default function TripInsightsScreen() {
         )}
 
         <Button
-          title="Share trip summary"
+          title={t('members.shareLink')}
           onPress={handleShareSummary}
           variant="primary"
           size="md"

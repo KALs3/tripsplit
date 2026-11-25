@@ -7,6 +7,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
+import { useLocale } from '../../hooks/useLocale';
 import { useTheme } from '../../hooks/useTheme';
 
 interface InputProps extends TextInputProps {
@@ -25,11 +26,14 @@ export function Input({
   className = '',
   containerClassName = '',
   containerStyle,
+  style,
+  textAlign,
   onFocus,
   onBlur,
   ...props
 }: InputProps) {
   const { palette } = useTheme();
+  const { isRTL } = useLocale();
   const [focused, setFocused] = useState(false);
 
   const borderClass = error
@@ -49,9 +53,11 @@ export function Input({
       <View
         className={`flex-row items-center rounded-lg border px-3 min-h-[46px] bg-card dark:bg-card-dark ${borderClass}`}
       >
-        {icon ? <View className="mr-2.5">{icon}</View> : null}
+        {icon ? <View className="me-2.5">{icon}</View> : null}
         <TextInput
           placeholderTextColor={palette.textMuted}
+          textAlign={textAlign ?? (isRTL ? 'right' : 'left')}
+          style={style}
           onFocus={(e) => {
             setFocused(true);
             onFocus?.(e);

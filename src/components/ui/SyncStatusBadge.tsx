@@ -2,6 +2,7 @@ import { Cloud, CloudOff, RefreshCw } from 'lucide-react-native';
 import React from 'react';
 import { Text, View } from 'react-native';
 import { tabularNums } from '../../constants/typography';
+import { useLocale } from '../../hooks/useLocale';
 import { useTheme } from '../../hooks/useTheme';
 import { SyncStatus } from '../../sync/types';
 
@@ -12,11 +13,15 @@ interface SyncStatusBadgeProps {
 
 export function SyncStatusBadge({ status, pendingCount }: SyncStatusBadgeProps) {
   const { isDark, palette, colors } = useTheme();
+  const { t } = useLocale();
 
   const config = (() => {
     if (status === 'offline' || pendingCount > 0) {
       return {
-        label: pendingCount > 0 ? `Offline (${pendingCount} queued)` : 'Offline',
+        label:
+          pendingCount > 0
+            ? t('sync.offlineWithCount', { count: pendingCount })
+            : t('sync.offline'),
         containerClass:
           'bg-amber-100 dark:bg-amber-500/15 border-amber-600/25 dark:border-amber-400/30',
         textClass: 'text-amber-700 dark:text-amber-400',
@@ -26,7 +31,7 @@ export function SyncStatusBadge({ status, pendingCount }: SyncStatusBadgeProps) 
 
     if (status === 'syncing') {
       return {
-        label: 'Syncing...',
+        label: t('sync.syncing'),
         containerClass:
           'bg-surface dark:bg-surface-dark border-hairline dark:border-hairline-dark',
         textClass: 'text-ink dark:text-ink-dark',
@@ -36,7 +41,7 @@ export function SyncStatusBadge({ status, pendingCount }: SyncStatusBadgeProps) 
 
     if (status === 'error') {
       return {
-        label: 'Retry pending',
+        label: t('sync.syncError'),
         containerClass:
           'bg-red-100 dark:bg-red-500/15 border-red-600/20 dark:border-red-400/30',
         textClass: 'text-debt dark:text-debt-dark',
@@ -50,7 +55,7 @@ export function SyncStatusBadge({ status, pendingCount }: SyncStatusBadgeProps) 
     }
 
     return {
-      label: 'Synced',
+      label: t('sync.synced'),
       containerClass:
         'bg-surface dark:bg-surface-dark border-hairline dark:border-hairline-dark',
       textClass: 'text-muted dark:text-muted-dark',

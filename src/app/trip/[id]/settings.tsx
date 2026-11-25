@@ -8,12 +8,14 @@ import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { Input } from '../../../components/ui/Input';
 import { KeyboardAwareView } from '../../../components/ui/KeyboardAwareView';
+import { useLocale } from '../../../hooks/useLocale';
 import { useTheme } from '../../../hooks/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
 
 export default function TripSettingsModal() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { isDark, palette, colors } = useTheme();
+  const { t, rtlContainerStyle } = useLocale();
 
   const trips = useAppStore((s) => s.trips);
   const updateTrip = useAppStore((s) => s.updateTrip);
@@ -28,13 +30,13 @@ export default function TripSettingsModal() {
 
   if (!trip) {
     return (
-      <SafeAreaView className="flex-1 bg-canvas dark:bg-canvas-dark">
+      <SafeAreaView style={rtlContainerStyle} className="flex-1 bg-canvas dark:bg-canvas-dark">
         <View className="flex-1 items-center justify-center p-6">
           <Text className="font-bold text-[16px] text-ink dark:text-ink-dark">
-            Trip not found
+            {t('common.tripNotFound')}
           </Text>
           <Button
-            title="Back to trips"
+            title={t('common.backToTrips')}
             onPress={() => router.replace('/(tabs)/trips')}
             className="mt-3"
           />
@@ -47,7 +49,7 @@ export default function TripSettingsModal() {
 
   const handleSave = () => {
     if (!name.trim()) {
-      setNameError('Enter a trip name.');
+      setNameError(t('trips.tripNameError'));
       return;
     }
     updateTrip(trip.id, {
@@ -63,12 +65,12 @@ export default function TripSettingsModal() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-canvas dark:bg-canvas-dark">
+    <SafeAreaView style={rtlContainerStyle} className="flex-1 bg-canvas dark:bg-canvas-dark">
       <View className="flex-row items-center justify-between px-[18px] py-3.5 border-b border-hairline dark:border-hairline-dark">
         <Text className="font-bold text-[19px] tracking-tight text-ink dark:text-ink-dark">
-          Trip settings
+          {t('tripSettings.title')}
         </Text>
-        <Pressable onPress={() => router.back()} className="p-1" accessibilityLabel="Close settings">
+        <Pressable onPress={() => router.back()} className="p-1" accessibilityLabel={t('common.close')}>
           <X size={21} color={palette.text} />
         </Pressable>
       </View>
@@ -80,8 +82,8 @@ export default function TripSettingsModal() {
           keyboardDismissMode="on-drag"
         >
           <Input
-            label="Trip name"
-            placeholder="Trip name"
+            label={t('trips.tripNameLabel')}
+            placeholder={t('trips.tripNamePlaceholder')}
             value={name}
             onChangeText={(val) => {
               setName(val);
@@ -93,7 +95,7 @@ export default function TripSettingsModal() {
           <CoverPhotoField value={coverUrl} onChange={setCoverUrl} />
 
           <Button
-            title="Save changes"
+            title={t('tripSettings.saveChanges')}
             onPress={handleSave}
             variant="primary"
             size="lg"
@@ -103,27 +105,27 @@ export default function TripSettingsModal() {
           {/* Danger Zone: Delete Trip */}
           <Card className="mt-7 p-4 border-debt/30 dark:border-debt-dark/30">
             <Text className="font-bold text-[15px] text-ink dark:text-ink-dark">
-              Delete trip
+              {t('tripSettings.deleteTitle')}
             </Text>
             <Text className="font-sans text-[13px] leading-[18px] text-muted dark:text-muted-dark mt-1">
-              Permanently remove this trip along with its expenses, settlements, and map pins.
+              {t('tripSettings.deleteDescription')}
             </Text>
 
             {confirmingDelete ? (
               <View className="mt-3.5 p-3 rounded-lg bg-surface dark:bg-surface-dark border border-hairline dark:border-hairline-dark">
                 <Text className="font-semibold text-[13px] text-ink dark:text-ink-dark mb-3">
-                  Delete &ldquo;{trip.name}&rdquo;? This cannot be undone.
+                  {t('tripSettings.confirmDeletePrompt', { name: trip.name })}
                 </Text>
                 <View className="flex-row gap-2.5">
                   <Button
-                    title="Cancel"
+                    title={t('common.cancel')}
                     onPress={() => setConfirmingDelete(false)}
                     variant="secondary"
                     size="sm"
                     className="flex-1"
                   />
                   <Button
-                    title="Delete permanently"
+                    title={t('tripSettings.deletePermanently')}
                     onPress={handleConfirmDelete}
                     variant="danger"
                     size="sm"
@@ -133,7 +135,7 @@ export default function TripSettingsModal() {
               </View>
             ) : (
               <Button
-                title="Delete trip"
+                title={t('tripSettings.deleteTitle')}
                 onPress={() => setConfirmingDelete(true)}
                 variant="danger"
                 size="md"

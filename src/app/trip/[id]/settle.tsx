@@ -8,6 +8,7 @@ import { Card } from '../../../components/ui/Card';
 import { Input } from '../../../components/ui/Input';
 import { KeyboardAwareView } from '../../../components/ui/KeyboardAwareView';
 import { CURRENCY_METADATA, fromMinorUnits, toMinorUnits } from '../../../domain';
+import { useLocale } from '../../../hooks/useLocale';
 import { useTheme } from '../../../hooks/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
 
@@ -25,6 +26,7 @@ export default function SettlePaymentModal() {
   }>();
 
   const { palette } = useTheme();
+  const { t, rtlContainerStyle, flipRtlStyle } = useLocale();
 
   const trips = useAppStore((s) => s.trips);
   const members = useAppStore((s) => s.members);
@@ -59,20 +61,20 @@ export default function SettlePaymentModal() {
 
   const getMemberLabel = (userId: string) => {
     const m = tripMembers.find((member) => member.userId === userId);
-    if (!m) return 'Member';
-    return m.userId === currentUserId ? 'You' : m.displayName.split(' ')[0];
+    if (!m) return t('common.member');
+    return m.userId === currentUserId ? t('common.you') : m.displayName.split(' ')[0];
   };
 
   const handleRecordPayment = () => {
     if (!trip) return;
     if (fromUser === toUser) {
-      setError('Payer and recipient must be different people.');
+      setError(t('settle.samePersonError'));
       return;
     }
 
     const major = Number.parseFloat(amountText.replace(',', '.'));
     if (Number.isNaN(major) || major <= 0) {
-      setError('Enter a positive payment amount.');
+      setError(t('settle.positiveAmountError'));
       return;
     }
 
@@ -92,10 +94,10 @@ export default function SettlePaymentModal() {
   if (!trip) return null;
 
   return (
-    <SafeAreaView className="flex-1 bg-canvas dark:bg-canvas-dark">
+    <SafeAreaView style={rtlContainerStyle} className="flex-1 bg-canvas dark:bg-canvas-dark">
       <View className="flex-row items-center justify-between px-[18px] py-3.5 border-b border-hairline dark:border-hairline-dark">
         <Text className="font-bold text-[19px] tracking-tight text-ink dark:text-ink-dark">
-          Record payment
+          {t('settle.title')}
         </Text>
         <Pressable onPress={() => router.back()} className="p-1">
           <X size={21} color={palette.text} />
@@ -113,18 +115,20 @@ export default function SettlePaymentModal() {
               <Text className="font-bold text-[18px] text-debt dark:text-debt-dark">
                 {getMemberLabel(fromUser)}
               </Text>
-              <ArrowRight size={17} color={palette.textMuted} />
+              <View style={flipRtlStyle}>
+                <ArrowRight size={17} color={palette.textMuted} />
+              </View>
               <Text className="font-bold text-[18px] text-credit dark:text-credit-dark">
                 {getMemberLabel(toUser)}
               </Text>
             </View>
             <Text className="font-sans text-[12px] mt-1.5 text-muted dark:text-muted-dark">
-              Updates net balances immediately
+              {t('settle.subtitle')}
             </Text>
           </Card>
 
           <Text className="font-semibold text-[13px] mt-3 mb-2 text-ink dark:text-ink-dark">
-            Who paid?
+            {t('settle.whoPaid')}
           </Text>
           <View className="flex-row flex-wrap gap-2">
             {tripMembers.map((m) => {
@@ -157,7 +161,7 @@ export default function SettlePaymentModal() {
           </View>
 
           <Text className="font-semibold text-[13px] mt-3 mb-2 text-ink dark:text-ink-dark">
-            Paid to whom?
+            {t('settle.paidToWhom')}
           </Text>
           <View className="flex-row flex-wrap gap-2">
             {tripMembers.map((m) => {
@@ -190,7 +194,9 @@ export default function SettlePaymentModal() {
           </View>
 
           <Input
-            label={`Amount (${CURRENCY_METADATA[trip.baseCurrency]?.symbol || trip.baseCurrency})`}
+            label={t('settle.amountLabel', {
+              currency: CURRENCY_METADATA[trip.baseCurrency]?.symbol || trip.baseCurrency,
+            })}
             placeholder="0.00"
             keyboardType="decimal-pad"
             value={amountText}
@@ -203,7 +209,7 @@ export default function SettlePaymentModal() {
           />
 
           <Button
-            title="Confirm payment"
+            title={t('settle.confirmPayment')}
             onPress={handleRecordPayment}
             variant="primary"
             size="lg"

@@ -24,7 +24,6 @@ import {
   calculateSplits,
   CURRENCY_METADATA,
   fetchLiveFxRate,
-  formatMoney,
   fromMinorUnits,
   parseQuickExpense,
   SplitValidationError,
@@ -36,19 +35,16 @@ import {
   SplitMethod,
   SplitResult,
 } from '../../../../domain/types';
+import { useLocale } from '../../../../hooks/useLocale';
 import { useTheme } from '../../../../hooks/useTheme';
 import { useAppStore } from '../../../../store/useAppStore';
 
-const SPLIT_TABS: { id: SplitMethod; label: string }[] = [
-  { id: 'EQUAL', label: 'Equal' },
-  { id: 'EXACT', label: 'Exact' },
-  { id: 'PERCENTAGE', label: '%' },
-  { id: 'SHARES', label: 'Shares' },
-];
+const SPLIT_TABS: SplitMethod[] = ['EQUAL', 'EXACT', 'PERCENTAGE', 'SHARES'];
 
 export default function AddExpenseModal() {
   const { id, expenseId } = useLocalSearchParams<{ id: string; expenseId?: string }>();
   const { palette } = useTheme();
+  const { t, isRTL, rtlContainerStyle, ltrTextStyle, formatCurrency } = useLocale();
 
   const trips = useAppStore((s) => s.trips);
   const members = useAppStore((s) => s.members);
@@ -212,11 +208,11 @@ export default function AddExpenseModal() {
   const handleSave = () => {
     if (!trip) return;
     if (!title.trim()) {
-      setFormError('Enter an expense title.');
+      setFormError(t('expenses.errorTitle'));
       return;
     }
     if (totalMinor <= 0) {
-      setFormError('Enter an amount greater than 0.');
+      setFormError(t('expenses.errorPositiveAmount'));
       return;
     }
 
@@ -226,7 +222,7 @@ export default function AddExpenseModal() {
         : Number.parseFloat(fxRateText.replace(',', '.')) || 1.0;
 
     if (fxRate <= 0) {
-      setFormError('Exchange rate must be positive.');
+      setFormError(t('expenses.errorFxRate'));
       return;
     }
 
@@ -262,7 +258,7 @@ export default function AddExpenseModal() {
       }
       router.back();
     } catch (err: any) {
-      setFormError(err.message || 'Could not calculate splits.');
+      setFormError(err.message || t('expenses.errorCalc'));
     }
   };
 
@@ -297,7 +293,7 @@ export default function AddExpenseModal() {
       if (fromCamera) {
         const perm = await ImagePicker.requestCameraPermissionsAsync();
         if (!perm.granted) {
-          setFormError('Camera permission is needed to snap a receipt.');
+          setFormError(t('expenses.errorCameraPerm'));
           return;
         }
         const res = await ImagePicker.launchCameraAsync({
@@ -317,7 +313,7 @@ export default function AddExpenseModal() {
         }
       }
     } catch {
-      setFormError('Receipt picker is unavailable on this simulator.');
+      setFormError(t('expenses.errorPicker'));
     }
   };
 
@@ -337,17 +333,17 @@ export default function AddExpenseModal() {
 
   const getMemberLabel = (userId: string) => {
     const m = tripMembers.find((member) => member.userId === userId);
-    if (!m) return 'Member';
-    return m.userId === currentUserId ? 'You' : m.displayName.split(' ')[0];
+    if (!m) return t('common.member');
+    return m.userId === currentUserId ? t('common.you') : m.displayName.split(' ')[0];
   };
 
   const currSymbol = CURRENCY_METADATA[currency]?.symbol || currency;
 
   return (
-    <SafeAreaView className="flex-1 bg-canvas dark:bg-canvas-dark">
+    <SafeAreaView style={rtlContainerStyle} className="flex-1 bg-canvas dark:bg-canvas-dark">
       <View className="flex-row items-center justify-between px-[18px] py-3.5 border-b border-hairline dark:border-hairline-dark">
         <Text className="font-bold text-[19px] tracking-tight text-ink dark:text-ink-dark">
-          {editingExpense ? 'Edit expense' : 'Log expense'}
+          {editingExpense ? t('expenses.editExpense') : t('expenses.logExpense')}
         </Text>
         <Pressable onPress={() => router.back()} className="p-1">
           <X size={21} color={palette.text} />
@@ -363,9 +359,9 @@ export default function AddExpenseModal() {
           {/* Amount-First Hero */}
           <Card className="items-center py-[18px] mb-2.5">
             <Text className="font-medium text-[12px] mb-1 text-muted dark:text-muted-dark">
-              Amount ({currency})
+              {t('expenses.amountLabel')} ({currency})
             </Text>
-            <View className="flex-row items-center justify-center mb-3.5">
+            <View style={{ direction: 'ltr' }} className="flex-row items-center justify-center mb-3.5">
               <Text className="font-bold text-[28px] mr-1 text-muted dark:text-muted-dark">
                 {currSymbol}
               </Text>
@@ -378,7 +374,7 @@ export default function AddExpenseModal() {
                   setAmountText(val);
                   setFormError('');
                 }}
-                style={tabularNums}
+                style={[tabularNums, ltrTextStyle]}
                 className="font-bold text-[38px] tracking-tight min-w-[120px] text-center py-0.5 text-ink dark:text-ink-dark"
               />
             </View>
@@ -388,7 +384,7 @@ export default function AddExpenseModal() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ gap: 8, paddingHorizontal: 8 }}
             >
-              {['USD', 'EUR', 'GBP', 'JPY', 'EGP', 'CAD'].map((curr) => {
+              {['USD', 'EUR', 'GBP', 'JPY', 'EGP', 'AED', 'SAR', 'CAD'].map((curr) => {
                 const selected = currency === curr;
                 return (
                   <Pressable
@@ -417,7 +413,7 @@ export default function AddExpenseModal() {
 
           {trip && currency !== trip.baseCurrency && (
             <Input
-              label={`Exchange rate (1 ${currency} to ${trip.baseCurrency})`}
+              label={`${t('expenses.fxLabel', { from: currency })} ${trip.baseCurrency}`}
               placeholder="1.0"
               keyboardType="decimal-pad"
               value={fxRateText}
@@ -431,25 +427,26 @@ export default function AddExpenseModal() {
               <View className="flex-row items-center gap-1.5 mb-2">
                 <Sparkles size={13} color={palette.text} />
                 <Text className="font-semibold text-[12px] text-ink dark:text-ink-dark">
-                  Quick-add parser
+                  {t('expenses.quickAddTitle')}
                 </Text>
               </View>
               <View className="flex-row gap-2 items-center">
                 <TextInput
-                  placeholder='"Ramen 48 split between me and Kenji"'
+                  placeholder={t('expenses.quickAddPlaceholder')}
                   placeholderTextColor={palette.textMuted}
                   value={quickInput}
                   onChangeText={setQuickInput}
+                  textAlign={isRTL ? 'right' : 'left'}
                   className="flex-1 font-sans text-[13px] rounded-lg px-2.5 h-[38px] bg-surface dark:bg-surface-dark text-ink dark:text-ink-dark"
                 />
-                <Button title="Fill" onPress={handleQuickParse} variant="primary" size="sm" />
+                <Button title={t('expenses.parse')} onPress={handleQuickParse} variant="primary" size="sm" />
               </View>
             </Card>
           )}
 
           <Input
-            label="Description"
-            placeholder="Sushi dinner, Airport train"
+            label={t('expenses.titleLabel')}
+            placeholder={t('expenses.titlePlaceholder')}
             value={title}
             onChangeText={(val) => {
               setTitle(val);
@@ -458,7 +455,7 @@ export default function AddExpenseModal() {
           />
 
           <Text className="font-semibold text-[13px] mt-3 mb-1.5 text-ink dark:text-ink-dark">
-            Category
+            {t('expenses.category')}
           </Text>
           <ScrollView
             horizontal
@@ -489,7 +486,7 @@ export default function AddExpenseModal() {
                         : 'text-ink dark:text-ink-dark'
                     }`}
                   >
-                    {cat.shortLabel}
+                    {t(`categories.${cat.id}.shortLabel`)}
                   </Text>
                 </Pressable>
               );
@@ -497,7 +494,7 @@ export default function AddExpenseModal() {
           </ScrollView>
 
           <Text className="font-semibold text-[13px] mt-3 mb-1.5 text-ink dark:text-ink-dark">
-            Paid by
+            {t('expenses.paidBy')}
           </Text>
           <View className="flex-row flex-wrap gap-2 py-1">
             {tripMembers.map((member) => {
@@ -527,15 +524,15 @@ export default function AddExpenseModal() {
           </View>
 
           <Text className="font-semibold text-[13px] mt-4 mb-1.5 text-ink dark:text-ink-dark">
-            Split method
+            {t('expenses.splitMethod')}
           </Text>
           <View className="flex-row rounded-lg border border-hairline dark:border-hairline-dark bg-surface dark:bg-surface-dark p-[3px] mb-2">
-            {SPLIT_TABS.map((tab) => {
-              const active = splitMethod === tab.id;
+            {SPLIT_TABS.map((method) => {
+              const active = splitMethod === method;
               return (
                 <Pressable
-                  key={tab.id}
-                  onPress={() => setSplitMethod(tab.id)}
+                  key={method}
+                  onPress={() => setSplitMethod(method)}
                   className={`flex-1 py-2 rounded-[6px] items-center ${
                     active ? 'bg-card dark:bg-card-dark' : ''
                   }`}
@@ -547,7 +544,7 @@ export default function AddExpenseModal() {
                         : 'font-medium text-muted dark:text-muted-dark'
                     }`}
                   >
-                    {tab.label}
+                    {t(`expenses.splitMethods.${method}`)}
                   </Text>
                 </Pressable>
               );
@@ -557,11 +554,14 @@ export default function AddExpenseModal() {
           <Card className="p-0 overflow-hidden">
             {splitMethod === 'EXACT' && totalMinor > 0 && (
               <View className="flex-row items-center justify-between px-3.5 py-2.5 border-b border-hairline dark:border-hairline-dark">
-                <Text className="font-medium text-[12px] text-muted dark:text-muted-dark">
-                  Remaining to allocate
+                <Text className="font-medium text-[12px] text-muted dark:text-muted-dark flex-1 me-2">
+                  {t('expenses.exactSplitHint', {
+                    currency,
+                    remaining: formatCurrency(totalMinor - exactAllocatedMinor, currency),
+                  })}
                 </Text>
                 <Badge
-                  label={formatMoney(totalMinor - exactAllocatedMinor, currency)}
+                  label={formatCurrency(totalMinor - exactAllocatedMinor, currency)}
                   variant={totalMinor - exactAllocatedMinor === 0 ? 'success' : 'danger'}
                 />
               </View>
@@ -569,8 +569,10 @@ export default function AddExpenseModal() {
 
             {splitMethod === 'PERCENTAGE' && (
               <View className="flex-row items-center justify-between px-3.5 py-2.5 border-b border-hairline dark:border-hairline-dark">
-                <Text className="font-medium text-[12px] text-muted dark:text-muted-dark">
-                  Allocated total
+                <Text className="font-medium text-[12px] text-muted dark:text-muted-dark flex-1 me-2">
+                  {t('expenses.percentSplitHint', {
+                    allocated: percentageAllocated.toFixed(1),
+                  })}
                 </Text>
                 <Badge
                   label={`${percentageAllocated.toFixed(1)}% / 100%`}
@@ -595,16 +597,16 @@ export default function AddExpenseModal() {
                       : ''
                   }`}
                 >
-                  <View className="flex-1 mr-2.5">
+                  <View className="flex-1 me-2.5">
                     <Text className="font-semibold text-[14px] text-ink dark:text-ink-dark">
                       {member.displayName}
                     </Text>
                     {previewItem && (
                       <Text
-                        style={tabularNums}
-                        className="font-bold text-[12px] mt-0.5 text-credit dark:text-credit-dark"
+                        style={[tabularNums, ltrTextStyle]}
+                        className="font-bold text-[12px] mt-0.5 self-start text-credit dark:text-credit-dark"
                       >
-                        {formatMoney(previewItem.shareMinor, currency)}
+                        {formatCurrency(previewItem.shareMinor, currency)}
                       </Text>
                     )}
                   </View>
@@ -631,7 +633,7 @@ export default function AddExpenseModal() {
                       onChangeText={(val) =>
                         setExactTexts((prev) => ({ ...prev, [member.userId]: val }))
                       }
-                      style={tabularNums}
+                      style={[tabularNums, ltrTextStyle]}
                       className="w-[84px] h-9 rounded-lg border border-hairline dark:border-hairline-dark bg-surface dark:bg-surface-dark px-2.5 text-right font-semibold text-[14px] text-ink dark:text-ink-dark"
                     />
                   )}
@@ -649,7 +651,7 @@ export default function AddExpenseModal() {
                             [member.userId]: val,
                           }))
                         }
-                        style={tabularNums}
+                        style={[tabularNums, ltrTextStyle]}
                         className="w-[84px] h-9 rounded-lg border border-hairline dark:border-hairline-dark bg-surface dark:bg-surface-dark px-2.5 text-right font-semibold text-[14px] text-ink dark:text-ink-dark"
                       />
                       <Text className="font-semibold text-[14px] text-muted dark:text-muted-dark">
@@ -667,7 +669,7 @@ export default function AddExpenseModal() {
                         <Minus size={14} color={palette.text} />
                       </Pressable>
                       <Text
-                        style={tabularNums}
+                        style={[tabularNums, ltrTextStyle]}
                         className="font-bold text-[14px] min-w-[26px] text-center text-ink dark:text-ink-dark"
                       >
                         {memberShares}x
@@ -692,14 +694,14 @@ export default function AddExpenseModal() {
           </Card>
 
           <Input
-            label="Note (optional)"
-            placeholder="Receipt details or context"
+            label={t('expenses.noteOptional')}
+            placeholder={t('expenses.notePlaceholder')}
             value={note}
             onChangeText={setNote}
           />
 
           <Text className="font-semibold text-[13px] mt-3 mb-1.5 text-ink dark:text-ink-dark">
-            Receipt photo (optional)
+            {t('expenses.receiptAttachment')}
           </Text>
           {receiptUrl ? (
             <Card className="p-2">
@@ -709,7 +711,7 @@ export default function AddExpenseModal() {
                 resizeMode="cover"
               />
               <Button
-                title="Remove receipt"
+                title={t('expenses.removePhoto')}
                 onPress={() => setReceiptUrl(null)}
                 variant="ghost"
                 size="sm"
@@ -719,7 +721,7 @@ export default function AddExpenseModal() {
           ) : (
             <View className="flex-row gap-2.5">
               <Button
-                title="Snap receipt"
+                title={t('expenses.takePhoto')}
                 onPress={() => void handlePickReceipt(true)}
                 variant="outline"
                 size="sm"
@@ -727,7 +729,7 @@ export default function AddExpenseModal() {
                 className="flex-1"
               />
               <Button
-                title="Choose photo"
+                title={t('expenses.upload')}
                 onPress={() => void handlePickReceipt(false)}
                 variant="outline"
                 size="sm"
@@ -744,7 +746,7 @@ export default function AddExpenseModal() {
           ) : null}
 
           <Button
-            title={editingExpense ? 'Update expense' : 'Save expense'}
+            title={editingExpense ? t('expenses.updateExpense') : t('expenses.saveExpense')}
             onPress={handleSave}
             variant="primary"
             size="lg"

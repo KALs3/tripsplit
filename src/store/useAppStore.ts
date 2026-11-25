@@ -19,6 +19,12 @@ import {
   PlaceRecord,
   SettlementTransfer,
 } from '../domain/types';
+import {
+  applyLanguageSideEffects,
+  i18n,
+  LanguagePreference,
+  resolveAppLanguage,
+} from '../i18n';
 import { generateClientUuid, OutboxQueue } from '../sync/outbox';
 import {
   executeSupabaseMutation,
@@ -38,6 +44,7 @@ export interface UserSession {
 export type ThemePreference = 'system' | 'light' | 'dark';
 
 const THEME_STORAGE_KEY = 'tripsplit_theme_pref';
+const LANGUAGE_STORAGE_KEY = 'tripsplit_language_pref';
 const outbox = new OutboxQueue(AsyncStorage);
 
 interface AppState {
@@ -46,8 +53,10 @@ interface AppState {
   isGuestDemo: boolean;
   isLoading: boolean;
 
-  // Theme preference
+  // Theme & Language preferences
   themePreference: ThemePreference;
+  languagePreference: LanguagePreference;
+  needsRtlRestart: boolean;
 
   // Sync & Offline state
   isNetworkOnline: boolean;
@@ -66,6 +75,8 @@ interface AppState {
   // Actions
   setThemePreference: (pref: ThemePreference) => void;
   hydrateThemePreference: () => Promise<void>;
+  setLanguagePreference: (pref: LanguagePreference) => void;
+  hydrateLanguagePreference: () => Promise<void>;
   loginAsGuest: () => void;
   setUser: (user: UserSession | null) => void;
   signOut: () => void;
@@ -130,6 +141,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   isLoading: false,
 
   themePreference: 'system',
+  languagePreference: 'system',
+  needsRtlRestart: false,
 
   isNetworkOnline: true,
   isOfflineSimulated: false,
@@ -163,6 +176,31 @@ export const useAppStore = create<AppState>((set, get) => ({
         } catch {
           // Ignore
         }
+      }
+    } catch {
+      // Ignore storage error
+    }
+  },
+
+  setLanguagePreference: (pref) => {
+    const resolved = resolveAppLanguage(pref);
+    const needsRestart = applyLanguageSideEffects(resolved);
+    set({
+      languagePreference: pref,
+      needsRtlRestart: needsRestart || get().needsRtlRestart,
+    });
+    void AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, pref).catch(() => {});
+  },
+
+  hydrateLanguagePreference: async () => {
+    try {
+      const saved = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
+      if (saved === 'en' || saved === 'ar' || saved === 'system') {
+        const resolved = resolveAppLanguage(saved);
+        const needsRestart = applyLanguageSideEffects(resolved);
+        set({ languagePreference: saved, needsRtlRestart: needsRestart });
+      } else {
+        applyLanguageSideEffects(resolveAppLanguage('system'));
       }
     } catch {
       // Ignore storage error
@@ -597,7 +635,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const state = get();
     const normalized = inviteCode.trim().toUpperCase();
     if (!normalized) {
-      return { error: 'Please enter an invite code.' };
+      return { error: i18n.t('store.noCode') };
     }
 
     const existing = state.trips.find(
@@ -667,7 +705,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
 
     return {
-      error: `No trip found with code "${normalized}". Try "PARIS26" in Demo Mode.`,
+      error: i18n.t('store.codeNotFound', { code: normalized }),
     };
   },
 

@@ -18,16 +18,17 @@ import { tabularNums } from '../../../constants/typography';
 import {
   calculateNetBalances,
   convertToBaseMinor,
-  formatMoney,
   getSortedNetBalances,
   simplifyDebts,
 } from '../../../domain';
+import { useLocale } from '../../../hooks/useLocale';
 import { useTheme } from '../../../hooks/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
 
 export default function BalancesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { isDark, palette, colors } = useTheme();
+  const { t, flipRtlStyle, ltrTextStyle, formatCurrency } = useLocale();
 
   const trips = useAppStore((s) => s.trips);
   const members = useAppStore((s) => s.members);
@@ -72,8 +73,8 @@ export default function BalancesScreen() {
 
   const getMemberName = (userId: string) => {
     const m = getMember(userId);
-    if (!m) return 'Unknown';
-    return m.userId === currentUserId ? 'You' : m.displayName.split(' ')[0];
+    if (!m) return t('common.unknown');
+    return m.userId === currentUserId ? t('common.you') : m.displayName.split(' ')[0];
   };
 
   const handleDeletePayment = (paymentId: string) => {
@@ -82,12 +83,12 @@ export default function BalancesScreen() {
       return;
     }
     Alert.alert(
-      'Remove payment',
-      'Undo this recorded settlement? Balances will recalculate.',
+      t('balances.removePaymentTitle'),
+      t('balances.removePaymentBody'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Remove',
+          text: t('common.remove'),
           style: 'destructive',
           onPress: () => deletePayment(paymentId),
         },
@@ -100,9 +101,9 @@ export default function BalancesScreen() {
       <SafeAreaView className="flex-1 bg-canvas dark:bg-canvas-dark">
         <View className="flex-1 items-center justify-center">
           <Text className="font-bold text-[16px] text-ink dark:text-ink-dark">
-            Trip not found
+            {t('common.tripNotFound')}
           </Text>
-          <Button title="Back" onPress={() => router.back()} className="mt-3" />
+          <Button title={t('common.back')} onPress={() => router.back()} className="mt-3" />
         </View>
       </SafeAreaView>
     );
@@ -118,13 +119,15 @@ export default function BalancesScreen() {
           onPress={() => router.back()}
           className="w-9 h-9 rounded-lg bg-surface dark:bg-surface-dark items-center justify-center"
         >
-          <ArrowLeft size={19} color={palette.text} />
+          <View style={flipRtlStyle}>
+            <ArrowLeft size={19} color={palette.text} />
+          </View>
         </Pressable>
         <Text className="font-bold text-[17px] tracking-tight text-ink dark:text-ink-dark">
-          Balances & settle up
+          {t('balances.title')}
         </Text>
         <Button
-          title="Pay"
+          title={t('balances.pay')}
           onPress={() =>
             router.push({ pathname: '/trip/[id]/settle', params: { id: trip.id } })
           }
@@ -139,12 +142,15 @@ export default function BalancesScreen() {
         <Card className="p-4">
           <View className="flex-row items-center justify-between">
             <Text className="font-bold text-[16px] text-ink dark:text-ink-dark">
-              Recommended transfers
+              {t('balances.recommendedTransfers')}
             </Text>
-            <Badge label={`${settlements.length} needed`} variant="neutral" />
+            <Badge
+              label={t('balances.neededCount', { count: settlements.length })}
+              variant="neutral"
+            />
           </View>
           <Text className="font-sans text-[12px] mt-1 leading-[17px] text-muted dark:text-muted-dark">
-            Minimized payment plan to clear every group balance.
+            {t('balances.planSubtitle')}
           </Text>
 
           <TicketDivider />
@@ -153,29 +159,31 @@ export default function BalancesScreen() {
             <View className="items-center py-4 gap-2">
               <CheckCircle2 size={26} color={creditColor} />
               <Text className="font-semibold text-[14px] text-ink dark:text-ink-dark">
-                Everyone is settled up.
+                {t('balances.everyoneSettled')}
               </Text>
             </View>
           ) : (
             <View>
-              {settlements.map((t, idx) => {
-                const fromMember = getMember(t.fromUser);
-                const toMember = getMember(t.toUser);
+              {settlements.map((transfer, idx) => {
+                const fromMember = getMember(transfer.fromUser);
+                const toMember = getMember(transfer.toUser);
                 return (
                   <View
-                    key={`${t.fromUser}_${t.toUser}_${idx}`}
+                    key={`${transfer.fromUser}_${transfer.toUser}_${idx}`}
                     className={`flex-row items-center justify-between py-3 ${
                       idx < settlements.length - 1
                         ? 'border-b border-hairline dark:border-hairline-dark'
                         : ''
                     }`}
                   >
-                    <View className="flex-1 mr-3">
+                    <View className="flex-1 me-3">
                       <View className="flex-row items-center gap-2">
                         {fromMember && (
                           <AvatarStack members={[fromMember]} size={26} />
                         )}
-                        <ArrowRight size={14} color={palette.textMuted} />
+                        <View style={flipRtlStyle}>
+                          <ArrowRight size={14} color={palette.textMuted} />
+                        </View>
                         {toMember && (
                           <AvatarStack members={[toMember]} size={26} />
                         )}
@@ -183,24 +191,24 @@ export default function BalancesScreen() {
                       <View className="mt-1.5">
                         <Text className="font-semibold text-[13px] text-ink dark:text-ink-dark">
                           <Text className="text-debt dark:text-debt-dark">
-                            {getMemberName(t.fromUser)}
+                            {getMemberName(transfer.fromUser)}
                           </Text>
-                          {' pays '}
+                          {` ${t('balances.pays')} `}
                           <Text className="text-credit dark:text-credit-dark">
-                            {getMemberName(t.toUser)}
+                            {getMemberName(transfer.toUser)}
                           </Text>
                         </Text>
                         <Text
-                          style={tabularNums}
-                          className="font-bold text-[17px] mt-0.5 text-ink dark:text-ink-dark"
+                          style={[tabularNums, ltrTextStyle]}
+                          className="font-bold text-[17px] mt-0.5 self-start text-ink dark:text-ink-dark"
                         >
-                          {formatMoney(t.amountMinor, trip.baseCurrency)}
+                          {formatCurrency(transfer.amountMinor, trip.baseCurrency)}
                         </Text>
                       </View>
                     </View>
 
                     <Button
-                      title="Mark paid"
+                      title={t('balances.markPaid')}
                       size="sm"
                       variant="primary"
                       onPress={() =>
@@ -208,9 +216,9 @@ export default function BalancesScreen() {
                           pathname: '/trip/[id]/settle',
                           params: {
                             id: trip.id,
-                            fromUser: t.fromUser,
-                            toUser: t.toUser,
-                            amountMinor: String(t.amountMinor),
+                            fromUser: transfer.fromUser,
+                            toUser: transfer.toUser,
+                            amountMinor: String(transfer.amountMinor),
                           },
                         })
                       }
@@ -224,7 +232,7 @@ export default function BalancesScreen() {
 
         {/* Per-Member Net Balances */}
         <Text className="font-bold text-[16px] mt-4 mb-1.5 tracking-tight text-ink dark:text-ink-dark">
-          Net balances
+          {t('balances.netBalances')}
         </Text>
         <Card className="p-0 overflow-hidden">
           {sortedBalances.map((b, idx) => {
@@ -249,7 +257,7 @@ export default function BalancesScreen() {
                     {getMemberName(b.userId)}
                   </Text>
                   <Text
-                    style={tabularNums}
+                    style={[tabularNums, ltrTextStyle]}
                     className={`font-bold text-[15px] ${
                       isPositive
                         ? 'text-credit dark:text-credit-dark'
@@ -259,10 +267,10 @@ export default function BalancesScreen() {
                     }`}
                   >
                     {isPositive
-                      ? `+${formatMoney(b.netMinor, trip.baseCurrency)}`
+                      ? `+${formatCurrency(b.netMinor, trip.baseCurrency)}`
                       : isNegative
-                      ? formatMoney(b.netMinor, trip.baseCurrency)
-                      : 'Settled'}
+                      ? formatCurrency(b.netMinor, trip.baseCurrency)
+                      : t('common.settled')}
                   </Text>
                 </View>
 
@@ -282,12 +290,12 @@ export default function BalancesScreen() {
 
         {/* Recorded Payments History */}
         <Text className="font-bold text-[16px] mt-4 mb-1.5 tracking-tight text-ink dark:text-ink-dark">
-          Recorded payments ({tripPayments.length})
+          {t('balances.recordedPayments', { count: tripPayments.length })}
         </Text>
         {tripPayments.length === 0 ? (
           <Card className="p-5 items-center">
             <Text className="font-sans text-[13px] text-center leading-[19px] text-muted dark:text-muted-dark">
-              No payments recorded yet. Tap &quot;Mark paid&quot; above after settling up.
+              {t('balances.noPayments')}
             </Text>
           </Card>
         ) : (
@@ -303,25 +311,28 @@ export default function BalancesScreen() {
               >
                 <View className="flex-1">
                   <Text className="font-semibold text-[14px] text-ink dark:text-ink-dark">
-                    {getMemberName(p.fromUser)} paid {getMemberName(p.toUser)}
+                    {t('balances.paidLine', {
+                      from: getMemberName(p.fromUser),
+                      to: getMemberName(p.toUser),
+                    })}
                   </Text>
                   <Text
-                    style={tabularNums}
-                    className="font-bold text-[13px] mt-0.5 text-credit dark:text-credit-dark"
+                    style={[tabularNums, ltrTextStyle]}
+                    className="font-bold text-[13px] mt-0.5 self-start text-credit dark:text-credit-dark"
                   >
-                    {formatMoney(
+                    {formatCurrency(
                       convertToBaseMinor(p.amountMinor, p.fxRateToBase),
                       trip.baseCurrency
                     )}
                     {p.currency !== trip.baseCurrency
-                      ? ` (${formatMoney(p.amountMinor, p.currency)})`
+                      ? ` (${formatCurrency(p.amountMinor, p.currency)})`
                       : ''}
                   </Text>
                 </View>
                 <Pressable
                   onPress={() => handleDeletePayment(p.id)}
                   className="w-8 h-8 rounded-lg bg-surface dark:bg-surface-dark items-center justify-center"
-                  accessibilityLabel="Remove payment"
+                  accessibilityLabel={t('balances.removePaymentTitle')}
                 >
                   <Trash2 size={15} color={debtColor} />
                 </Pressable>
