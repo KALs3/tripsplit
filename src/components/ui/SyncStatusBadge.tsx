@@ -1,7 +1,8 @@
 import { Cloud, CloudOff, RefreshCw } from 'lucide-react-native';
 import React from 'react';
-import { StyleSheet, Text, useColorScheme, View } from 'react-native';
-import { colors } from '../../constants/colors';
+import { StyleSheet, Text, View } from 'react-native';
+import { fonts, tabularNums } from '../../constants/typography';
+import { useTheme } from '../../hooks/useTheme';
 import { SyncStatus } from '../../sync/types';
 
 interface SyncStatusBadgeProps {
@@ -10,14 +11,15 @@ interface SyncStatusBadgeProps {
 }
 
 export function SyncStatusBadge({ status, pendingCount }: SyncStatusBadgeProps) {
-  const isDark = useColorScheme() === 'dark';
+  const { isDark, palette, colors } = useTheme();
 
   const config = (() => {
     if (status === 'offline' || pendingCount > 0) {
       return {
-        label: pendingCount > 0 ? `Offline • ${pendingCount} queued` : 'Offline',
-        bg: isDark ? 'rgba(245, 158, 11, 0.16)' : colors.warningLight,
+        label: pendingCount > 0 ? `Offline (${pendingCount} queued)` : 'Offline',
+        bg: isDark ? 'rgba(217, 119, 6, 0.16)' : colors.warningLight,
         fg: isDark ? '#FBBF24' : '#B45309',
+        border: isDark ? 'rgba(251, 191, 36, 0.3)' : 'rgba(217, 119, 6, 0.25)',
         icon: <CloudOff size={12} color={isDark ? '#FBBF24' : '#B45309'} />,
       };
     }
@@ -25,33 +27,43 @@ export function SyncStatusBadge({ status, pendingCount }: SyncStatusBadgeProps) 
     if (status === 'syncing') {
       return {
         label: 'Syncing...',
-        bg: isDark ? 'rgba(59, 130, 246, 0.16)' : colors.infoLight,
-        fg: isDark ? '#60A5FA' : '#1D4ED8',
-        icon: <RefreshCw size={12} color={isDark ? '#60A5FA' : '#1D4ED8'} />,
+        bg: palette.surface,
+        fg: palette.text,
+        border: palette.borderStrong,
+        icon: <RefreshCw size={12} color={palette.text} />,
       };
     }
 
     if (status === 'error') {
       return {
-        label: 'Sync retry pending',
-        bg: isDark ? 'rgba(225, 29, 72, 0.16)' : colors.dangerLight,
-        fg: isDark ? '#FB7185' : '#BE123C',
-        icon: <CloudOff size={12} color={isDark ? '#FB7185' : '#BE123C'} />,
+        label: 'Retry pending',
+        bg: isDark ? 'rgba(248, 113, 113, 0.14)' : colors.dangerLight,
+        fg: isDark ? colors.dangerDark : colors.danger,
+        border: isDark ? 'rgba(248, 113, 113, 0.3)' : 'rgba(220, 38, 38, 0.2)',
+        icon: <CloudOff size={12} color={isDark ? colors.dangerDark : colors.danger} />,
       };
     }
 
     return {
       label: 'Synced',
-      bg: isDark ? 'rgba(16, 185, 129, 0.15)' : colors.successLight,
-      fg: isDark ? '#34D399' : '#047857',
-      icon: <Cloud size={12} color={isDark ? '#34D399' : '#047857'} />,
+      bg: palette.surface,
+      fg: palette.textMuted,
+      border: palette.border,
+      icon: <Cloud size={12} color={isDark ? colors.successDark : colors.success} />,
     };
   })();
 
   return (
-    <View style={[styles.pill, { backgroundColor: config.bg }]}>
+    <View
+      style={[
+        styles.pill,
+        { backgroundColor: config.bg, borderColor: config.border },
+      ]}
+    >
       {config.icon}
-      <Text style={[styles.label, { color: config.fg }]}>{config.label}</Text>
+      <Text style={[styles.label, tabularNums, { color: config.fg }]}>
+        {config.label}
+      </Text>
     </View>
   );
 }
@@ -62,11 +74,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 5,
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 10,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
   },
   label: {
+    fontFamily: fonts.medium,
     fontSize: 11,
-    fontWeight: '700',
   },
 });

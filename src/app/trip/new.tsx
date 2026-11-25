@@ -2,35 +2,47 @@ import { router } from 'expo-router';
 import { X } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { KeyboardAwareView } from '../../components/ui/KeyboardAwareView';
-import { colors } from '../../constants/colors';
+import { fonts } from '../../constants/typography';
 import { CURRENCY_METADATA } from '../../domain';
+import { useTheme } from '../../hooks/useTheme';
 import { useAppStore } from '../../store/useAppStore';
 
 const PRESET_COVERS = [
-  'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=800', // Tokyo
-  'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800', // Paris
-  'https://images.unsplash.com/photo-1533105079780-92b9be482077?w=800', // Greece
-  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800', // Beach
+  {
+    label: 'Tokyo',
+    url: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=800',
+  },
+  {
+    label: 'Paris',
+    url: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800',
+  },
+  {
+    label: 'Greece',
+    url: 'https://images.unsplash.com/photo-1533105079780-92b9be482077?w=800',
+  },
+  {
+    label: 'Coast',
+    url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800',
+  },
 ];
 
 export default function NewTripModal() {
-  const isDark = useColorScheme() === 'dark';
-  const palette = isDark ? colors.dark : colors.light;
+  const { palette } = useTheme();
 
   const [name, setName] = useState('');
   const [baseCurrency, setBaseCurrency] = useState('USD');
-  const [coverUrl, setCoverUrl] = useState(PRESET_COVERS[0]);
+  const [coverUrl, setCoverUrl] = useState(PRESET_COVERS[0].url);
   const [error, setError] = useState('');
 
   const addTrip = useAppStore((s) => s.addTrip);
@@ -38,7 +50,7 @@ export default function NewTripModal() {
 
   const handleCreate = () => {
     if (!name.trim()) {
-      setError('Please provide a trip name.');
+      setError('Enter a trip name.');
       return;
     }
 
@@ -57,9 +69,9 @@ export default function NewTripModal() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
       <View style={[styles.header, { borderBottomColor: palette.border }]}>
-        <Text style={[styles.title, { color: palette.text }]}>Create New Trip</Text>
+        <Text style={[styles.title, { color: palette.text }]}>Create trip</Text>
         <Pressable onPress={() => router.back()} style={styles.closeBtn}>
-          <X size={22} color={palette.text} />
+          <X size={21} color={palette.text} />
         </Pressable>
       </View>
 
@@ -69,95 +81,85 @@ export default function NewTripModal() {
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
-        <Input
-          label="Trip Name"
-          placeholder="e.g. Summer in Greece 🇬🇷"
-          value={name}
-          onChangeText={(val) => {
-            setName(val);
-            setError('');
-          }}
-          error={error}
-        />
+          <Input
+            label="Trip name"
+            placeholder="Summer in Greece"
+            value={name}
+            onChangeText={(val) => {
+              setName(val);
+              setError('');
+            }}
+            error={error}
+          />
 
-        <Text style={[styles.sectionLabel, { color: palette.text }]}>Base Currency</Text>
-        <Text style={[styles.sectionHelp, { color: palette.textMuted }]}>
-          All individual expenses and final settlements will be converted into this currency.
-        </Text>
-        <View style={styles.currencyRow}>
-          {['USD', 'EUR', 'GBP', 'EGP', 'JPY', 'CAD'].map((curr) => {
-            const isSelected = baseCurrency === curr;
-            return (
-              <Pressable
-                key={curr}
-                onPress={() => setBaseCurrency(curr)}
-                style={[
-                  styles.currencyChip,
-                  {
-                    backgroundColor: isSelected
-                      ? colors.primary
-                      : isDark
-                      ? palette.surface
-                      : palette.card,
-                    borderColor: isSelected ? colors.primary : palette.border,
-                  },
-                ]}
-              >
-                <Text
+          <Text style={[styles.sectionLabel, { color: palette.text }]}>
+            Base currency
+          </Text>
+          <Text style={[styles.sectionHelp, { color: palette.textMuted }]}>
+            All expenses and settlements are summarized in this currency.
+          </Text>
+          <View style={styles.currencyRow}>
+            {['USD', 'EUR', 'GBP', 'EGP', 'JPY', 'CAD'].map((curr) => {
+              const isSelected = baseCurrency === curr;
+              return (
+                <Pressable
+                  key={curr}
+                  onPress={() => setBaseCurrency(curr)}
                   style={[
-                    styles.currencyChipText,
-                    { color: isSelected ? '#FFFFFF' : palette.text },
-                  ]}
-                >
-                  {curr} ({CURRENCY_METADATA[curr]?.symbol || '$'})
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        <Text style={[styles.sectionLabel, { color: palette.text, marginTop: 18 }]}>
-          Trip Cover Photo
-        </Text>
-        <View style={styles.coverRow}>
-          {PRESET_COVERS.map((url, index) => {
-            const isSelected = coverUrl === url;
-            return (
-              <Pressable
-                key={index}
-                onPress={() => setCoverUrl(url)}
-                style={[
-                  styles.coverOption,
-                  {
-                    borderColor: isSelected ? colors.primary : 'transparent',
-                    borderWidth: isSelected ? 3 : 0,
-                  },
-                ]}
-              >
-                <View
-                  style={[
-                    styles.coverPlaceholder,
+                    styles.currencyChip,
                     {
-                      backgroundColor: isDark ? '#1E293B' : '#E2E8F0',
+                      backgroundColor: isSelected ? palette.accent : palette.card,
+                      borderColor: isSelected ? palette.accent : palette.border,
                     },
                   ]}
                 >
-                  <Text style={{ fontSize: 22 }}>
-                    {index === 0 ? '🗼' : index === 1 ? '🥐' : index === 2 ? '🏛️' : '🏖️'}
+                  <Text
+                    style={[
+                      styles.currencyChipText,
+                      { color: isSelected ? palette.accentText : palette.text },
+                    ]}
+                  >
+                    {curr} ({CURRENCY_METADATA[curr]?.symbol || '$'})
                   </Text>
-                </View>
-              </Pressable>
-            );
-          })}
-        </View>
+                </Pressable>
+              );
+            })}
+          </View>
 
-        <Button
-          title="Create Trip"
-          onPress={handleCreate}
-          variant="primary"
-          size="lg"
-          style={{ marginTop: 28 }}
-        />
+          <Text style={[styles.sectionLabel, { color: palette.text, marginTop: 18 }]}>
+            Cover photo
+          </Text>
+          <View style={styles.coverRow}>
+            {PRESET_COVERS.map((item) => {
+              const isSelected = coverUrl === item.url;
+              return (
+                <Pressable
+                  key={item.label}
+                  onPress={() => setCoverUrl(item.url)}
+                  style={[
+                    styles.coverOption,
+                    {
+                      borderColor: isSelected ? palette.accent : palette.border,
+                      borderWidth: isSelected ? 2 : 1,
+                    },
+                  ]}
+                >
+                  <Image source={{ uri: item.url }} style={styles.coverThumb} />
+                  <Text style={[styles.coverLabel, { color: palette.text }]}>
+                    {item.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <Button
+            title="Create trip"
+            onPress={handleCreate}
+            variant="primary"
+            size="lg"
+            style={{ marginTop: 26 }}
+          />
         </ScrollView>
       </KeyboardAwareView>
     </SafeAreaView>
@@ -165,39 +167,33 @@ export default function NewTripModal() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
     borderBottomWidth: 1,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
+    fontSize: 19,
     letterSpacing: -0.3,
   },
-  closeBtn: {
-    padding: 4,
-  },
-  scroll: {
-    padding: 20,
-    paddingBottom: 40,
-  },
+  closeBtn: { padding: 4 },
+  scroll: { padding: 18, paddingBottom: 40 },
   sectionLabel: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
+    fontSize: 13,
     marginTop: 14,
     marginBottom: 4,
   },
   sectionHelp: {
+    fontFamily: fonts.regular,
     fontSize: 12,
     marginBottom: 10,
-    lineHeight: 16,
+    lineHeight: 17,
   },
   currencyRow: {
     flexDirection: 'row',
@@ -205,28 +201,34 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   currencyChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 8,
     borderWidth: 1,
   },
   currencyChipText: {
+    fontFamily: fonts.semibold,
     fontSize: 13,
-    fontWeight: '600',
   },
   coverRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
+    marginTop: 6,
   },
   coverOption: {
-    borderRadius: 12,
+    flex: 1,
+    borderRadius: 8,
     overflow: 'hidden',
-  },
-  coverPlaceholder: {
-    width: 64,
-    height: 64,
     alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 10,
+    paddingBottom: 6,
+  },
+  coverThumb: {
+    width: '100%',
+    height: 54,
+    marginBottom: 4,
+  },
+  coverLabel: {
+    fontFamily: fonts.medium,
+    fontSize: 11,
   },
 });

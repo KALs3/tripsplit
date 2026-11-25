@@ -4,7 +4,6 @@ import {
   ArrowRight,
   CheckCircle2,
   Plus,
-  Sparkles,
   Trash2,
 } from 'lucide-react-native';
 import React, { useMemo } from 'react';
@@ -15,14 +14,15 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { AvatarStack } from '../../../components/ui/AvatarStack';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
-import { colors } from '../../../constants/colors';
+import { TicketDivider } from '../../../components/ui/TicketDivider';
+import { fonts, tabularNums } from '../../../constants/typography';
 import {
   calculateNetBalances,
   convertToBaseMinor,
@@ -30,12 +30,12 @@ import {
   getSortedNetBalances,
   simplifyDebts,
 } from '../../../domain';
+import { useTheme } from '../../../hooks/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
 
 export default function BalancesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const isDark = useColorScheme() === 'dark';
-  const palette = isDark ? colors.dark : colors.light;
+  const { isDark, palette, colors } = useTheme();
 
   const trips = useAppStore((s) => s.trips);
   const members = useAppStore((s) => s.members);
@@ -75,8 +75,11 @@ export default function BalancesScreen() {
     };
   }, [id, expenses, tripPayments, tripMembers]);
 
+  const getMember = (userId: string) =>
+    tripMembers.find((member) => member.userId === userId);
+
   const getMemberName = (userId: string) => {
-    const m = tripMembers.find((member) => member.userId === userId);
+    const m = getMember(userId);
     if (!m) return 'Unknown';
     return m.userId === currentUserId ? 'You' : m.displayName.split(' ')[0];
   };
@@ -87,8 +90,8 @@ export default function BalancesScreen() {
       return;
     }
     Alert.alert(
-      'Undo Settlement',
-      'Remove this recorded payment? Balances will update automatically.',
+      'Remove payment',
+      'Undo this recorded settlement? Balances will recalculate.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -111,6 +114,9 @@ export default function BalancesScreen() {
     );
   }
 
+  const creditColor = isDark ? colors.successDark : colors.success;
+  const debtColor = isDark ? colors.dangerDark : colors.danger;
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
       <View style={[styles.header, { borderBottomColor: palette.border }]}>
@@ -118,10 +124,10 @@ export default function BalancesScreen() {
           onPress={() => router.back()}
           style={[styles.iconButton, { backgroundColor: palette.surface }]}
         >
-          <ArrowLeft size={20} color={palette.text} />
+          <ArrowLeft size={19} color={palette.text} />
         </Pressable>
         <Text style={[styles.headerTitle, { color: palette.text }]}>
-          Balances & Settle Up
+          Balances & settle up
         </Text>
         <Button
           title="Pay"
@@ -130,91 +136,100 @@ export default function BalancesScreen() {
           }
           variant="primary"
           size="sm"
-          icon={<Plus size={15} color="#FFFFFF" />}
+          icon={<Plus size={15} color={palette.accentText} />}
         />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
-        {/* Simplified Debt Plan */}
-        <Card
-          style={[
-            styles.planCard,
-            { borderColor: isDark ? colors.primaryDark : colors.primaryLight },
-          ]}
-        >
+        {/* Simplified Debt Ticket */}
+        <Card style={styles.planCard}>
           <View style={styles.cardHeaderRow}>
-            <View style={styles.titleIcon}>
-              <Sparkles size={17} color={colors.primary} />
-              <Text style={[styles.sectionTitle, { color: palette.text }]}>
-                Recommended Transfers
-              </Text>
-            </View>
-            <Badge label={`${settlements.length} needed`} variant="info" />
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>
+              Recommended transfers
+            </Text>
+            <Badge label={`${settlements.length} needed`} variant="neutral" />
           </View>
           <Text style={[styles.helperText, { color: palette.textMuted }]}>
-            Greedy bipartite simplification minimizes the payments needed to clear all debts.
+            Minimized payment plan to clear every group balance.
           </Text>
+
+          <TicketDivider />
 
           {settlements.length === 0 ? (
             <View style={styles.allSettledBox}>
-              <CheckCircle2 size={28} color={colors.success} />
+              <CheckCircle2 size={26} color={creditColor} />
               <Text style={[styles.allSettledText, { color: palette.text }]}>
-                Everyone is completely settled up!
+                Everyone is settled up.
               </Text>
             </View>
           ) : (
-            <View style={{ marginTop: 8 }}>
-              {settlements.map((t, idx) => (
-                <View
-                  key={`${t.fromUser}_${t.toUser}_${idx}`}
-                  style={[
-                    styles.transferRow,
-                    idx < settlements.length - 1 && {
-                      borderBottomWidth: 1,
-                      borderBottomColor: palette.border,
-                    },
-                  ]}
-                >
-                  <View style={styles.transferInfo}>
-                    <View style={styles.transferNames}>
-                      <Text style={[styles.debtorName, { color: colors.danger }]}>
-                        {getMemberName(t.fromUser)}
-                      </Text>
-                      <ArrowRight size={14} color={palette.textMuted} />
-                      <Text style={[styles.creditorName, { color: colors.success }]}>
-                        {getMemberName(t.toUser)}
-                      </Text>
+            <View>
+              {settlements.map((t, idx) => {
+                const fromMember = getMember(t.fromUser);
+                const toMember = getMember(t.toUser);
+                return (
+                  <View
+                    key={`${t.fromUser}_${t.toUser}_${idx}`}
+                    style={[
+                      styles.transferRow,
+                      idx < settlements.length - 1 && {
+                        borderBottomWidth: 1,
+                        borderBottomColor: palette.border,
+                      },
+                    ]}
+                  >
+                    <View style={styles.transferLeft}>
+                      <View style={styles.transferAvatars}>
+                        {fromMember && (
+                          <AvatarStack members={[fromMember]} size={26} />
+                        )}
+                        <ArrowRight size={14} color={palette.textMuted} />
+                        {toMember && (
+                          <AvatarStack members={[toMember]} size={26} />
+                        )}
+                      </View>
+                      <View style={{ marginTop: 5 }}>
+                        <Text style={[styles.transferLabel, { color: palette.text }]}>
+                          <Text style={{ color: debtColor }}>
+                            {getMemberName(t.fromUser)}
+                          </Text>
+                          {' pays '}
+                          <Text style={{ color: creditColor }}>
+                            {getMemberName(t.toUser)}
+                          </Text>
+                        </Text>
+                        <Text style={[styles.transferAmount, tabularNums, { color: palette.text }]}>
+                          {formatMoney(t.amountMinor, trip.baseCurrency)}
+                        </Text>
+                      </View>
                     </View>
-                    <Text style={[styles.transferAmount, { color: palette.text }]}>
-                      {formatMoney(t.amountMinor, trip.baseCurrency)}
-                    </Text>
-                  </View>
 
-                  <Button
-                    title="Settle"
-                    size="sm"
-                    variant="outline"
-                    onPress={() =>
-                      router.push({
-                        pathname: '/trip/[id]/settle',
-                        params: {
-                          id: trip.id,
-                          fromUser: t.fromUser,
-                          toUser: t.toUser,
-                          amountMinor: String(t.amountMinor),
-                        },
-                      })
-                    }
-                  />
-                </View>
-              ))}
+                    <Button
+                      title="Mark paid"
+                      size="sm"
+                      variant="primary"
+                      onPress={() =>
+                        router.push({
+                          pathname: '/trip/[id]/settle',
+                          params: {
+                            id: trip.id,
+                            fromUser: t.fromUser,
+                            toUser: t.toUser,
+                            amountMinor: String(t.amountMinor),
+                          },
+                        })
+                      }
+                    />
+                  </View>
+                );
+              })}
             </View>
           )}
         </Card>
 
         {/* Per-Member Net Balances */}
         <Text style={[styles.groupHeading, { color: palette.text }]}>
-          Group Net Balances
+          Net balances
         </Text>
         <Card style={styles.balancesCard}>
           {sortedBalances.map((b, idx) => {
@@ -243,11 +258,12 @@ export default function BalancesScreen() {
                   <Text
                     style={[
                       styles.balanceAmount,
+                      tabularNums,
                       {
                         color: isPositive
-                          ? colors.success
+                          ? creditColor
                           : isNegative
-                          ? colors.danger
+                          ? debtColor
                           : palette.textMuted,
                       },
                     ]}
@@ -265,8 +281,8 @@ export default function BalancesScreen() {
                     style={[
                       styles.barFill,
                       {
-                        width: `${b.netMinor === 0 ? 0 : Math.max(8, barWidthPct)}%`,
-                        backgroundColor: isPositive ? colors.success : colors.danger,
+                        width: `${b.netMinor === 0 ? 0 : Math.max(6, barWidthPct)}%`,
+                        backgroundColor: isPositive ? creditColor : debtColor,
                       },
                     ]}
                   />
@@ -278,12 +294,12 @@ export default function BalancesScreen() {
 
         {/* Recorded Payments History */}
         <Text style={[styles.groupHeading, { color: palette.text }]}>
-          Recorded Payments ({tripPayments.length})
+          Recorded payments ({tripPayments.length})
         </Text>
         {tripPayments.length === 0 ? (
           <Card style={styles.emptyCard}>
             <Text style={[styles.emptyText, { color: palette.textMuted }]}>
-              No payments recorded yet. Tap &quot;Settle&quot; above once someone pays back a friend.
+              No payments recorded yet. Tap &quot;Mark paid&quot; above after settling up.
             </Text>
           </Card>
         ) : (
@@ -303,7 +319,7 @@ export default function BalancesScreen() {
                   <Text style={[styles.paymentTitle, { color: palette.text }]}>
                     {getMemberName(p.fromUser)} paid {getMemberName(p.toUser)}
                   </Text>
-                  <Text style={[styles.paymentSub, { color: palette.textMuted }]}>
+                  <Text style={[styles.paymentSub, tabularNums, { color: creditColor }]}>
                     {formatMoney(
                       convertToBaseMinor(p.amountMinor, p.fxRateToBase),
                       trip.baseCurrency
@@ -318,7 +334,7 @@ export default function BalancesScreen() {
                   style={[styles.trashBtn, { backgroundColor: palette.surface }]}
                   accessibilityLabel="Remove payment"
                 >
-                  <Trash2 size={15} color={colors.danger} />
+                  <Trash2 size={15} color={debtColor} />
                 </Pressable>
               </View>
             ))}
@@ -332,7 +348,7 @@ export default function BalancesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   notFound: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  notFoundText: { fontSize: 16, fontWeight: '700' },
+  notFoundText: { fontFamily: fonts.bold, fontSize: 16 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -342,23 +358,22 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   iconButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: -0.3,
+    fontFamily: fonts.bold,
+    fontSize: 17,
+    letterSpacing: -0.2,
   },
   scroll: {
     padding: 16,
     paddingBottom: 40,
   },
   planCard: {
-    borderWidth: 1.5,
     padding: 16,
   },
   cardHeaderRow: {
@@ -366,28 +381,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  titleIcon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
   sectionTitle: {
+    fontFamily: fonts.bold,
     fontSize: 16,
-    fontWeight: '700',
   },
   helperText: {
+    fontFamily: fonts.regular,
     fontSize: 12,
-    marginTop: 6,
+    marginTop: 4,
     lineHeight: 17,
   },
   allSettledBox: {
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingVertical: 16,
     gap: 8,
   },
   allSettledText: {
+    fontFamily: fonts.semibold,
     fontSize: 14,
-    fontWeight: '600',
   },
   transferRow: {
     flexDirection: 'row',
@@ -395,34 +406,38 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 12,
   },
-  transferInfo: {
+  transferLeft: {
     flex: 1,
-    marginRight: 10,
+    marginRight: 12,
   },
-  transferNames: {
+  transferAvatars: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
-  debtorName: { fontSize: 14, fontWeight: '700' },
-  creditorName: { fontSize: 14, fontWeight: '700' },
+  transferLabel: {
+    fontFamily: fonts.semibold,
+    fontSize: 13,
+  },
   transferAmount: {
-    fontSize: 16,
-    fontWeight: '800',
+    fontFamily: fonts.bold,
+    fontSize: 17,
     marginTop: 2,
   },
   groupHeading: {
-    fontSize: 17,
-    fontWeight: '800',
-    marginTop: 18,
+    fontFamily: fonts.bold,
+    fontSize: 16,
+    marginTop: 16,
     marginBottom: 6,
     letterSpacing: -0.2,
   },
   balancesCard: {
-    padding: 14,
+    padding: 0,
+    overflow: 'hidden',
   },
   balanceRow: {
-    paddingVertical: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
   balanceTopRow: {
     flexDirection: 'row',
@@ -430,40 +445,43 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 6,
   },
-  memberName: { fontSize: 14, fontWeight: '600' },
-  balanceAmount: { fontSize: 15, fontWeight: '700' },
+  memberName: { fontFamily: fonts.semibold, fontSize: 14 },
+  balanceAmount: { fontFamily: fonts.bold, fontSize: 15 },
   barTrack: {
-    height: 6,
-    borderRadius: 3,
+    height: 5,
+    borderRadius: 4,
     overflow: 'hidden',
   },
   barFill: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: 4,
   },
   emptyCard: {
     padding: 20,
     alignItems: 'center',
   },
   emptyText: {
+    fontFamily: fonts.regular,
     fontSize: 13,
     textAlign: 'center',
     lineHeight: 19,
   },
   paymentsCard: {
-    padding: 14,
+    padding: 0,
+    overflow: 'hidden',
   },
   paymentRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
-  paymentTitle: { fontSize: 14, fontWeight: '600' },
-  paymentSub: { fontSize: 13, fontWeight: '700', marginTop: 2 },
+  paymentTitle: { fontFamily: fonts.semibold, fontSize: 14 },
+  paymentSub: { fontFamily: fonts.bold, fontSize: 13, marginTop: 2 },
   trashBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },

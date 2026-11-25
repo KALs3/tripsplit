@@ -4,17 +4,61 @@ import { colors } from './colors';
 export interface CategoryMeta {
   id: ExpenseCategory;
   label: string;
-  emoji: string;
+  shortLabel: string;
+  emoji: string; // Retained for plain-text Share summaries
   color: string;
+  colorDark: string;
 }
 
 export const EXPENSE_CATEGORIES: CategoryMeta[] = [
-  { id: 'food', label: 'Food & Dining', emoji: '🍜', color: colors.categories.food },
-  { id: 'transport', label: 'Transport', emoji: '🚄', color: colors.categories.transport },
-  { id: 'lodging', label: 'Lodging', emoji: '🏨', color: colors.categories.lodging },
-  { id: 'activities', label: 'Activities', emoji: '🎟️', color: colors.categories.activities },
-  { id: 'shopping', label: 'Shopping', emoji: '🛍️', color: colors.categories.shopping },
-  { id: 'other', label: 'Other', emoji: '🧾', color: colors.categories.other },
+  {
+    id: 'food',
+    label: 'Food & Dining',
+    shortLabel: 'Food',
+    emoji: '🍜',
+    color: colors.categories.food,
+    colorDark: colors.categoriesDark.food,
+  },
+  {
+    id: 'transport',
+    label: 'Transport',
+    shortLabel: 'Transit',
+    emoji: '🚄',
+    color: colors.categories.transport,
+    colorDark: colors.categoriesDark.transport,
+  },
+  {
+    id: 'lodging',
+    label: 'Lodging',
+    shortLabel: 'Stay',
+    emoji: '🏨',
+    color: colors.categories.lodging,
+    colorDark: colors.categoriesDark.lodging,
+  },
+  {
+    id: 'activities',
+    label: 'Activities',
+    shortLabel: 'Tickets',
+    emoji: '🎟️',
+    color: colors.categories.activities,
+    colorDark: colors.categoriesDark.activities,
+  },
+  {
+    id: 'shopping',
+    label: 'Shopping',
+    shortLabel: 'Shop',
+    emoji: '🛍️',
+    color: colors.categories.shopping,
+    colorDark: colors.categoriesDark.shopping,
+  },
+  {
+    id: 'other',
+    label: 'Other',
+    shortLabel: 'Other',
+    emoji: '🧾',
+    color: colors.categories.other,
+    colorDark: colors.categoriesDark.other,
+  },
 ];
 
 export function getCategoryMeta(category?: ExpenseCategory): CategoryMeta {

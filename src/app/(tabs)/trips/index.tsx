@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Calendar, Plus, QrCode, Users } from 'lucide-react-native';
+import { Calendar, Compass, Plus, QrCode } from 'lucide-react-native';
 import React from 'react';
 import {
   FlatList,
@@ -7,22 +7,22 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { AvatarStack } from '../../../components/ui/AvatarStack';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { SyncStatusBadge } from '../../../components/ui/SyncStatusBadge';
-import { colors } from '../../../constants/colors';
+import { fonts, tabularNums } from '../../../constants/typography';
 import { formatMoney } from '../../../domain';
 import { MockTrip } from '../../../domain/mockData';
+import { useTheme } from '../../../hooks/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
 
 export default function TripsListScreen() {
-  const isDark = useColorScheme() === 'dark';
-  const palette = isDark ? colors.dark : colors.light;
+  const { palette } = useTheme();
 
   const trips = useAppStore((s) => s.trips);
   const members = useAppStore((s) => s.members);
@@ -40,7 +40,7 @@ export default function TripsListScreen() {
 
   const renderTripCard = ({ item }: { item: MockTrip }) => {
     const tripMembers = members.filter((m) => m.tripId === item.id);
-    const { userNetMinor } = getTripBalances(item.id);
+    const { userNetMinor, totalSpendMinor } = getTripBalances(item.id);
 
     const isOwed = userNetMinor > 0;
     const isDebt = userNetMinor < 0;
@@ -48,51 +48,56 @@ export default function TripsListScreen() {
     return (
       <Pressable onPress={() => handleOpenTrip(item.id)}>
         <Card style={styles.tripCard}>
-          {item.coverUrl ? (
-            <Image source={{ uri: item.coverUrl }} style={styles.coverImage} />
-          ) : (
-            <View style={[styles.coverFallback, { backgroundColor: palette.surface }]}>
-              <Text style={styles.coverFallbackText}>✈️</Text>
-            </View>
-          )}
-
-          <View style={styles.cardContent}>
-            <View style={styles.titleRow}>
-              <Text style={[styles.tripName, { color: palette.text }]} numberOfLines={1}>
+          {/* Cover Header with Scrim */}
+          <View style={styles.coverWrap}>
+            {item.coverUrl ? (
+              <Image source={{ uri: item.coverUrl }} style={styles.coverImage} />
+            ) : (
+              <View style={[styles.coverFallback, { backgroundColor: palette.surface }]}>
+                <Compass size={28} color={palette.textMuted} />
+              </View>
+            )}
+            <View style={styles.coverScrim} />
+            <View style={styles.coverOverlay}>
+              <Text style={styles.coverTitle} numberOfLines={1}>
                 {item.name}
               </Text>
-              <Badge
-                label={
-                  isOwed
-                    ? `+${formatMoney(userNetMinor, item.baseCurrency)}`
-                    : isDebt
-                    ? formatMoney(userNetMinor, item.baseCurrency)
-                    : 'Settled'
-                }
-                variant={isOwed ? 'success' : isDebt ? 'danger' : 'neutral'}
-              />
-            </View>
-
-            <View style={styles.metaRow}>
-              <View style={styles.metaItem}>
-                <Users size={14} color={palette.textMuted} />
-                <Text style={[styles.metaText, { color: palette.textMuted }]}>
-                  {tripMembers.length || 1} members
-                </Text>
+              <View style={styles.coverDateRow}>
+                {item.startDate ? (
+                  <View style={styles.datePill}>
+                    <Calendar size={12} color="#E4E4E7" />
+                    <Text style={styles.coverDateText}>
+                      {new Date(item.startDate).toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </Text>
+                  </View>
+                ) : null}
+                <Text style={styles.coverDateText}>{item.inviteCode}</Text>
               </View>
-
-              {item.startDate && (
-                <View style={styles.metaItem}>
-                  <Calendar size={14} color={palette.textMuted} />
-                  <Text style={[styles.metaText, { color: palette.textMuted }]}>
-                    {new Date(item.startDate).toLocaleDateString(undefined, {
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                  </Text>
-                </View>
-              )}
             </View>
+          </View>
+
+          {/* Structured Footer Strip */}
+          <View style={styles.cardFooter}>
+            <View style={styles.footerLeft}>
+              <AvatarStack members={tripMembers} size={26} />
+              <Text style={[styles.spendText, tabularNums, { color: palette.textMuted }]}>
+                Total {formatMoney(totalSpendMinor, item.baseCurrency)}
+              </Text>
+            </View>
+
+            <Badge
+              label={
+                isOwed
+                  ? `+${formatMoney(userNetMinor, item.baseCurrency)}`
+                  : isDebt
+                  ? formatMoney(userNetMinor, item.baseCurrency)
+                  : 'Settled'
+              }
+              variant={isOwed ? 'success' : isDebt ? 'danger' : 'neutral'}
+            />
           </View>
         </Card>
       </Pressable>
@@ -104,18 +109,18 @@ export default function TripsListScreen() {
       edges={['top', 'left', 'right']}
       style={[styles.container, { backgroundColor: palette.background }]}
     >
-      {/* Top App Bar */}
+      {/* Minimal Monochrome Header */}
       <View style={[styles.header, { borderBottomColor: palette.border }]}>
-        <View>
+        <View style={{ flex: 1, marginRight: 8 }}>
           <View style={styles.greetingRow}>
-            <Text style={[styles.greeting, { color: palette.text }]}>
-              Hi, {user?.displayName?.split(' ')[0] || 'Traveler'} 👋
+            <Text style={[styles.greeting, { color: palette.text }]} numberOfLines={1}>
+              {user?.displayName?.split(' ')[0] || 'Traveler'}&apos;s trips
             </Text>
             {isGuestDemo && (
-              <Badge label="Demo" variant="info" style={{ marginLeft: 6 }} />
+              <Badge label="Demo" variant="neutral" style={{ marginLeft: 8 }} />
             )}
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
             <SyncStatusBadge status={syncStatus} pendingCount={pendingMutationsCount} />
           </View>
         </View>
@@ -126,14 +131,14 @@ export default function TripsListScreen() {
             onPress={() => router.push('/trip/join')}
             variant="outline"
             size="sm"
-            icon={<QrCode size={15} color={colors.primary} />}
+            icon={<QrCode size={15} color={palette.text} />}
           />
           <Button
-            title="New Trip"
+            title="New trip"
             onPress={() => router.push('/trip/new')}
             variant="primary"
             size="sm"
-            icon={<Plus size={16} color="#FFFFFF" />}
+            icon={<Plus size={15} color={palette.accentText} />}
           />
         </View>
       </View>
@@ -151,7 +156,7 @@ export default function TripsListScreen() {
               Create a trip with friends or join an existing trip with an invite code.
             </Text>
             <Button
-              title="Create First Trip"
+              title="Create first trip"
               onPress={() => router.push('/trip/new')}
               variant="primary"
               size="md"
@@ -172,9 +177,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 16,
+    paddingHorizontal: 18,
+    paddingTop: 10,
+    paddingBottom: 14,
     borderBottomWidth: 1,
   },
   greetingRow: {
@@ -182,66 +187,90 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   greeting: {
+    fontFamily: fonts.bold,
     fontSize: 22,
-    fontWeight: '800',
-    letterSpacing: -0.4,
-  },
-  subGreeting: {
-    fontSize: 13,
-    marginTop: 2,
+    letterSpacing: -0.5,
   },
   listContainer: {
     padding: 16,
-    paddingBottom: 30,
+    paddingBottom: 32,
   },
   tripCard: {
     padding: 0,
     overflow: 'hidden',
     marginBottom: 12,
   },
+  coverWrap: {
+    height: 136,
+    position: 'relative',
+    justifyContent: 'flex-end',
+  },
   coverImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     width: '100%',
-    height: 120,
-    backgroundColor: '#E2E8F0',
+    height: '100%',
   },
   coverFallback: {
-    width: '100%',
-    height: 100,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  coverFallbackText: {
-    fontSize: 36,
+  coverScrim: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(9, 9, 11, 0.42)',
   },
-  cardContent: {
+  coverOverlay: {
     padding: 14,
   },
-  titleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+  coverTitle: {
+    fontFamily: fonts.bold,
+    fontSize: 20,
+    color: '#FFFFFF',
+    letterSpacing: -0.4,
   },
-  tripName: {
-    fontSize: 17,
-    fontWeight: '700',
-    flex: 1,
-    marginRight: 10,
-    letterSpacing: -0.2,
-  },
-  metaRow: {
+  coverDateRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 12,
+    marginTop: 4,
   },
-  metaItem: {
+  datePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: 4,
   },
-  metaText: {
+  coverDateText: {
+    fontFamily: fonts.medium,
     fontSize: 12,
-    fontWeight: '500',
+    color: '#E4E4E7',
+  },
+  cardFooter: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  footerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  spendText: {
+    fontFamily: fonts.medium,
+    fontSize: 12,
   },
   emptyContainer: {
     alignItems: 'center',
@@ -250,11 +279,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
   },
   emptyTitle: {
+    fontFamily: fonts.bold,
     fontSize: 18,
-    fontWeight: '700',
     marginBottom: 6,
   },
   emptySubtitle: {
+    fontFamily: fonts.regular,
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,

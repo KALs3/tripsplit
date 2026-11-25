@@ -1,11 +1,10 @@
 import { router } from 'expo-router';
-import { Compass, Sparkles, UserCheck } from 'lucide-react-native';
+import { ArrowRight, Compass, UserCheck } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,13 +13,14 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { KeyboardAwareView } from '../../components/ui/KeyboardAwareView';
-import { colors } from '../../constants/colors';
+import { TicketDivider } from '../../components/ui/TicketDivider';
+import { fonts } from '../../constants/typography';
+import { useTheme } from '../../hooks/useTheme';
 import { supabase } from '../../lib/supabase';
 import { useAppStore } from '../../store/useAppStore';
 
 export default function LoginScreen() {
-  const isDark = useColorScheme() === 'dark';
-  const palette = isDark ? colors.dark : colors.light;
+  const { palette, colors } = useTheme();
 
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
@@ -39,7 +39,7 @@ export default function LoginScreen() {
 
   const handleEmailAuth = async () => {
     if (!email || !password) {
-      setErrorMessage('Please enter both email and password.');
+      setErrorMessage('Enter both email and password.');
       return;
     }
     setErrorMessage('');
@@ -83,7 +83,6 @@ export default function LoginScreen() {
         }
       }
     } catch (err: any) {
-      // In development or if Supabase keys are placeholders, offer clear feedback
       setErrorMessage(err.message || 'Authentication failed.');
     } finally {
       setLoading(false);
@@ -98,51 +97,53 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
-          {/* Header Brand */}
+          {/* Minimal Monochrome Brand Header */}
           <View style={styles.brandContainer}>
-            <View style={[styles.logoBadge, { backgroundColor: colors.primaryLight }]}>
-              <Compass size={36} color={colors.primary} />
+            <View
+              style={[
+                styles.logoBox,
+                { backgroundColor: palette.accent },
+              ]}
+            >
+              <Compass size={28} color={palette.accentText} strokeWidth={2} />
             </View>
-            <Text style={[styles.brandTitle, { color: palette.text }]}>TripSplit</Text>
+            <Text style={[styles.brandTitle, { color: palette.text }]}>
+              TripSplit
+            </Text>
             <Text style={[styles.brandSubtitle, { color: palette.textMuted }]}>
-              Effortless group expense splitting & shared trip planner
+              Shared trip ledger and instant debt settlement
             </Text>
           </View>
 
-          {/* Quick Demo Callout (Primary recruiter action) */}
-          <Card
-            style={[
-              styles.demoCard,
-              {
-                borderColor: colors.primary,
-                backgroundColor: isDark ? 'rgba(5, 150, 105, 0.12)' : '#ECFDF5',
-              },
-            ]}
-          >
-            <View style={styles.demoCardHeader}>
-              <Sparkles size={20} color={colors.primary} />
-              <Text style={[styles.demoCardTitle, { color: colors.primary }]}>
-                Recruiter & Demo Mode
-              </Text>
-              <Badge label="Instant" variant="success" />
+          {/* Demo Ticket Card */}
+          <Card style={styles.demoTicket}>
+            <View style={styles.demoHeader}>
+              <View>
+                <Text style={[styles.demoTitle, { color: palette.text }]}>
+                  Tokyo & Kyoto sample trip
+                </Text>
+                <Text style={[styles.demoMeta, { color: palette.textMuted }]}>
+                  4 travelers, live ledger, offline sync
+                </Text>
+              </View>
+              <Badge label="TOKYO26" variant="neutral" />
             </View>
-            <Text style={[styles.demoCardText, { color: palette.text }]}>
-              Explore a pre-loaded trip to Tokyo with 4 travelers, real expenses, and greedy debt simplification. No signup required.
-            </Text>
+
+            <TicketDivider />
+
             <Button
-              title="Try 1-Tap Guest Demo"
+              title="Try demo trip"
               onPress={handleGuestDemo}
               variant="primary"
               size="md"
-              icon={<UserCheck size={18} color="#FFFFFF" />}
-              style={styles.demoButton}
+              icon={<UserCheck size={17} color={palette.accentText} />}
             />
           </Card>
 
           <View style={styles.dividerRow}>
             <View style={[styles.dividerLine, { backgroundColor: palette.border }]} />
             <Text style={[styles.dividerText, { color: palette.textMuted }]}>
-              or sign in with email
+              or continue with email
             </Text>
             <View style={[styles.dividerLine, { backgroundColor: palette.border }]} />
           </View>
@@ -151,15 +152,15 @@ export default function LoginScreen() {
           <Card style={styles.formCard}>
             {isSignUp && (
               <Input
-                label="Full Name"
-                placeholder="e.g. Jane Doe"
+                label="Full name"
+                placeholder="Jane Doe"
                 value={displayName}
                 onChangeText={setDisplayName}
                 autoCapitalize="words"
               />
             )}
             <Input
-              label="Email Address"
+              label="Email"
               placeholder="name@example.com"
               value={email}
               onChangeText={setEmail}
@@ -176,23 +177,26 @@ export default function LoginScreen() {
             />
 
             {errorMessage ? (
-              <Text style={styles.errorBanner}>{errorMessage}</Text>
+              <Text style={[styles.errorBanner, { color: colors.danger }]}>
+                {errorMessage}
+              </Text>
             ) : null}
 
             <Button
-              title={isSignUp ? 'Create Account' : 'Sign In'}
+              title={isSignUp ? 'Create account' : 'Sign in'}
               onPress={handleEmailAuth}
               loading={loading}
-              variant="primary"
+              variant="outline"
               size="md"
-              style={{ marginTop: 12 }}
+              icon={<ArrowRight size={16} color={palette.text} />}
+              style={{ marginTop: 10 }}
             />
 
             <Button
               title={
                 isSignUp
-                  ? 'Already have an account? Sign In'
-                  : "Don't have an account? Sign Up"
+                  ? 'Already have an account? Sign in'
+                  : 'New here? Create an account'
               }
               onPress={() => {
                 setIsSignUp(!isSignUp);
@@ -200,7 +204,7 @@ export default function LoginScreen() {
               }}
               variant="ghost"
               size="sm"
-              style={{ marginTop: 8 }}
+              style={{ marginTop: 6 }}
             />
           </Card>
         </ScrollView>
@@ -213,84 +217,75 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  keyboardView: {
-    flex: 1,
-  },
   scrollContainer: {
     paddingHorizontal: 20,
-    paddingTop: 30,
+    paddingTop: 28,
     paddingBottom: 40,
   },
   brandContainer: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 24,
   },
-  logoBadge: {
-    width: 68,
-    height: 68,
-    borderRadius: 22,
+  logoBox: {
+    width: 52,
+    height: 52,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
   },
   brandTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-    letterSpacing: -0.5,
+    fontFamily: fonts.bold,
+    fontSize: 30,
+    letterSpacing: -0.8,
   },
   brandSubtitle: {
+    fontFamily: fonts.regular,
     fontSize: 15,
-    textAlign: 'center',
-    marginTop: 6,
-    paddingHorizontal: 20,
+    marginTop: 4,
     lineHeight: 22,
   },
-  demoCard: {
-    borderWidth: 1.5,
-    marginBottom: 20,
-  },
-  demoCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  demoTicket: {
+    padding: 16,
     marginBottom: 8,
   },
-  demoCardTitle: {
+  demoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  demoTitle: {
+    fontFamily: fonts.semibold,
     fontSize: 16,
-    fontWeight: '700',
-    flex: 1,
+    letterSpacing: -0.2,
   },
-  demoCardText: {
+  demoMeta: {
+    fontFamily: fonts.regular,
     fontSize: 13,
-    lineHeight: 19,
-    marginBottom: 14,
-  },
-  demoButton: {
-    marginTop: 4,
+    marginTop: 2,
   },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 14,
+    marginVertical: 16,
   },
   dividerLine: {
     flex: 1,
     height: 1,
   },
   dividerText: {
+    fontFamily: fonts.medium,
     fontSize: 12,
     paddingHorizontal: 10,
-    textTransform: 'uppercase',
-    fontWeight: '600',
   },
   formCard: {
-    padding: 18,
+    padding: 16,
   },
   errorBanner: {
-    color: colors.danger,
+    fontFamily: fonts.medium,
     fontSize: 13,
-    marginTop: 4,
-    marginBottom: 8,
-    fontWeight: '500',
+    marginTop: 6,
+    marginBottom: 4,
   },
 });

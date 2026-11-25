@@ -1,14 +1,37 @@
+import {
+  SpaceGrotesk_400Regular,
+  SpaceGrotesk_500Medium,
+  SpaceGrotesk_600SemiBold,
+  SpaceGrotesk_700Bold,
+  useFonts,
+} from '@expo-google-fonts/space-grotesk';
 import * as Network from 'expo-network';
 import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAppStore } from '../store/useAppStore';
 
+void SplashScreen.preventAutoHideAsync();
+
 export default function RootLayout() {
   const isDark = useColorScheme() === 'dark';
   const setNetworkOnline = useAppStore((s) => s.setNetworkOnline);
+
+  const [fontsLoaded, fontError] = useFonts({
+    SpaceGrotesk_400Regular,
+    SpaceGrotesk_500Medium,
+    SpaceGrotesk_600SemiBold,
+    SpaceGrotesk_700Bold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      void SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
 
   useEffect(() => {
     let mounted = true;
@@ -37,6 +60,10 @@ export default function RootLayout() {
     };
   }, [setNetworkOnline]);
 
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
+
   return (
     <SafeAreaProvider>
       <StatusBar style={isDark ? 'light' : 'dark'} />
@@ -49,6 +76,7 @@ export default function RootLayout() {
         <Stack.Screen name="index" />
         <Stack.Screen name="(auth)/login" />
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="join/[code]" />
         <Stack.Screen
           name="trip/new"
           options={{

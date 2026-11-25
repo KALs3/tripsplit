@@ -9,22 +9,23 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Badge } from '../../../../components/ui/Badge';
 import { Button } from '../../../../components/ui/Button';
 import { Card } from '../../../../components/ui/Card';
+import { CategoryIcon } from '../../../../components/ui/CategoryIcon';
+import { TicketDivider } from '../../../../components/ui/TicketDivider';
 import { getCategoryMeta } from '../../../../constants/categories';
-import { colors } from '../../../../constants/colors';
+import { fonts, tabularNums } from '../../../../constants/typography';
 import { convertToBaseMinor, formatMoney } from '../../../../domain';
+import { useTheme } from '../../../../hooks/useTheme';
 import { useAppStore } from '../../../../store/useAppStore';
 
 export default function ExpenseDetailScreen() {
   const { id, expenseId } = useLocalSearchParams<{ id: string; expenseId: string }>();
-  const isDark = useColorScheme() === 'dark';
-  const palette = isDark ? colors.dark : colors.light;
+  const { isDark, palette, colors } = useTheme();
 
   const trips = useAppStore((s) => s.trips);
   const members = useAppStore((s) => s.members);
@@ -48,8 +49,8 @@ export default function ExpenseDetailScreen() {
     }
 
     Alert.alert(
-      'Delete Expense',
-      `Are you sure you want to delete "${expense.title}"? Balances will recalculate immediately.`,
+      'Delete expense',
+      `Delete "${expense.title}"? Balances will recalculate immediately.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -72,7 +73,7 @@ export default function ExpenseDetailScreen() {
             Expense not found
           </Text>
           <Button
-            title="Go Back"
+            title="Go back"
             onPress={() => router.back()}
             variant="primary"
             style={{ marginTop: 14 }}
@@ -84,6 +85,8 @@ export default function ExpenseDetailScreen() {
 
   const cat = getCategoryMeta(expense.category);
   const baseAmountMinor = convertToBaseMinor(expense.amountMinor, expense.fxRateToBase);
+  const dangerBg = isDark ? 'rgba(248, 113, 113, 0.14)' : colors.dangerLight;
+  const dangerFg = isDark ? colors.dangerDark : colors.danger;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
@@ -92,9 +95,9 @@ export default function ExpenseDetailScreen() {
           onPress={() => router.back()}
           style={[styles.iconButton, { backgroundColor: palette.surface }]}
         >
-          <ArrowLeft size={20} color={palette.text} />
+          <ArrowLeft size={19} color={palette.text} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: palette.text }]}>Expense Details</Text>
+        <Text style={[styles.headerTitle, { color: palette.text }]}>Receipt stub</Text>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <Pressable
             onPress={() =>
@@ -106,48 +109,45 @@ export default function ExpenseDetailScreen() {
             style={[styles.iconButton, { backgroundColor: palette.surface }]}
             accessibilityLabel="Edit expense"
           >
-            <Pencil size={17} color={palette.text} />
+            <Pencil size={16} color={palette.text} />
           </Pressable>
           <Pressable
             onPress={handleDelete}
-            style={[styles.iconButton, { backgroundColor: colors.dangerLight }]}
+            style={[styles.iconButton, { backgroundColor: dangerBg }]}
             accessibilityLabel="Delete expense"
           >
-            <Trash2 size={18} color={colors.danger} />
+            <Trash2 size={17} color={dangerFg} />
           </Pressable>
         </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
-        {/* Hero Card */}
-        <Card style={styles.heroCard}>
-          <View
-            style={[
-              styles.heroIconBox,
-              { backgroundColor: `${cat.color}20` },
-            ]}
-          >
-            <Text style={{ fontSize: 30 }}>{cat.emoji}</Text>
+        {/* Transit Ticket Receipt Stub */}
+        <Card style={styles.ticketCard}>
+          <View style={styles.ticketTop}>
+            <View style={[styles.iconWell, { backgroundColor: palette.surface }]}>
+              <CategoryIcon category={expense.category} size={22} color={palette.text} />
+            </View>
+            <Badge label={cat.label} variant="neutral" />
           </View>
-          <Badge label={cat.label} variant="neutral" style={{ marginVertical: 8 }} />
+
           <Text style={[styles.expenseTitle, { color: palette.text }]}>
             {expense.title}
           </Text>
-          <Text style={[styles.amountText, { color: palette.text }]}>
+          <Text style={[styles.amountText, tabularNums, { color: palette.text }]}>
             {formatMoney(expense.amountMinor, expense.currency)}
           </Text>
           {expense.currency !== trip.baseCurrency && (
-            <Text style={[styles.convertedText, { color: palette.textMuted }]}>
-              Converted: {formatMoney(baseAmountMinor, trip.baseCurrency)} (FX{' '}
+            <Text style={[styles.convertedText, tabularNums, { color: palette.textMuted }]}>
+              {formatMoney(baseAmountMinor, trip.baseCurrency)} in {trip.baseCurrency} (FX{' '}
               {expense.fxRateToBase})
             </Text>
           )}
-        </Card>
 
-        {/* Metadata Card */}
-        <Card style={styles.metaCard}>
+          <TicketDivider />
+
           <View style={styles.metaRow}>
-            <User size={16} color={palette.textMuted} />
+            <User size={15} color={palette.textMuted} />
             <Text style={[styles.metaLabel, { color: palette.textMuted }]}>Paid by</Text>
             <Text style={[styles.metaValue, { color: palette.text }]}>
               {getMemberName(expense.paidBy)}
@@ -155,8 +155,8 @@ export default function ExpenseDetailScreen() {
           </View>
 
           {expense.spentAt && (
-            <View style={[styles.metaRow, { marginTop: 12 }]}>
-              <Calendar size={16} color={palette.textMuted} />
+            <View style={[styles.metaRow, { marginTop: 10 }]}>
+              <Calendar size={15} color={palette.textMuted} />
               <Text style={[styles.metaLabel, { color: palette.textMuted }]}>Date</Text>
               <Text style={[styles.metaValue, { color: palette.text }]}>
                 {new Date(expense.spentAt).toLocaleDateString()}
@@ -165,21 +165,20 @@ export default function ExpenseDetailScreen() {
           )}
 
           {expense.note && (
-            <View style={[styles.metaRow, { marginTop: 12 }]}>
-              <FileText size={16} color={palette.textMuted} />
+            <View style={[styles.metaRow, { marginTop: 10 }]}>
+              <FileText size={15} color={palette.textMuted} />
               <Text style={[styles.metaLabel, { color: palette.textMuted }]}>Note</Text>
               <Text style={[styles.metaValue, { color: palette.text }]}>
                 {expense.note}
               </Text>
             </View>
           )}
-        </Card>
 
-        {/* Splits Breakdown */}
-        <Text style={[styles.sectionTitle, { color: palette.text }]}>
-          Split Breakdown ({expense.splits.length} people)
-        </Text>
-        <Card style={styles.splitsCard}>
+          <TicketDivider />
+
+          <Text style={[styles.splitsHeading, { color: palette.text }]}>
+            Split breakdown ({expense.splits.length})
+          </Text>
           {expense.splits.map((split, idx) => (
             <View
               key={split.userId}
@@ -194,7 +193,7 @@ export default function ExpenseDetailScreen() {
               <Text style={[styles.splitUser, { color: palette.text }]}>
                 {getMemberName(split.userId)}
               </Text>
-              <Text style={[styles.splitAmount, { color: palette.text }]}>
+              <Text style={[styles.splitAmount, tabularNums, { color: palette.text }]}>
                 {formatMoney(split.shareMinor, expense.currency)}
               </Text>
             </View>
@@ -202,27 +201,27 @@ export default function ExpenseDetailScreen() {
         </Card>
 
         {expense.receiptUrl && (
-          <>
+          <View style={{ marginTop: 10 }}>
             <Text style={[styles.sectionTitle, { color: palette.text }]}>
-              Attached Receipt
+              Attached receipt
             </Text>
-            <Card style={{ padding: 10 }}>
+            <Card style={{ padding: 8 }}>
               <Image
                 source={{ uri: expense.receiptUrl }}
-                style={{ width: '100%', height: 220, borderRadius: 10 }}
+                style={{ width: '100%', height: 220, borderRadius: 8 }}
                 resizeMode="cover"
               />
             </Card>
-          </>
+          </View>
         )}
 
         <Button
-          title="Delete Expense"
+          title="Delete expense"
           onPress={handleDelete}
           variant="danger"
           size="md"
           icon={<Trash2 size={16} color="#FFFFFF" />}
-          style={{ marginTop: 20 }}
+          style={{ marginTop: 18 }}
         />
       </ScrollView>
     </SafeAreaView>
@@ -230,19 +229,14 @@ export default function ExpenseDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   notFound: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
   },
-  notFoundText: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
+  notFoundText: { fontFamily: fonts.bold, fontSize: 16 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -252,49 +246,52 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   iconButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
+    fontFamily: fonts.bold,
     fontSize: 17,
-    fontWeight: '700',
+    letterSpacing: -0.2,
   },
   scroll: {
-    padding: 18,
+    padding: 16,
     paddingBottom: 40,
   },
-  heroCard: {
-    alignItems: 'center',
-    paddingVertical: 24,
+  ticketCard: {
+    padding: 16,
   },
-  heroIconBox: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
+  ticketTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+  iconWell: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   expenseTitle: {
+    fontFamily: fonts.bold,
     fontSize: 20,
-    fontWeight: '800',
-    marginTop: 4,
-    textAlign: 'center',
+    letterSpacing: -0.3,
   },
   amountText: {
-    fontSize: 32,
-    fontWeight: '800',
-    marginTop: 6,
-    letterSpacing: -0.6,
+    fontFamily: fonts.bold,
+    fontSize: 34,
+    marginTop: 4,
+    letterSpacing: -0.8,
   },
   convertedText: {
+    fontFamily: fonts.regular,
     fontSize: 13,
     marginTop: 4,
-  },
-  metaCard: {
-    padding: 16,
   },
   metaRow: {
     flexDirection: 'row',
@@ -302,36 +299,37 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   metaLabel: {
+    fontFamily: fonts.medium,
     fontSize: 13,
-    width: 64,
-    fontWeight: '500',
+    width: 60,
   },
   metaValue: {
+    fontFamily: fonts.semibold,
     fontSize: 14,
-    fontWeight: '600',
     flex: 1,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginTop: 18,
-    marginBottom: 6,
-  },
-  splitsCard: {
-    padding: 14,
+  splitsHeading: {
+    fontFamily: fonts.bold,
+    fontSize: 14,
+    marginBottom: 4,
   },
   splitRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 11,
+    paddingVertical: 10,
   },
   splitUser: {
+    fontFamily: fonts.medium,
     fontSize: 14,
-    fontWeight: '600',
   },
   splitAmount: {
+    fontFamily: fonts.bold,
+    fontSize: 14,
+  },
+  sectionTitle: {
+    fontFamily: fonts.bold,
     fontSize: 15,
-    fontWeight: '700',
+    marginBottom: 6,
   },
 });

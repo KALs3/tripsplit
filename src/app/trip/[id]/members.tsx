@@ -18,7 +18,6 @@ import {
   Share,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
@@ -28,13 +27,14 @@ import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { Input } from '../../../components/ui/Input';
 import { KeyboardAwareView } from '../../../components/ui/KeyboardAwareView';
-import { colors } from '../../../constants/colors';
+import { TicketDivider } from '../../../components/ui/TicketDivider';
+import { fonts, tabularNums } from '../../../constants/typography';
+import { useTheme } from '../../../hooks/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
 
 export default function TripMembersScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const isDark = useColorScheme() === 'dark';
-  const palette = isDark ? colors.dark : colors.light;
+  const { isDark, palette, colors } = useTheme();
 
   const trips = useAppStore((s) => s.trips);
   const members = useAppStore((s) => s.members);
@@ -67,6 +67,7 @@ export default function TripMembersScreen() {
 
   const inviteLink = `tripsplit://join/${trip.inviteCode}`;
   const isOwner = trip.ownerId === currentUserId;
+  const debtColor = isDark ? colors.dangerDark : colors.danger;
 
   const handleCopyCode = async () => {
     await Clipboard.setStringAsync(trip.inviteCode);
@@ -77,10 +78,10 @@ export default function TripMembersScreen() {
   const handleShareInvite = async () => {
     try {
       await Share.share({
-        message: `Join my trip "${trip.name}" on TripSplit! Use invite code ${trip.inviteCode} or open: ${inviteLink}`,
+        message: `Join "${trip.name}" on TripSplit! Use code ${trip.inviteCode} or open: ${inviteLink}`,
       });
     } catch {
-      // User dismissed share sheet
+      // Dismissed
     }
   };
 
@@ -100,7 +101,7 @@ export default function TripMembersScreen() {
       return;
     }
     Alert.alert(
-      'Remove Member',
+      'Remove member',
       `Remove ${displayName} from "${trip.name}"?`,
       [
         { text: 'Cancel', style: 'cancel' },
@@ -120,12 +121,12 @@ export default function TripMembersScreen() {
           onPress={() => router.back()}
           style={[styles.iconButton, { backgroundColor: palette.surface }]}
         >
-          <ArrowLeft size={20} color={palette.text} />
+          <ArrowLeft size={19} color={palette.text} />
         </Pressable>
         <Text style={[styles.headerTitle, { color: palette.text }]}>
-          Members ({tripMembers.length})
+          Travelers ({tripMembers.length})
         </Text>
-        <View style={{ width: 38 }} />
+        <View style={{ width: 36 }} />
       </View>
 
       <KeyboardAwareView>
@@ -134,144 +135,150 @@ export default function TripMembersScreen() {
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
-        {/* Invite Link & QR Card */}
-        <Card style={styles.inviteCard}>
-          <Text style={[styles.inviteHeading, { color: palette.text }]}>
-            Invite Friends via Code or QR
-          </Text>
-          <Text style={[styles.inviteSub, { color: palette.textMuted }]}>
-            Anyone with this code can join &quot;{trip.name}&quot; and log shared expenses.
-          </Text>
-
-          {/* White backing ensures QR code scans reliably in both Light & Dark Mode */}
-          <View style={styles.qrWrapper}>
-            <QRCode value={inviteLink} size={136} color="#0F172A" backgroundColor="#FFFFFF" />
-          </View>
-
-          <View style={[styles.codePill, { backgroundColor: palette.surface }]}>
-            <Text style={[styles.codeText, { color: palette.text }]}>
-              {trip.inviteCode}
+          {/* Boarding Pass QR Invite Ticket */}
+          <Card style={styles.inviteCard}>
+            <Text style={[styles.inviteHeading, { color: palette.text }]}>
+              Trip invite pass
             </Text>
-          </View>
+            <Text style={[styles.inviteSub, { color: palette.textMuted }]}>
+              Scan or share this code to join {trip.name}.
+            </Text>
 
-          <View style={styles.inviteActions}>
-            <Button
-              title={copied ? 'Copied!' : 'Copy Code'}
-              onPress={handleCopyCode}
-              variant="outline"
-              size="sm"
-              icon={
-                copied ? (
-                  <Check size={15} color={colors.primary} />
-                ) : (
-                  <Copy size={15} color={colors.primary} />
-                )
-              }
-              style={{ flex: 1 }}
-            />
-            <Button
-              title="Share Link"
-              onPress={handleShareInvite}
-              variant="primary"
-              size="sm"
-              icon={<Share2 size={15} color="#FFFFFF" />}
-              style={{ flex: 1 }}
-            />
-          </View>
-        </Card>
-
-        {/* Quick Add Friend */}
-        <Card style={styles.addCard}>
-          <Text style={[styles.sectionTitle, { color: palette.text }]}>
-            Add Traveler Directly
-          </Text>
-          <View style={styles.addRow}>
-            <View style={{ flex: 1 }}>
-              <Input
-                placeholder="Friend's name (e.g. Maya)"
-                value={newFriendName}
-                onChangeText={(val) => {
-                  setNewFriendName(val);
-                  setNameError('');
-                }}
-                error={nameError}
-                containerStyle={{ marginVertical: 0 }}
+            <View style={[styles.qrWrapper, { borderColor: palette.border }]}>
+              <QRCode
+                value={inviteLink}
+                size={136}
+                color="#09090B"
+                backgroundColor="#FFFFFF"
               />
             </View>
-            <Button
-              title="Add"
-              onPress={handleAddFriend}
-              variant="primary"
-              size="md"
-              icon={<UserPlus size={16} color="#FFFFFF" />}
-            />
-          </View>
-        </Card>
 
-        {/* Members List */}
-        <Text style={[styles.listHeading, { color: palette.text }]}>
-          Current Group
-        </Text>
-        <Card style={styles.membersCard}>
-          {tripMembers.map((member, idx) => {
-            const isSelf = member.userId === currentUserId;
-            const initials = member.displayName
-              .split(' ')
-              .map((part) => part[0])
-              .join('')
-              .slice(0, 2)
-              .toUpperCase();
+            <TicketDivider />
 
-            return (
-              <View
-                key={member.userId}
-                style={[
-                  styles.memberRow,
-                  idx < tripMembers.length - 1 && {
-                    borderBottomWidth: 1,
-                    borderBottomColor: palette.border,
-                  },
-                ]}
-              >
-                {member.avatarUrl ? (
-                  <Image source={{ uri: member.avatarUrl }} style={styles.avatar} />
-                ) : (
-                  <View
-                    style={[
-                      styles.avatarFallback,
-                      { backgroundColor: colors.primaryLight },
-                    ]}
-                  >
-                    <Text style={[styles.initialsText, { color: colors.primaryDark }]}>
-                      {initials}
-                    </Text>
-                  </View>
-                )}
+            <View style={[styles.codePill, { backgroundColor: palette.surface }]}>
+              <Text style={[styles.codeText, tabularNums, { color: palette.text }]}>
+                {trip.inviteCode}
+              </Text>
+            </View>
 
-                <View style={styles.memberMeta}>
-                  <Text style={[styles.memberName, { color: palette.text }]}>
-                    {member.displayName} {isSelf ? '(You)' : ''}
-                  </Text>
-                  <Badge
-                    label={member.role === 'owner' ? 'Owner' : 'Member'}
-                    variant={member.role === 'owner' ? 'info' : 'neutral'}
-                    style={{ marginTop: 4 }}
-                  />
-                </View>
+            <View style={styles.inviteActions}>
+              <Button
+                title={copied ? 'Copied' : 'Copy code'}
+                onPress={handleCopyCode}
+                variant="outline"
+                size="sm"
+                icon={
+                  copied ? (
+                    <Check size={15} color={palette.text} />
+                  ) : (
+                    <Copy size={15} color={palette.text} />
+                  )
+                }
+                style={{ flex: 1 }}
+              />
+              <Button
+                title="Share link"
+                onPress={handleShareInvite}
+                variant="primary"
+                size="sm"
+                icon={<Share2 size={15} color={palette.accentText} />}
+                style={{ flex: 1 }}
+              />
+            </View>
+          </Card>
 
-                {isOwner && member.role !== 'owner' && (
-                  <Pressable
-                    onPress={() => handleRemoveMember(member.userId, member.displayName)}
-                    style={[styles.trashBtn, { backgroundColor: palette.surface }]}
-                    accessibilityLabel={`Remove ${member.displayName}`}
-                  >
-                    <Trash2 size={15} color={colors.danger} />
-                  </Pressable>
-                )}
+          {/* Add Traveler */}
+          <Card style={styles.addCard}>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>
+              Add traveler directly
+            </Text>
+            <View style={styles.addRow}>
+              <View style={{ flex: 1 }}>
+                <Input
+                  placeholder="Friend's name (e.g. Maya)"
+                  value={newFriendName}
+                  onChangeText={(val) => {
+                    setNewFriendName(val);
+                    setNameError('');
+                  }}
+                  error={nameError}
+                  containerStyle={{ marginVertical: 0 }}
+                />
               </View>
-            );
-          })}
-        </Card>
+              <Button
+                title="Add"
+                onPress={handleAddFriend}
+                variant="primary"
+                size="md"
+                icon={<UserPlus size={16} color={palette.accentText} />}
+              />
+            </View>
+          </Card>
+
+          {/* Members List */}
+          <Text style={[styles.listHeading, { color: palette.text }]}>
+            Current group
+          </Text>
+          <Card style={styles.membersCard}>
+            {tripMembers.map((member, idx) => {
+              const isSelf = member.userId === currentUserId;
+              const initials = member.displayName
+                .split(' ')
+                .map((part) => part[0])
+                .join('')
+                .slice(0, 2)
+                .toUpperCase();
+
+              return (
+                <View
+                  key={member.userId}
+                  style={[
+                    styles.memberRow,
+                    idx < tripMembers.length - 1 && {
+                      borderBottomWidth: 1,
+                      borderBottomColor: palette.border,
+                    },
+                  ]}
+                >
+                  {member.avatarUrl ? (
+                    <Image source={{ uri: member.avatarUrl }} style={styles.avatar} />
+                  ) : (
+                    <View
+                      style={[
+                        styles.avatarFallback,
+                        { backgroundColor: palette.surface },
+                      ]}
+                    >
+                      <Text style={[styles.initialsText, { color: palette.text }]}>
+                        {initials}
+                      </Text>
+                    </View>
+                  )}
+
+                  <View style={styles.memberMeta}>
+                    <Text style={[styles.memberName, { color: palette.text }]}>
+                      {member.displayName} {isSelf ? '(You)' : ''}
+                    </Text>
+                    <Badge
+                      label={member.role === 'owner' ? 'Owner' : 'Member'}
+                      variant="neutral"
+                      style={{ marginTop: 4 }}
+                    />
+                  </View>
+
+                  {isOwner && member.role !== 'owner' && (
+                    <Pressable
+                      onPress={() => handleRemoveMember(member.userId, member.displayName)}
+                      style={[styles.trashBtn, { backgroundColor: palette.surface }]}
+                      accessibilityLabel={`Remove ${member.displayName}`}
+                    >
+                      <Trash2 size={15} color={debtColor} />
+                    </Pressable>
+                  )}
+                </View>
+              );
+            })}
+          </Card>
         </ScrollView>
       </KeyboardAwareView>
     </SafeAreaView>
@@ -281,7 +288,7 @@ export default function TripMembersScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   notFound: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  notFoundText: { fontSize: 16, fontWeight: '700' },
+  notFoundText: { fontFamily: fonts.bold, fontSize: 16 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -291,16 +298,16 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   iconButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: -0.3,
+    fontFamily: fonts.bold,
+    fontSize: 17,
+    letterSpacing: -0.2,
   },
   scroll: {
     padding: 16,
@@ -308,52 +315,47 @@ const styles = StyleSheet.create({
   },
   inviteCard: {
     alignItems: 'center',
-    padding: 20,
+    padding: 16,
   },
   inviteHeading: {
+    fontFamily: fonts.bold,
     fontSize: 17,
-    fontWeight: '700',
   },
   inviteSub: {
+    fontFamily: fonts.regular,
     fontSize: 13,
     textAlign: 'center',
-    marginTop: 4,
-    marginBottom: 16,
-    lineHeight: 18,
+    marginTop: 3,
+    marginBottom: 14,
   },
   qrWrapper: {
-    padding: 14,
+    padding: 12,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
+    borderRadius: 10,
+    borderWidth: 1,
   },
   codePill: {
-    marginTop: 14,
     paddingHorizontal: 18,
     paddingVertical: 8,
-    borderRadius: 10,
+    borderRadius: 8,
   },
   codeText: {
+    fontFamily: fonts.bold,
     fontSize: 18,
-    fontWeight: '800',
     letterSpacing: 2,
   },
   inviteActions: {
     flexDirection: 'row',
     gap: 10,
     width: '100%',
-    marginTop: 16,
+    marginTop: 14,
   },
   addCard: {
     padding: 16,
   },
   sectionTitle: {
+    fontFamily: fonts.bold,
     fontSize: 15,
-    fontWeight: '700',
     marginBottom: 10,
   },
   addRow: {
@@ -362,48 +364,50 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   listHeading: {
-    fontSize: 17,
-    fontWeight: '800',
-    marginTop: 16,
+    fontFamily: fonts.bold,
+    fontSize: 16,
+    marginTop: 14,
     marginBottom: 6,
   },
   membersCard: {
-    padding: 14,
+    padding: 0,
+    overflow: 'hidden',
   },
   memberRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
   avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     marginRight: 12,
   },
   avatarFallback: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   initialsText: {
-    fontSize: 15,
-    fontWeight: '800',
+    fontFamily: fonts.bold,
+    fontSize: 14,
   },
   memberMeta: {
     flex: 1,
   },
   memberName: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
+    fontSize: 14,
   },
   trashBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },

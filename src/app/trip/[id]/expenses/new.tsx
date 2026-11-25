@@ -1,6 +1,14 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Camera, Check, Image as ImageIcon, Minus, Plus, Sparkles, X } from 'lucide-react-native';
+import {
+  Camera,
+  Check,
+  Image as ImageIcon,
+  Minus,
+  Plus,
+  Sparkles,
+  X,
+} from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
 import {
   Image,
@@ -9,17 +17,17 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  useColorScheme,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Badge } from '../../../../components/ui/Badge';
 import { Button } from '../../../../components/ui/Button';
 import { Card } from '../../../../components/ui/Card';
+import { CategoryIcon } from '../../../../components/ui/CategoryIcon';
 import { Input } from '../../../../components/ui/Input';
 import { KeyboardAwareView } from '../../../../components/ui/KeyboardAwareView';
 import { EXPENSE_CATEGORIES } from '../../../../constants/categories';
-import { colors } from '../../../../constants/colors';
+import { fonts, tabularNums } from '../../../../constants/typography';
 import {
   calculateSplits,
   CURRENCY_METADATA,
@@ -30,7 +38,13 @@ import {
   SplitValidationError,
   toMinorUnits,
 } from '../../../../domain';
-import { ExpenseCategory, SplitInput, SplitMethod, SplitResult } from '../../../../domain/types';
+import {
+  ExpenseCategory,
+  SplitInput,
+  SplitMethod,
+  SplitResult,
+} from '../../../../domain/types';
+import { useTheme } from '../../../../hooks/useTheme';
 import { useAppStore } from '../../../../store/useAppStore';
 
 const SPLIT_TABS: { id: SplitMethod; label: string }[] = [
@@ -42,8 +56,7 @@ const SPLIT_TABS: { id: SplitMethod; label: string }[] = [
 
 export default function AddExpenseModal() {
   const { id, expenseId } = useLocalSearchParams<{ id: string; expenseId?: string }>();
-  const isDark = useColorScheme() === 'dark';
-  const palette = isDark ? colors.dark : colors.light;
+  const { isDark, palette, colors } = useTheme();
 
   const trips = useAppStore((s) => s.trips);
   const members = useAppStore((s) => s.members);
@@ -62,7 +75,7 @@ export default function AddExpenseModal() {
   const currentUserId = user?.id || 'user_me';
   const baseCurrency = trip?.baseCurrency || 'USD';
 
-  // Form fields (pre-populated when editing an existing expense)
+  // Form fields (pre-populated when editing)
   const [quickInput, setQuickInput] = useState('');
   const [title, setTitle] = useState(() => editingExpense?.title ?? '');
   const [amountText, setAmountText] = useState(() =>
@@ -94,7 +107,6 @@ export default function AddExpenseModal() {
     editingExpense ? 'EXACT' : 'EQUAL'
   );
 
-  // Split method states
   const [equalParticipants, setEqualParticipants] = useState<string[]>(() =>
     editingExpense
       ? editingExpense.splits.map((s) => s.userId)
@@ -133,7 +145,6 @@ export default function AddExpenseModal() {
   const parsedMajorAmount = Number.parseFloat(amountText.replace(',', '.')) || 0;
   const totalMinor = parsedMajorAmount > 0 ? toMinorUnits(parsedMajorAmount, currency) : 0;
 
-  // Build SplitInput from active tab state
   const splitInput = useMemo<SplitInput>(() => {
     switch (splitMethod) {
       case 'EQUAL':
@@ -179,7 +190,6 @@ export default function AddExpenseModal() {
     currency,
   ]);
 
-  // Live preview computed directly by our domain engine
   const splitPreview = useMemo<{ splits: SplitResult[]; error: string | null }>(() => {
     if (totalMinor <= 0) {
       return { splits: [], error: null };
@@ -211,11 +221,11 @@ export default function AddExpenseModal() {
   const handleSave = () => {
     if (!trip) return;
     if (!title.trim()) {
-      setFormError('Please enter an expense title.');
+      setFormError('Enter an expense title.');
       return;
     }
     if (totalMinor <= 0) {
-      setFormError('Please enter an amount greater than 0.');
+      setFormError('Enter an amount greater than 0.');
       return;
     }
 
@@ -320,7 +330,6 @@ export default function AddExpenseModal() {
     }
   };
 
-  // Remaining indicators for Exact & Percentage modes
   const exactAllocatedMinor = useMemo(() => {
     return tripMembers.reduce((sum, m) => {
       const val = Number.parseFloat((exactTexts[m.userId] || '0').replace(',', '.')) || 0;
@@ -341,14 +350,18 @@ export default function AddExpenseModal() {
     return m.userId === currentUserId ? 'You' : m.displayName.split(' ')[0];
   };
 
+  const creditColor = isDark ? colors.successDark : colors.success;
+  const debtColor = isDark ? colors.dangerDark : colors.danger;
+  const currSymbol = CURRENCY_METADATA[currency]?.symbol || currency;
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
       <View style={[styles.header, { borderBottomColor: palette.border }]}>
         <Text style={[styles.headerTitle, { color: palette.text }]}>
-          {editingExpense ? 'Edit Expense' : 'Add Expense'}
+          {editingExpense ? 'Edit expense' : 'Log expense'}
         </Text>
         <Pressable onPress={() => router.back()} style={styles.closeBtn}>
-          <X size={22} color={palette.text} />
+          <X size={21} color={palette.text} />
         </Pressable>
       </View>
 
@@ -358,109 +371,106 @@ export default function AddExpenseModal() {
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
-          {/* Smart Quick-Add Bar */}
-          <Card
-            style={{
-              padding: 12,
-              marginBottom: 14,
-              borderColor: isDark ? colors.primaryDark : colors.primaryLight,
-              borderWidth: 1.5,
-            }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-              <Sparkles size={14} color={colors.primary} />
-              <Text style={{ fontSize: 12, fontWeight: '700', color: colors.primary }}>
-                Quick-Add Helper
+          {/* Amount-First Hero */}
+          <Card style={styles.amountHeroCard}>
+            <Text style={[styles.amountPrompt, { color: palette.textMuted }]}>
+              Amount ({currency})
+            </Text>
+            <View style={styles.amountInputRow}>
+              <Text style={[styles.currencyPrefix, { color: palette.textMuted }]}>
+                {currSymbol}
               </Text>
-            </View>
-            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
               <TextInput
-                placeholder='e.g. "Ramen 48 split between me and Kenji"'
-                placeholderTextColor={palette.textMuted}
-                value={quickInput}
-                onChangeText={setQuickInput}
-                style={{
-                  flex: 1,
-                  fontSize: 13,
-                  color: palette.text,
-                  backgroundColor: palette.surface,
-                  borderRadius: 10,
-                  paddingHorizontal: 10,
-                  height: 38,
-                }}
-              />
-              <Button title="Fill" onPress={handleQuickParse} variant="primary" size="sm" />
-            </View>
-          </Card>
-
-          {/* Basic Details */}
-          <Input
-            label="What was this for?"
-            placeholder="e.g. Sushi Dinner, Airport Taxi"
-            value={title}
-            onChangeText={(val) => {
-              setTitle(val);
-              setFormError('');
-            }}
-          />
-
-          <View style={styles.amountCurrencyRow}>
-            <View style={{ flex: 1 }}>
-              <Input
-                label={`Amount (${CURRENCY_METADATA[currency]?.symbol || currency})`}
                 placeholder="0.00"
+                placeholderTextColor={palette.borderStrong}
                 keyboardType="decimal-pad"
                 value={amountText}
                 onChangeText={(val) => {
                   setAmountText(val);
                   setFormError('');
                 }}
+                style={[styles.heroAmountInput, tabularNums, { color: palette.text }]}
               />
             </View>
-          </View>
 
-          {/* Currency Chips */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.chipsRow}
-          >
-            {['USD', 'EUR', 'GBP', 'JPY', 'EGP', 'CAD'].map((curr) => {
-              const selected = currency === curr;
-              return (
-                <Pressable
-                  key={curr}
-                  onPress={() => void handleSelectCurrency(curr)}
-                  style={[
-                    styles.chip,
-                    {
-                      backgroundColor: selected ? colors.primary : palette.card,
-                      borderColor: selected ? colors.primary : palette.border,
-                    },
-                  ]}
-                >
-                  <Text
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.currencyChipsRow}
+            >
+              {['USD', 'EUR', 'GBP', 'JPY', 'EGP', 'CAD'].map((curr) => {
+                const selected = currency === curr;
+                return (
+                  <Pressable
+                    key={curr}
+                    onPress={() => void handleSelectCurrency(curr)}
                     style={[
-                      styles.chipText,
-                      { color: selected ? '#FFFFFF' : palette.text },
+                      styles.chip,
+                      {
+                        backgroundColor: selected ? palette.accent : palette.surface,
+                        borderColor: selected ? palette.accent : palette.border,
+                      },
                     ]}
                   >
-                    {curr}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
+                    <Text
+                      style={[
+                        styles.chipText,
+                        { color: selected ? palette.accentText : palette.text },
+                      ]}
+                    >
+                      {curr}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </Card>
 
           {trip && currency !== trip.baseCurrency && (
             <Input
-              label={`Exchange Rate (1 ${currency} → ${trip.baseCurrency})`}
+              label={`Exchange rate (1 ${currency} to ${trip.baseCurrency})`}
               placeholder="1.0"
               keyboardType="decimal-pad"
               value={fxRateText}
               onChangeText={setFxRateText}
             />
           )}
+
+          {/* Smart Quick-Add Bar */}
+          {!editingExpense && (
+            <Card style={styles.quickAddCard}>
+              <View style={styles.quickAddHeader}>
+                <Sparkles size={13} color={palette.text} />
+                <Text style={[styles.quickAddTitle, { color: palette.text }]}>
+                  Quick-add parser
+                </Text>
+              </View>
+              <View style={styles.quickAddRow}>
+                <TextInput
+                  placeholder='"Ramen 48 split between me and Kenji"'
+                  placeholderTextColor={palette.textMuted}
+                  value={quickInput}
+                  onChangeText={setQuickInput}
+                  style={[
+                    styles.quickAddInput,
+                    { color: palette.text, backgroundColor: palette.surface },
+                  ]}
+                />
+                <Button title="Fill" onPress={handleQuickParse} variant="primary" size="sm" />
+              </View>
+            </Card>
+          )}
+
+          {/* Title */}
+          <Input
+            label="Description"
+            placeholder="Sushi dinner, Airport train"
+            value={title}
+            onChangeText={(val) => {
+              setTitle(val);
+              setFormError('');
+            }}
+          />
 
           {/* Category Picker */}
           <Text style={[styles.sectionLabel, { color: palette.text }]}>Category</Text>
@@ -476,20 +486,25 @@ export default function AddExpenseModal() {
                   key={cat.id}
                   onPress={() => setCategory(cat.id)}
                   style={[
-                    styles.chip,
+                    styles.chipIconBtn,
                     {
-                      backgroundColor: selected ? colors.primary : palette.card,
-                      borderColor: selected ? colors.primary : palette.border,
+                      backgroundColor: selected ? palette.accent : palette.card,
+                      borderColor: selected ? palette.accent : palette.border,
                     },
                   ]}
                 >
+                  <CategoryIcon
+                    category={cat.id}
+                    size={14}
+                    color={selected ? palette.accentText : palette.text}
+                  />
                   <Text
                     style={[
                       styles.chipText,
-                      { color: selected ? '#FFFFFF' : palette.text },
+                      { color: selected ? palette.accentText : palette.text },
                     ]}
                   >
-                    {cat.emoji} {cat.label.split(' ')[0]}
+                    {cat.shortLabel}
                   </Text>
                 </Pressable>
               );
@@ -508,15 +523,15 @@ export default function AddExpenseModal() {
                   style={[
                     styles.chip,
                     {
-                      backgroundColor: selected ? colors.primary : palette.card,
-                      borderColor: selected ? colors.primary : palette.border,
+                      backgroundColor: selected ? palette.accent : palette.card,
+                      borderColor: selected ? palette.accent : palette.border,
                     },
                   ]}
                 >
                   <Text
                     style={[
                       styles.chipText,
-                      { color: selected ? '#FFFFFF' : palette.text },
+                      { color: selected ? palette.accentText : palette.text },
                     ]}
                   >
                     {getMemberLabel(member.userId)}
@@ -527,8 +542,8 @@ export default function AddExpenseModal() {
           </View>
 
           {/* Split Method Tabs */}
-          <Text style={[styles.sectionLabel, { color: palette.text, marginTop: 18 }]}>
-            Split Method
+          <Text style={[styles.sectionLabel, { color: palette.text, marginTop: 16 }]}>
+            Split method
           </Text>
           <View
             style={[
@@ -551,8 +566,8 @@ export default function AddExpenseModal() {
                     style={[
                       styles.segmentText,
                       {
-                        color: active ? colors.primary : palette.textMuted,
-                        fontWeight: active ? '700' : '600',
+                        color: active ? palette.text : palette.textMuted,
+                        fontFamily: active ? fonts.bold : fonts.medium,
                       },
                     ]}
                   >
@@ -563,12 +578,12 @@ export default function AddExpenseModal() {
             })}
           </View>
 
-          {/* Split Details Card */}
+          {/* Split Details Ledger Card */}
           <Card style={styles.splitCard}>
             {splitMethod === 'EXACT' && totalMinor > 0 && (
-              <View style={styles.statusBanner}>
+              <View style={[styles.statusBanner, { borderBottomColor: palette.border }]}>
                 <Text style={[styles.statusText, { color: palette.textMuted }]}>
-                  Remaining to allocate:
+                  Remaining to allocate
                 </Text>
                 <Badge
                   label={formatMoney(totalMinor - exactAllocatedMinor, currency)}
@@ -578,9 +593,9 @@ export default function AddExpenseModal() {
             )}
 
             {splitMethod === 'PERCENTAGE' && (
-              <View style={styles.statusBanner}>
+              <View style={[styles.statusBanner, { borderBottomColor: palette.border }]}>
                 <Text style={[styles.statusText, { color: palette.textMuted }]}>
-                  Allocated total:
+                  Allocated total
                 </Text>
                 <Badge
                   label={`${percentageAllocated.toFixed(1)}% / 100%`}
@@ -612,7 +627,7 @@ export default function AddExpenseModal() {
                       {member.displayName}
                     </Text>
                     {previewItem && (
-                      <Text style={[styles.previewShare, { color: colors.primary }]}>
+                      <Text style={[styles.previewShare, tabularNums, { color: creditColor }]}>
                         {formatMoney(previewItem.shareMinor, currency)}
                       </Text>
                     )}
@@ -622,18 +637,18 @@ export default function AddExpenseModal() {
                     <Pressable
                       onPress={() => toggleEqualParticipant(member.userId)}
                       style={[
-                        styles.checkCircle,
+                        styles.checkBox,
                         {
                           backgroundColor: isIncludedEqual
-                            ? colors.primary
+                            ? palette.accent
                             : 'transparent',
                           borderColor: isIncludedEqual
-                            ? colors.primary
+                            ? palette.accent
                             : palette.borderStrong,
                         },
                       ]}
                     >
-                      {isIncludedEqual && <Check size={14} color="#FFFFFF" />}
+                      {isIncludedEqual && <Check size={14} color={palette.accentText} />}
                     </Pressable>
                   )}
 
@@ -648,6 +663,7 @@ export default function AddExpenseModal() {
                       }
                       style={[
                         styles.inlineInput,
+                        tabularNums,
                         {
                           color: palette.text,
                           borderColor: palette.border,
@@ -672,6 +688,7 @@ export default function AddExpenseModal() {
                         }
                         style={[
                           styles.inlineInput,
+                          tabularNums,
                           {
                             color: palette.text,
                             borderColor: palette.border,
@@ -691,7 +708,7 @@ export default function AddExpenseModal() {
                       >
                         <Minus size={14} color={palette.text} />
                       </Pressable>
-                      <Text style={[styles.shareCountText, { color: palette.text }]}>
+                      <Text style={[styles.shareCountText, tabularNums, { color: palette.text }]}>
                         {memberShares}x
                       </Text>
                       <Pressable
@@ -707,65 +724,68 @@ export default function AddExpenseModal() {
             })}
 
             {splitPreview.error && (
-              <Text style={styles.errorText}>{splitPreview.error}</Text>
+              <Text style={[styles.errorText, { color: debtColor, paddingHorizontal: 14, paddingBottom: 12 }]}>
+                {splitPreview.error}
+              </Text>
             )}
           </Card>
 
           <Input
-            label="Note (Optional)"
-            placeholder="Add receipt details or context..."
+            label="Note (optional)"
+            placeholder="Receipt details or context"
             value={note}
             onChangeText={setNote}
           />
 
-          {/* Receipt Photo Attachment */}
           <Text style={[styles.sectionLabel, { color: palette.text }]}>
-            Receipt Photo (Optional)
+            Receipt photo (optional)
           </Text>
           {receiptUrl ? (
-            <Card style={{ padding: 10 }}>
+            <Card style={{ padding: 8 }}>
               <Image
                 source={{ uri: receiptUrl }}
-                style={{ width: '100%', height: 150, borderRadius: 10 }}
+                style={{ width: '100%', height: 150, borderRadius: 8 }}
                 resizeMode="cover"
               />
               <Button
-                title="Remove Receipt"
+                title="Remove receipt"
                 onPress={() => setReceiptUrl(null)}
                 variant="ghost"
                 size="sm"
-                style={{ marginTop: 8 }}
+                style={{ marginTop: 6 }}
               />
             </Card>
           ) : (
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <Button
-                title="Snap Receipt"
+                title="Snap receipt"
                 onPress={() => void handlePickReceipt(true)}
                 variant="outline"
                 size="sm"
-                icon={<Camera size={15} color={colors.primary} />}
+                icon={<Camera size={15} color={palette.text} />}
                 style={{ flex: 1 }}
               />
               <Button
-                title="Choose Photo"
+                title="Choose photo"
                 onPress={() => void handlePickReceipt(false)}
                 variant="outline"
                 size="sm"
-                icon={<ImageIcon size={15} color={colors.primary} />}
+                icon={<ImageIcon size={15} color={palette.text} />}
                 style={{ flex: 1 }}
               />
             </View>
           )}
 
-          {formError ? <Text style={styles.errorText}>{formError}</Text> : null}
+          {formError ? (
+            <Text style={[styles.errorText, { color: debtColor }]}>{formError}</Text>
+          ) : null}
 
           <Button
-            title={editingExpense ? 'Update Expense' : 'Save Expense'}
+            title={editingExpense ? 'Update expense' : 'Save expense'}
             onPress={handleSave}
             variant="primary"
             size="lg"
-            style={{ marginTop: 18 }}
+            style={{ marginTop: 20 }}
           />
         </ScrollView>
       </KeyboardAwareView>
@@ -774,112 +794,144 @@ export default function AddExpenseModal() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
     borderBottomWidth: 1,
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+  headerTitle: { fontFamily: fonts.bold, fontSize: 19, letterSpacing: -0.3 },
+  closeBtn: { padding: 4 },
+  scroll: { padding: 16, paddingBottom: 44 },
+  amountHeroCard: {
+    alignItems: 'center',
+    paddingVertical: 18,
+    marginBottom: 10,
   },
-  closeBtn: {
-    padding: 4,
+  amountPrompt: {
+    fontFamily: fonts.medium,
+    fontSize: 12,
+    marginBottom: 4,
   },
-  scroll: {
-    padding: 18,
-    paddingBottom: 44,
-  },
-  amountCurrencyRow: {
+  amountInputRow: {
     flexDirection: 'row',
-    gap: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
   },
-  chipsRow: {
+  currencyPrefix: {
+    fontFamily: fonts.bold,
+    fontSize: 28,
+    marginRight: 4,
+  },
+  heroAmountInput: {
+    fontFamily: fonts.bold,
+    fontSize: 38,
+    letterSpacing: -1,
+    minWidth: 120,
+    textAlign: 'center',
+    paddingVertical: 2,
+  },
+  currencyChipsRow: {
     gap: 8,
-    paddingVertical: 6,
+    paddingHorizontal: 8,
   },
-  payerRow: {
+  quickAddCard: {
+    padding: 12,
+    marginBottom: 8,
+  },
+  quickAddHeader: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    paddingVertical: 4,
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
   },
+  quickAddTitle: {
+    fontFamily: fonts.semibold,
+    fontSize: 12,
+  },
+  quickAddRow: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  quickAddInput: {
+    flex: 1,
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    height: 38,
+  },
+  chipsRow: { gap: 8, paddingVertical: 4 },
+  payerRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingVertical: 4 },
   chip: {
-    paddingHorizontal: 13,
+    paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 10,
+    borderRadius: 8,
     borderWidth: 1,
   },
-  chipText: {
-    fontSize: 13,
-    fontWeight: '600',
+  chipIconBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 11,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
   },
+  chipText: { fontFamily: fonts.semibold, fontSize: 12 },
   sectionLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginTop: 14,
+    fontFamily: fonts.semibold,
+    fontSize: 13,
+    marginTop: 12,
     marginBottom: 6,
   },
   segmentedControl: {
     flexDirection: 'row',
-    borderRadius: 12,
+    borderRadius: 8,
     borderWidth: 1,
-    padding: 4,
-    marginBottom: 10,
+    padding: 3,
+    marginBottom: 8,
   },
   segmentBtn: {
     flex: 1,
     paddingVertical: 8,
-    borderRadius: 9,
+    borderRadius: 6,
     alignItems: 'center',
   },
-  segmentText: {
-    fontSize: 13,
-  },
+  segmentText: { fontSize: 13 },
   splitCard: {
-    padding: 14,
+    padding: 0,
+    overflow: 'hidden',
   },
   statusBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
-    paddingBottom: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
   },
-  statusText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
+  statusText: { fontFamily: fonts.medium, fontSize: 12 },
   memberSplitRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: 14,
     paddingVertical: 11,
   },
-  memberNameWrap: {
-    flex: 1,
-    marginRight: 10,
-  },
-  memberName: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  previewShare: {
-    fontSize: 12,
-    fontWeight: '700',
-    marginTop: 2,
-  },
-  checkCircle: {
+  memberNameWrap: { flex: 1, marginRight: 10 },
+  memberName: { fontFamily: fonts.semibold, fontSize: 14 },
+  previewShare: { fontFamily: fonts.bold, fontSize: 12, marginTop: 2 },
+  checkBox: {
     width: 24,
     height: 24,
-    borderRadius: 12,
-    borderWidth: 2,
+    borderRadius: 8,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -890,23 +942,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: 10,
     textAlign: 'right',
+    fontFamily: fonts.semibold,
     fontSize: 14,
-    fontWeight: '600',
   },
-  pctWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  unitText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  stepperRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
+  pctWrap: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  unitText: { fontFamily: fonts.semibold, fontSize: 14 },
+  stepperRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   stepBtn: {
     width: 30,
     height: 30,
@@ -915,15 +956,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   shareCountText: {
+    fontFamily: fonts.bold,
     fontSize: 14,
-    fontWeight: '700',
     minWidth: 26,
     textAlign: 'center',
   },
-  errorText: {
-    color: colors.danger,
-    fontSize: 13,
-    fontWeight: '600',
-    marginTop: 8,
-  },
+  errorText: { fontFamily: fonts.semibold, fontSize: 13, marginTop: 8 },
 });

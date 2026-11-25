@@ -7,19 +7,18 @@ import {
   StyleSheet,
   Switch,
   Text,
-  useColorScheme,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
-import { colors } from '../../../constants/colors';
+import { fonts, tabularNums } from '../../../constants/typography';
+import { useTheme } from '../../../hooks/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
 
 export default function ProfileScreen() {
-  const isDark = useColorScheme() === 'dark';
-  const palette = isDark ? colors.dark : colors.light;
+  const { palette, colors } = useTheme();
 
   const user = useAppStore((s) => s.user);
   const isGuestDemo = useAppStore((s) => s.isGuestDemo);
@@ -38,19 +37,19 @@ export default function ProfileScreen() {
       edges={['top', 'left', 'right']}
       style={[styles.container, { backgroundColor: palette.background }]}
     >
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.header}>
-          <Text style={[styles.headerTitle, { color: palette.text }]}>Profile & Settings</Text>
-        </View>
+      <View style={[styles.header, { borderBottomColor: palette.border }]}>
+        <Text style={[styles.headerTitle, { color: palette.text }]}>Profile & settings</Text>
+      </View>
 
+      <ScrollView contentContainerStyle={styles.scroll}>
         {/* User Card */}
         <Card style={styles.userCard}>
           <View style={styles.userRow}>
             {user?.avatarUrl ? (
               <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
             ) : (
-              <View style={[styles.avatarFallback, { backgroundColor: colors.primaryLight }]}>
-                <User size={32} color={colors.primary} />
+              <View style={[styles.avatarFallback, { backgroundColor: palette.surface }]}>
+                <User size={26} color={palette.text} />
               </View>
             )}
             <View style={styles.userInfo}>
@@ -62,9 +61,9 @@ export default function ProfileScreen() {
               </Text>
               <View style={styles.badgeRow}>
                 {isGuestDemo ? (
-                  <Badge label="Guest Demo Mode" variant="info" />
+                  <Badge label="Guest demo" variant="neutral" />
                 ) : (
-                  <Badge label="Verified Account" variant="success" />
+                  <Badge label="Verified account" variant="success" />
                 )}
               </View>
             </View>
@@ -76,7 +75,7 @@ export default function ProfileScreen() {
           <View style={styles.settingRow}>
             <View style={styles.settingIconTitle}>
               <DollarSign size={18} color={palette.textMuted} />
-              <Text style={[styles.settingLabel, { color: palette.text }]}>Base Currency</Text>
+              <Text style={[styles.settingLabel, { color: palette.text }]}>Base currency</Text>
             </View>
             <Badge label={user?.defaultCurrency || 'USD'} variant="neutral" />
           </View>
@@ -96,9 +95,9 @@ export default function ProfileScreen() {
               <WifiOff size={18} color={palette.textMuted} />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.settingLabel, { color: palette.text }]}>
-                  Simulate Airplane Mode
+                  Simulate airplane mode
                 </Text>
-                <Text style={{ fontSize: 12, color: palette.textMuted, marginTop: 2 }}>
+                <Text style={[styles.settingSub, tabularNums, { color: palette.textMuted }]}>
                   Queue expenses offline ({pendingMutationsCount} pending) and replay on reconnect
                 </Text>
               </View>
@@ -106,18 +105,18 @@ export default function ProfileScreen() {
             <Switch
               value={isOfflineSimulated}
               onValueChange={toggleSimulateOffline}
-              trackColor={{ false: palette.border, true: colors.warning }}
+              trackColor={{ false: palette.borderStrong, true: colors.warning }}
             />
           </View>
         </Card>
 
         <Button
-          title="Sign Out"
+          title="Sign out"
           onPress={handleSignOut}
           variant="outline"
           size="md"
-          icon={<LogOut size={16} color={colors.primary} />}
-          style={{ marginTop: 20 }}
+          icon={<LogOut size={16} color={palette.text} />}
+          style={{ marginTop: 16 }}
         />
       </ScrollView>
     </SafeAreaView>
@@ -128,17 +127,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scroll: {
-    padding: 20,
-    paddingBottom: 40,
-  },
   header: {
-    marginBottom: 16,
+    paddingHorizontal: 18,
+    paddingTop: 10,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    letterSpacing: -0.4,
+    fontFamily: fonts.bold,
+    fontSize: 22,
+    letterSpacing: -0.5,
+  },
+  scroll: {
+    padding: 16,
+    paddingBottom: 40,
   },
   userCard: {
     padding: 16,
@@ -148,27 +150,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    marginRight: 16,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    marginRight: 14,
   },
   avatarFallback: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
+    marginRight: 14,
   },
   userInfo: {
     flex: 1,
   },
   userName: {
+    fontFamily: fonts.bold,
     fontSize: 18,
-    fontWeight: '700',
+    letterSpacing: -0.2,
   },
   userEmail: {
+    fontFamily: fonts.regular,
     fontSize: 13,
     marginTop: 2,
   },
@@ -177,7 +181,7 @@ const styles = StyleSheet.create({
   },
   settingsCard: {
     padding: 16,
-    marginTop: 10,
+    marginTop: 6,
   },
   settingRow: {
     flexDirection: 'row',
@@ -190,7 +194,13 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   settingLabel: {
+    fontFamily: fonts.semibold,
     fontSize: 15,
-    fontWeight: '600',
+  },
+  settingSub: {
+    fontFamily: fonts.regular,
+    fontSize: 12,
+    marginTop: 2,
+    lineHeight: 17,
   },
 });

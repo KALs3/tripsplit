@@ -1,68 +1,86 @@
 /**
- * TripSplit Design System - Color Tokens
- * Tailored for high clarity, accessibility, and financial interfaces.
+ * TripSplit Design System — Pure Monochrome Foundation
+ *
+ * 90% monochrome surfaces & crisp typography; green and red are reserved
+ * exclusively for financial credit/debt meaning and sync states.
  */
 
 export const colors = {
-  // Brand Primary (Emerald / Teal - represents positive financial health & growth)
-  primary: '#059669',
-  primaryHover: '#047857',
-  primaryLight: '#D1FAE5',
-  primaryDark: '#064E3B',
+  // Primary monochrome brand anchor (used for legacy/accent lookups)
+  primary: '#09090B',
+  primaryHover: '#27272A',
+  primaryLight: '#F4F4F5',
+  primaryDark: '#18181B',
 
-  // Semantic Status Colors
-  success: '#10B981',
-  successLight: '#ECFDF5',
-  
-  // Debt / Owed / Expense (Rose)
-  danger: '#E11D48',
-  dangerLight: '#FFE4E6',
+  // Financial & Sync Semantic Status Colors ONLY
+  success: '#16A34A',
+  successDark: '#22C55E',
+  successLight: '#DCFCE7',
 
-  // Warnings / Notifications (Amber)
-  warning: '#F59E0B',
+  danger: '#DC2626',
+  dangerDark: '#F87171',
+  dangerLight: '#FEE2E2',
+
+  warning: '#D97706',
   warningLight: '#FEF3C7',
 
-  // Info / Links (Blue)
-  info: '#3B82F6',
-  infoLight: '#EFF6FF',
+  info: '#52525B',
+  infoLight: '#F4F4F5',
 
-  // Category Icon & Tag Colors
+  // Monochrome tonal steps for Donut Chart & Map Pin markers
   categories: {
-    food: '#F97316',       // Orange
-    transport: '#3B82F6',  // Blue
-    lodging: '#8B5CF6',    // Purple
-    activities: '#EC4899', // Pink
-    shopping: '#10B981',   // Emerald
-    other: '#6B7280',      // Slate Gray
+    food: '#09090B',
+    transport: '#3F3F46',
+    lodging: '#52525B',
+    activities: '#71717A',
+    shopping: '#A1A1AA',
+    other: '#D4D4D8',
   },
 
-  // Light Mode Palette
+  categoriesDark: {
+    food: '#FAFAFA',
+    transport: '#D4D4D8',
+    lodging: '#A1A1AA',
+    activities: '#71717A',
+    shopping: '#52525B',
+    other: '#3F3F46',
+  },
+
+  // Light Mode Palette (Daylight Paper & Jet Ink)
   light: {
-    background: '#F8FAFC', // Slate 50
+    background: '#F4F4F5',
     card: '#FFFFFF',
-    surface: '#F1F5F9',    // Slate 100
-    border: '#E2E8F0',     // Slate 200
-    borderStrong: '#CBD5E1', // Slate 300
-    text: '#0F172A',       // Slate 900
-    textMuted: '#64748B',  // Slate 500
+    surface: '#ECECEF',
+    border: '#E4E4E7',
+    borderStrong: '#D4D4D8',
+    text: '#09090B',
+    textMuted: '#71717A',
     textInverse: '#FFFFFF',
-    tint: '#059669',
-    tabIconDefault: '#94A3B8',
-    tabIconSelected: '#059669',
+    accent: '#09090B',
+    accentText: '#FFFFFF',
+    credit: '#16A34A',
+    debt: '#DC2626',
+    tint: '#09090B',
+    tabIconDefault: '#A1A1AA',
+    tabIconSelected: '#09090B',
   },
 
-  // Dark Mode Palette
+  // Dark Mode Palette (Obsidian & Crisp Alabaster)
   dark: {
-    background: '#090D16', // Deep navy black
-    card: '#131B2E',       // Raised slate navy
-    surface: '#1E293B',    // Slate 800
-    border: '#23304B',     // Subtle border
-    borderStrong: '#334155', // Slate 700
-    text: '#F8FAFC',       // Slate 50
-    textMuted: '#94A3B8',  // Slate 400
-    textInverse: '#0F172A',
-    tint: '#34D399',
-    tabIconDefault: '#64748B',
-    tabIconSelected: '#34D399',
+    background: '#09090B',
+    card: '#121215',
+    surface: '#1C1C21',
+    border: '#27272A',
+    borderStrong: '#3F3F46',
+    text: '#FAFAFA',
+    textMuted: '#A1A1AA',
+    textInverse: '#09090B',
+    accent: '#FAFAFA',
+    accentText: '#09090B',
+    credit: '#22C55E',
+    debt: '#F87171',
+    tint: '#FAFAFA',
+    tabIconDefault: '#71717A',
+    tabIconSelected: '#FAFAFA',
   },
 };

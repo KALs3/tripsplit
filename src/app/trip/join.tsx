@@ -6,7 +6,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,12 +14,12 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { KeyboardAwareView } from '../../components/ui/KeyboardAwareView';
-import { colors } from '../../constants/colors';
+import { fonts } from '../../constants/typography';
+import { useTheme } from '../../hooks/useTheme';
 import { useAppStore } from '../../store/useAppStore';
 
 export default function JoinTripModal() {
-  const isDark = useColorScheme() === 'dark';
-  const palette = isDark ? colors.dark : colors.light;
+  const { palette } = useTheme();
 
   const isGuestDemo = useAppStore((s) => s.isGuestDemo);
   const joinTripByCode = useAppStore((s) => s.joinTripByCode);
@@ -42,9 +41,9 @@ export default function JoinTripModal() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
       <View style={[styles.header, { borderBottomColor: palette.border }]}>
-        <Text style={[styles.title, { color: palette.text }]}>Join a Trip</Text>
+        <Text style={[styles.title, { color: palette.text }]}>Join a trip</Text>
         <Pressable onPress={() => router.back()} style={styles.closeBtn}>
-          <X size={22} color={palette.text} />
+          <X size={21} color={palette.text} />
         </Pressable>
       </View>
 
@@ -54,53 +53,53 @@ export default function JoinTripModal() {
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
-        <View style={[styles.iconBox, { backgroundColor: colors.primaryLight }]}>
-          <QrCode size={34} color={colors.primary} />
-        </View>
+          <View style={[styles.iconBox, { backgroundColor: palette.surface }]}>
+            <QrCode size={30} color={palette.text} />
+          </View>
 
-        <Text style={[styles.subtitle, { color: palette.textMuted }]}>
-          Enter the 6-character invite code shared by a trip member.
-        </Text>
+          <Text style={[styles.subtitle, { color: palette.textMuted }]}>
+            Enter the invite code shared by a trip member.
+          </Text>
 
-        <Input
-          label="Invite Code"
-          placeholder="e.g. TOKYO26"
-          value={code}
-          onChangeText={(val) => {
-            setCode(val.toUpperCase());
-            setError('');
-          }}
-          autoCapitalize="characters"
-          autoCorrect={false}
-          error={error}
-          containerStyle={{ width: '100%' }}
-        />
+          <Input
+            label="Invite code"
+            placeholder="TOKYO26"
+            value={code}
+            onChangeText={(val) => {
+              setCode(val.toUpperCase());
+              setError('');
+            }}
+            autoCapitalize="characters"
+            autoCorrect={false}
+            error={error}
+            containerStyle={{ width: '100%' }}
+          />
 
-        <Button
-          title="Join Trip"
-          onPress={() => handleJoin()}
-          variant="primary"
-          size="lg"
-          style={{ width: '100%', marginTop: 14 }}
-        />
+          <Button
+            title="Join trip"
+            onPress={() => handleJoin()}
+            variant="primary"
+            size="lg"
+            style={{ width: '100%', marginTop: 14 }}
+          />
 
-        {isGuestDemo && (
-          <Card style={styles.demoHintCard}>
-            <View style={styles.demoHintRow}>
-              <Badge label="Demo Tip" variant="info" />
-              <Text style={[styles.demoHintText, { color: palette.text }]}>
-                Try code <Text style={{ fontWeight: '800' }}>PARIS26</Text> to join a sample Paris weekend trip!
-              </Text>
-            </View>
-            <Button
-              title="Fill & Join PARIS26"
-              onPress={() => handleJoin('PARIS26')}
-              variant="outline"
-              size="sm"
-              style={{ marginTop: 10 }}
-            />
-          </Card>
-        )}
+          {isGuestDemo && (
+            <Card style={styles.demoHintCard}>
+              <View style={styles.demoHintRow}>
+                <Badge label="Demo" variant="neutral" />
+                <Text style={[styles.demoHintText, { color: palette.text }]}>
+                  Try code PARIS26 to join a sample Paris trip in EUR.
+                </Text>
+              </View>
+              <Button
+                title="Join PARIS26"
+                onPress={() => handleJoin('PARIS26')}
+                variant="outline"
+                size="sm"
+                style={{ marginTop: 10 }}
+              />
+            </Card>
+          )}
         </ScrollView>
       </KeyboardAwareView>
     </SafeAreaView>
@@ -113,35 +112,36 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
     borderBottomWidth: 1,
   },
-  title: { fontSize: 20, fontWeight: '700' },
+  title: { fontFamily: fonts.bold, fontSize: 19, letterSpacing: -0.3 },
   closeBtn: { padding: 4 },
   body: {
-    flex: 1,
-    padding: 24,
+    flexGrow: 1,
+    padding: 20,
     alignItems: 'center',
-    paddingTop: 36,
+    paddingTop: 32,
   },
   iconBox: {
-    width: 68,
-    height: 68,
-    borderRadius: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
   },
   subtitle: {
+    fontFamily: fonts.regular,
     fontSize: 14,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 18,
     lineHeight: 20,
   },
   demoHintCard: {
     width: '100%',
-    marginTop: 24,
+    marginTop: 22,
     padding: 14,
   },
   demoHintRow: {
@@ -151,6 +151,7 @@ const styles = StyleSheet.create({
   },
   demoHintText: {
     flex: 1,
+    fontFamily: fonts.regular,
     fontSize: 13,
     lineHeight: 18,
   },

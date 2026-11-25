@@ -1,14 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
   TextInput,
   TextInputProps,
-  useColorScheme,
   View,
   ViewStyle,
 } from 'react-native';
-import { colors } from '../../constants/colors';
+import { fonts } from '../../constants/typography';
+import { useTheme } from '../../hooks/useTheme';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -23,10 +23,12 @@ export function Input({
   icon,
   containerStyle,
   style,
+  onFocus,
+  onBlur,
   ...props
 }: InputProps) {
-  const isDark = useColorScheme() === 'dark';
-  const palette = isDark ? colors.dark : colors.light;
+  const { palette, colors } = useTheme();
+  const [focused, setFocused] = useState(false);
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -36,13 +38,25 @@ export function Input({
           styles.inputWrapper,
           {
             backgroundColor: palette.card,
-            borderColor: error ? colors.danger : palette.border,
+            borderColor: error
+              ? colors.danger
+              : focused
+              ? palette.text
+              : palette.border,
           },
         ]}
       >
         {icon && <View style={styles.iconContainer}>{icon}</View>}
         <TextInput
           placeholderTextColor={palette.textMuted}
+          onFocus={(e) => {
+            setFocused(true);
+            onFocus?.(e);
+          }}
+          onBlur={(e) => {
+            setFocused(false);
+            onBlur?.(e);
+          }}
           style={[
             styles.input,
             {
@@ -53,7 +67,7 @@ export function Input({
           {...props}
         />
       </View>
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {error && <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text>}
     </View>
   );
 }
@@ -63,31 +77,31 @@ const styles = StyleSheet.create({
     marginVertical: 6,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
+    fontSize: 13,
     marginBottom: 6,
     letterSpacing: -0.1,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
-    borderWidth: 1.5,
-    paddingHorizontal: 14,
-    minHeight: 48,
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    minHeight: 46,
   },
   iconContainer: {
     marginRight: 10,
   },
   input: {
     flex: 1,
+    fontFamily: fonts.regular,
     fontSize: 15,
     paddingVertical: 10,
   },
   errorText: {
-    color: colors.danger,
+    fontFamily: fonts.medium,
     fontSize: 12,
     marginTop: 4,
-    fontWeight: '500',
   },
 });

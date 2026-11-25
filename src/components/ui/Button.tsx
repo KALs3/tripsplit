@@ -4,10 +4,10 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  useColorScheme,
   ViewStyle,
 } from 'react-native';
-import { colors } from '../../constants/colors';
+import { fonts } from '../../constants/typography';
+import { useTheme } from '../../hooks/useTheme';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost';
 export type ButtonSize = 'sm' | 'md' | 'lg';
@@ -33,34 +33,36 @@ export function Button({
   icon,
   style,
 }: ButtonProps) {
-  const isDark = useColorScheme() === 'dark';
-  const palette = isDark ? colors.dark : colors.light;
+  const { isDark, palette, colors } = useTheme();
 
   const getBackgroundColor = (pressed: boolean) => {
-    if (disabled) return isDark ? '#1E293B' : '#E2E8F0';
+    if (disabled) return palette.surface;
     switch (variant) {
       case 'primary':
-        return pressed ? colors.primaryHover : colors.primary;
+        return pressed
+          ? isDark
+            ? '#E4E4E7'
+            : '#27272A'
+          : palette.accent;
       case 'secondary':
-        return pressed ? (isDark ? '#334155' : '#CBD5E1') : palette.surface;
+        return pressed ? palette.borderStrong : palette.surface;
       case 'danger':
-        return pressed ? '#BE123C' : colors.danger;
+        return pressed ? '#B91C1C' : colors.danger;
       case 'outline':
       case 'ghost':
-        return pressed ? (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)') : 'transparent';
+        return pressed ? palette.surface : 'transparent';
     }
   };
 
   const getTextColor = () => {
-    if (disabled) return isDark ? '#64748B' : '#94A3B8';
+    if (disabled) return palette.textMuted;
     switch (variant) {
       case 'primary':
+        return palette.accentText;
       case 'danger':
         return '#FFFFFF';
       case 'secondary':
-        return palette.text;
       case 'outline':
-        return colors.primary;
       case 'ghost':
         return palette.text;
     }
@@ -68,8 +70,8 @@ export function Button({
 
   const sizeStyles = {
     sm: { paddingVertical: 8, paddingHorizontal: 12, fontSize: 13, minHeight: 36 },
-    md: { paddingVertical: 12, paddingHorizontal: 18, fontSize: 15, minHeight: 48 },
-    lg: { paddingVertical: 15, paddingHorizontal: 24, fontSize: 17, minHeight: 54 },
+    md: { paddingVertical: 12, paddingHorizontal: 16, fontSize: 15, minHeight: 46 },
+    lg: { paddingVertical: 14, paddingHorizontal: 22, fontSize: 16, minHeight: 52 },
   }[size];
 
   return (
@@ -80,12 +82,13 @@ export function Button({
         styles.base,
         {
           backgroundColor: getBackgroundColor(pressed),
-          borderColor: variant === 'outline' ? (disabled ? palette.border : colors.primary) : 'transparent',
-          borderWidth: variant === 'outline' ? 1.5 : 0,
+          borderColor:
+            variant === 'outline' ? palette.borderStrong : 'transparent',
+          borderWidth: variant === 'outline' ? 1 : 0,
           paddingVertical: sizeStyles.paddingVertical,
           paddingHorizontal: sizeStyles.paddingHorizontal,
           minHeight: sizeStyles.minHeight,
-          opacity: disabled ? 0.6 : pressed ? 0.92 : 1,
+          opacity: disabled ? 0.55 : pressed ? 0.9 : 1,
         },
         style,
       ]}
@@ -115,13 +118,13 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: 12,
+    borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
   text: {
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     letterSpacing: -0.2,
   },
 });

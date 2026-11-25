@@ -6,7 +6,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,8 +13,9 @@ import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { Input } from '../../../components/ui/Input';
 import { KeyboardAwareView } from '../../../components/ui/KeyboardAwareView';
-import { colors } from '../../../constants/colors';
+import { fonts } from '../../../constants/typography';
 import { CURRENCY_METADATA, fromMinorUnits, toMinorUnits } from '../../../domain';
+import { useTheme } from '../../../hooks/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
 
 export default function SettlePaymentModal() {
@@ -31,8 +31,7 @@ export default function SettlePaymentModal() {
     amountMinor?: string;
   }>();
 
-  const isDark = useColorScheme() === 'dark';
-  const palette = isDark ? colors.dark : colors.light;
+  const { isDark, palette, colors } = useTheme();
 
   const trips = useAppStore((s) => s.trips);
   const members = useAppStore((s) => s.members);
@@ -80,7 +79,7 @@ export default function SettlePaymentModal() {
 
     const major = Number.parseFloat(amountText.replace(',', '.'));
     if (Number.isNaN(major) || major <= 0) {
-      setError('Please enter a valid positive payment amount.');
+      setError('Enter a positive payment amount.');
       return;
     }
 
@@ -97,16 +96,17 @@ export default function SettlePaymentModal() {
     router.back();
   };
 
-  if (!trip) {
-    return null;
-  }
+  if (!trip) return null;
+
+  const creditColor = isDark ? colors.successDark : colors.success;
+  const debtColor = isDark ? colors.dangerDark : colors.danger;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
       <View style={[styles.header, { borderBottomColor: palette.border }]}>
-        <Text style={[styles.title, { color: palette.text }]}>Record Payment</Text>
+        <Text style={[styles.title, { color: palette.text }]}>Record payment</Text>
         <Pressable onPress={() => router.back()} style={styles.closeBtn}>
-          <X size={22} color={palette.text} />
+          <X size={21} color={palette.text} />
         </Pressable>
       </View>
 
@@ -116,23 +116,21 @@ export default function SettlePaymentModal() {
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
-          {/* Summary Banner */}
           <Card style={styles.summaryCard}>
             <View style={styles.directionRow}>
-              <Text style={[styles.partyBadge, { color: colors.danger }]}>
+              <Text style={[styles.partyBadge, { color: debtColor }]}>
                 {getMemberLabel(fromUser)}
               </Text>
-              <ArrowRight size={18} color={palette.textMuted} />
-              <Text style={[styles.partyBadge, { color: colors.success }]}>
+              <ArrowRight size={17} color={palette.textMuted} />
+              <Text style={[styles.partyBadge, { color: creditColor }]}>
                 {getMemberLabel(toUser)}
               </Text>
             </View>
             <Text style={[styles.summarySub, { color: palette.textMuted }]}>
-              Recording this transfer adjusts net balances immediately
+              Updates net balances immediately
             </Text>
           </Card>
 
-          {/* From User */}
           <Text style={[styles.sectionLabel, { color: palette.text }]}>Who paid?</Text>
           <View style={styles.chipsWrap}>
             {tripMembers.map((m) => {
@@ -147,15 +145,15 @@ export default function SettlePaymentModal() {
                   style={[
                     styles.chip,
                     {
-                      backgroundColor: selected ? colors.primary : palette.card,
-                      borderColor: selected ? colors.primary : palette.border,
+                      backgroundColor: selected ? palette.accent : palette.card,
+                      borderColor: selected ? palette.accent : palette.border,
                     },
                   ]}
                 >
                   <Text
                     style={[
                       styles.chipText,
-                      { color: selected ? '#FFFFFF' : palette.text },
+                      { color: selected ? palette.accentText : palette.text },
                     ]}
                   >
                     {getMemberLabel(m.userId)}
@@ -165,7 +163,6 @@ export default function SettlePaymentModal() {
             })}
           </View>
 
-          {/* To User */}
           <Text style={[styles.sectionLabel, { color: palette.text }]}>Paid to whom?</Text>
           <View style={styles.chipsWrap}>
             {tripMembers.map((m) => {
@@ -180,15 +177,15 @@ export default function SettlePaymentModal() {
                   style={[
                     styles.chip,
                     {
-                      backgroundColor: selected ? colors.primary : palette.card,
-                      borderColor: selected ? colors.primary : palette.border,
+                      backgroundColor: selected ? palette.accent : palette.card,
+                      borderColor: selected ? palette.accent : palette.border,
                     },
                   ]}
                 >
                   <Text
                     style={[
                       styles.chipText,
-                      { color: selected ? '#FFFFFF' : palette.text },
+                      { color: selected ? palette.accentText : palette.text },
                     ]}
                   >
                     {getMemberLabel(m.userId)}
@@ -198,7 +195,6 @@ export default function SettlePaymentModal() {
             })}
           </View>
 
-          {/* Amount */}
           <Input
             label={`Amount (${CURRENCY_METADATA[trip.baseCurrency]?.symbol || trip.baseCurrency})`}
             placeholder="0.00"
@@ -213,7 +209,7 @@ export default function SettlePaymentModal() {
           />
 
           <Button
-            title="Confirm Payment"
+            title="Confirm payment"
             onPress={handleRecordPayment}
             variant="primary"
             size="lg"
@@ -231,17 +227,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
     borderBottomWidth: 1,
   },
-  title: { fontSize: 20, fontWeight: '700' },
+  title: { fontFamily: fonts.bold, fontSize: 19, letterSpacing: -0.3 },
   closeBtn: { padding: 4 },
-  scroll: { padding: 20, paddingBottom: 40 },
+  scroll: { padding: 18, paddingBottom: 40 },
   summaryCard: {
     alignItems: 'center',
     paddingVertical: 18,
-    marginBottom: 14,
+    marginBottom: 12,
   },
   directionRow: {
     flexDirection: 'row',
@@ -249,16 +245,17 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   partyBadge: {
+    fontFamily: fonts.bold,
     fontSize: 18,
-    fontWeight: '800',
   },
   summarySub: {
+    fontFamily: fonts.regular,
     fontSize: 12,
-    marginTop: 6,
+    marginTop: 5,
   },
   sectionLabel: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
+    fontSize: 13,
     marginTop: 12,
     marginBottom: 8,
   },
@@ -268,10 +265,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 10,
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+    borderRadius: 8,
     borderWidth: 1,
   },
-  chipText: { fontSize: 13, fontWeight: '600' },
+  chipText: { fontFamily: fonts.semibold, fontSize: 13 },
 });

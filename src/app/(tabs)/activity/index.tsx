@@ -1,20 +1,22 @@
+import { ArrowUpRight } from 'lucide-react-native';
 import React from 'react';
 import {
   FlatList,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card } from '../../../components/ui/Card';
-import { colors } from '../../../constants/colors';
+import { CategoryIcon } from '../../../components/ui/CategoryIcon';
+import { fonts, tabularNums } from '../../../constants/typography';
 import { formatMoney } from '../../../domain';
+import { ExpenseCategory } from '../../../domain/types';
+import { useTheme } from '../../../hooks/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
 
 export default function ActivityScreen() {
-  const isDark = useColorScheme() === 'dark';
-  const palette = isDark ? colors.dark : colors.light;
+  const { isDark, palette, colors } = useTheme();
 
   const expenses = useAppStore((s) => s.expenses);
   const payments = useAppStore((s) => s.payments);
@@ -24,17 +26,17 @@ export default function ActivityScreen() {
     return members.find((m) => m.userId === userId)?.displayName || 'A member';
   };
 
-  // Combine active (non-deleted) expenses and payments into a chronological feed
   const feed = [
     ...expenses
       .filter((e) => !e.deletedAt)
       .map((e) => ({
         id: e.id,
         type: 'expense' as const,
+        category: e.category as ExpenseCategory | undefined,
         title: `${getMemberName(e.paidBy)} paid for "${e.title}"`,
         amountMinor: e.amountMinor,
         currency: e.currency,
-        subtitle: `${e.splits.length} people split this expense`,
+        subtitle: `Split across ${e.splits.length} travelers`,
         sortKey: e.spentAt || '',
       })),
     ...payments
@@ -42,13 +44,16 @@ export default function ActivityScreen() {
       .map((p) => ({
         id: p.id,
         type: 'payment' as const,
+        category: undefined,
         title: `${getMemberName(p.fromUser)} paid ${getMemberName(p.toUser)}`,
         amountMinor: p.amountMinor,
         currency: p.currency,
-        subtitle: 'Debt settlement transfer',
+        subtitle: 'Settlement transfer',
         sortKey: p.id,
       })),
   ].sort((a, b) => b.sortKey.localeCompare(a.sortKey));
+
+  const creditColor = isDark ? colors.successDark : colors.success;
 
   return (
     <SafeAreaView
@@ -56,9 +61,9 @@ export default function ActivityScreen() {
       style={[styles.container, { backgroundColor: palette.background }]}
     >
       <View style={[styles.header, { borderBottomColor: palette.border }]}>
-        <Text style={[styles.headerTitle, { color: palette.text }]}>Recent Activity</Text>
+        <Text style={[styles.headerTitle, { color: palette.text }]}>Activity</Text>
         <Text style={[styles.headerSubtitle, { color: palette.textMuted }]}>
-          Live history of expenses and settlements
+          Expenses and settlements across your trips
         </Text>
       </View>
 
@@ -69,10 +74,12 @@ export default function ActivityScreen() {
         renderItem={({ item }) => (
           <Card style={styles.activityCard}>
             <View style={styles.cardHeader}>
-              <View style={styles.badgeIcon}>
-                <Text style={{ fontSize: 18 }}>
-                  {item.type === 'expense' ? '🧾' : '💸'}
-                </Text>
+              <View style={[styles.iconWell, { backgroundColor: palette.surface }]}>
+                {item.type === 'expense' ? (
+                  <CategoryIcon category={item.category} size={17} color={palette.text} />
+                ) : (
+                  <ArrowUpRight size={17} color={creditColor} strokeWidth={2.2} />
+                )}
               </View>
               <View style={styles.textContainer}>
                 <Text style={[styles.title, { color: palette.text }]}>{item.title}</Text>
@@ -83,8 +90,9 @@ export default function ActivityScreen() {
               <Text
                 style={[
                   styles.amount,
+                  tabularNums,
                   {
-                    color: item.type === 'expense' ? palette.text : colors.primary,
+                    color: item.type === 'expense' ? palette.text : creditColor,
                   },
                 ]}
               >
@@ -110,36 +118,37 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 16,
+    paddingHorizontal: 18,
+    paddingTop: 10,
+    paddingBottom: 14,
     borderBottomWidth: 1,
   },
   headerTitle: {
+    fontFamily: fonts.bold,
     fontSize: 22,
-    fontWeight: '800',
-    letterSpacing: -0.4,
+    letterSpacing: -0.5,
   },
   headerSubtitle: {
+    fontFamily: fonts.regular,
     fontSize: 13,
     marginTop: 2,
   },
   list: {
     padding: 16,
+    paddingBottom: 32,
   },
   activityCard: {
-    marginVertical: 6,
-    padding: 14,
+    marginVertical: 4,
+    padding: 13,
   },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  badgeIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0,0,0,0.04)',
+  iconWell: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -149,22 +158,25 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   title: {
+    fontFamily: fonts.semibold,
     fontSize: 14,
-    fontWeight: '600',
+    letterSpacing: -0.1,
   },
   subtitle: {
+    fontFamily: fonts.regular,
     fontSize: 12,
     marginTop: 2,
   },
   amount: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
+    fontSize: 14,
   },
   empty: {
     alignItems: 'center',
     paddingVertical: 60,
   },
   emptyText: {
+    fontFamily: fonts.regular,
     fontSize: 14,
   },
 });

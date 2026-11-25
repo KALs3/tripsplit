@@ -1,6 +1,7 @@
 import React from 'react';
-import { StyleSheet, Text, useColorScheme, View, ViewStyle } from 'react-native';
-import { colors } from '../../constants/colors';
+import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { fonts, tabularNums } from '../../constants/typography';
+import { useTheme } from '../../hooks/useTheme';
 
 export type BadgeVariant = 'success' | 'danger' | 'warning' | 'info' | 'neutral';
 
@@ -11,45 +12,50 @@ interface BadgeProps {
 }
 
 export function Badge({ label, variant = 'neutral', style }: BadgeProps) {
-  const isDark = useColorScheme() === 'dark';
-  const palette = isDark ? colors.dark : colors.light;
+  const { isDark, palette, colors } = useTheme();
 
   const getColors = () => {
     switch (variant) {
       case 'success':
         return {
-          bg: isDark ? 'rgba(16, 185, 129, 0.15)' : colors.successLight,
-          text: isDark ? '#34D399' : '#047857',
+          bg: isDark ? 'rgba(34, 197, 94, 0.14)' : colors.successLight,
+          text: isDark ? colors.successDark : colors.success,
+          border: isDark ? 'rgba(34, 197, 94, 0.3)' : 'rgba(22, 163, 74, 0.2)',
         };
       case 'danger':
         return {
-          bg: isDark ? 'rgba(225, 29, 72, 0.15)' : colors.dangerLight,
-          text: isDark ? '#FB7185' : '#BE123C',
+          bg: isDark ? 'rgba(248, 113, 113, 0.14)' : colors.dangerLight,
+          text: isDark ? colors.dangerDark : colors.danger,
+          border: isDark ? 'rgba(248, 113, 113, 0.3)' : 'rgba(220, 38, 38, 0.2)',
         };
       case 'warning':
         return {
-          bg: isDark ? 'rgba(245, 158, 11, 0.15)' : colors.warningLight,
+          bg: isDark ? 'rgba(217, 119, 6, 0.16)' : colors.warningLight,
           text: isDark ? '#FBBF24' : '#B45309',
+          border: isDark ? 'rgba(251, 191, 36, 0.3)' : 'rgba(217, 119, 6, 0.25)',
         };
       case 'info':
-        return {
-          bg: isDark ? 'rgba(59, 130, 246, 0.15)' : colors.infoLight,
-          text: isDark ? '#60A5FA' : '#1D4ED8',
-        };
       case 'neutral':
       default:
         return {
           bg: palette.surface,
-          text: palette.textMuted,
+          text: palette.text,
+          border: palette.border,
         };
     }
   };
 
-  const { bg, text } = getColors();
+  const { bg, text, border } = getColors();
 
   return (
-    <View style={[styles.badge, { backgroundColor: bg }, style]}>
-      <Text style={[styles.text, { color: text }]}>{label}</Text>
+    <View
+      style={[
+        styles.badge,
+        { backgroundColor: bg, borderColor: border },
+        style,
+      ]}
+    >
+      <Text style={[styles.text, tabularNums, { color: text }]}>{label}</Text>
     </View>
   );
 }
@@ -59,11 +65,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
+    borderWidth: 1,
     alignSelf: 'flex-start',
   },
   text: {
+    fontFamily: fonts.semibold,
     fontSize: 12,
-    fontWeight: '600',
     letterSpacing: -0.1,
   },
 });

@@ -4,7 +4,6 @@ import {
   ArrowLeft,
   ExternalLink,
   LocateFixed,
-  MapPin,
   Plus,
   Trash2,
 } from 'lucide-react-native';
@@ -16,7 +15,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -24,17 +22,18 @@ import Svg, { Circle, Line, Rect } from 'react-native-svg';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
+import { CategoryIcon } from '../../../components/ui/CategoryIcon';
 import { Input } from '../../../components/ui/Input';
 import { KeyboardAwareView } from '../../../components/ui/KeyboardAwareView';
-import { EXPENSE_CATEGORIES, getCategoryMeta } from '../../../constants/categories';
-import { colors } from '../../../constants/colors';
+import { EXPENSE_CATEGORIES } from '../../../constants/categories';
+import { fonts, tabularNums } from '../../../constants/typography';
 import { ExpenseCategory, PlaceRecord } from '../../../domain/types';
+import { useTheme } from '../../../hooks/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
 
 export default function TripMapScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const isDark = useColorScheme() === 'dark';
-  const palette = isDark ? colors.dark : colors.light;
+  const { isDark, palette, colors } = useTheme();
 
   const trips = useAppStore((s) => s.trips);
   const places = useAppStore((s) => s.places);
@@ -64,7 +63,6 @@ export default function TripMapScreen() {
   const selectedPlace =
     tripPlaces.find((p) => p.id === selectedPlaceId) ?? tripPlaces[0] ?? null;
 
-  // Normalize lat/lng onto a responsive SVG canvas
   const canvasWidth = 320;
   const canvasHeight = 190;
   const pad = 28;
@@ -101,9 +99,7 @@ export default function TripMapScreen() {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        setGpsError(
-          'Location permission denied. Using sample trip coordinates instead.'
-        );
+        setGpsError('Location permission denied. Using sample trip coordinates.');
         setCoords({ lat: 35.6595, lng: 139.7004 });
         setShowAddForm(true);
         return;
@@ -174,6 +170,8 @@ export default function TripMapScreen() {
     );
   }
 
+  const debtColor = isDark ? colors.dangerDark : colors.danger;
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
       <View style={[styles.header, { borderBottomColor: palette.border }]}>
@@ -181,17 +179,15 @@ export default function TripMapScreen() {
           onPress={() => router.back()}
           style={[styles.iconButton, { backgroundColor: palette.surface }]}
         >
-          <ArrowLeft size={20} color={palette.text} />
+          <ArrowLeft size={19} color={palette.text} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: palette.text }]}>
-          Shared Trip Map
-        </Text>
+        <Text style={[styles.headerTitle, { color: palette.text }]}>Trip map</Text>
         <Button
           title="Pin"
           onPress={() => setShowAddForm(!showAddForm)}
           variant="primary"
           size="sm"
-          icon={<Plus size={15} color="#FFFFFF" />}
+          icon={<Plus size={15} color={palette.accentText} />}
         />
       </View>
 
@@ -201,248 +197,265 @@ export default function TripMapScreen() {
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
-        {/* Coordinate Map Canvas */}
-        <Card style={styles.mapCard}>
-          <View style={styles.mapHeaderRow}>
-            <Text style={[styles.mapTitle, { color: palette.text }]}>
-              Pinned Spots ({tripPlaces.length})
-            </Text>
-            <Button
-              title={gpsLoading ? 'Locating...' : 'Pin My GPS'}
-              onPress={handleCaptureGps}
-              loading={gpsLoading}
-              variant="outline"
-              size="sm"
-              icon={<LocateFixed size={14} color={colors.primary} />}
-            />
-          </View>
+          {/* Monochrome Coordinate Map Canvas */}
+          <Card style={styles.mapCard}>
+            <View style={styles.mapHeaderRow}>
+              <Text style={[styles.mapTitle, { color: palette.text }]}>
+                Pinned spots ({tripPlaces.length})
+              </Text>
+              <Button
+                title={gpsLoading ? 'Locating...' : 'Pin GPS'}
+                onPress={handleCaptureGps}
+                loading={gpsLoading}
+                variant="outline"
+                size="sm"
+                icon={<LocateFixed size={14} color={palette.text} />}
+              />
+            </View>
 
-          <View
-            style={[
-              styles.canvasWrap,
-              {
-                backgroundColor: isDark ? '#0F172A' : '#EFF6FF',
-                borderColor: palette.border,
-              },
-            ]}
-          >
-            <Svg width="100%" height={canvasHeight} viewBox={`0 0 ${canvasWidth} ${canvasHeight}`}>
-              {/* Subtle Coordinate Grid */}
-              {[1, 2, 3].map((i) => (
-                <Line
-                  key={`h-${i}`}
-                  x1="0"
-                  y1={(canvasHeight / 4) * i}
-                  x2={canvasWidth}
-                  y2={(canvasHeight / 4) * i}
-                  stroke={isDark ? '#1E293B' : '#DBEAFE'}
-                  strokeWidth="1"
-                />
-              ))}
-              {[1, 2, 3, 4].map((i) => (
-                <Line
-                  key={`v-${i}`}
-                  x1={(canvasWidth / 5) * i}
-                  y1="0"
-                  x2={(canvasWidth / 5) * i}
-                  y2={canvasHeight}
-                  stroke={isDark ? '#1E293B' : '#DBEAFE'}
-                  strokeWidth="1"
-                />
-              ))}
-
-              {/* Route Connector */}
-              {plottedPins.map((pin, idx) => {
-                if (idx === 0) return null;
-                const prev = plottedPins[idx - 1];
-                return (
+            <View
+              style={[
+                styles.canvasWrap,
+                {
+                  backgroundColor: palette.surface,
+                  borderColor: palette.border,
+                },
+              ]}
+            >
+              <Svg
+                width="100%"
+                height={canvasHeight}
+                viewBox={`0 0 ${canvasWidth} ${canvasHeight}`}
+              >
+                {[1, 2, 3].map((i) => (
                   <Line
-                    key={`path-${pin.place.id}`}
-                    x1={prev.x}
-                    y1={prev.y}
-                    x2={pin.x}
-                    y2={pin.y}
-                    stroke={colors.primary}
-                    strokeOpacity="0.35"
-                    strokeDasharray="4,4"
-                    strokeWidth="2"
+                    key={`h-${i}`}
+                    x1="0"
+                    y1={(canvasHeight / 4) * i}
+                    x2={canvasWidth}
+                    y2={(canvasHeight / 4) * i}
+                    stroke={palette.border}
+                    strokeWidth="1"
                   />
-                );
-              })}
+                ))}
+                {[1, 2, 3, 4].map((i) => (
+                  <Line
+                    key={`v-${i}`}
+                    x1={(canvasWidth / 5) * i}
+                    y1="0"
+                    x2={(canvasWidth / 5) * i}
+                    y2={canvasHeight}
+                    stroke={palette.border}
+                    strokeWidth="1"
+                  />
+                ))}
 
-              {/* Pin Dots */}
-              {plottedPins.map(({ place, x, y }) => {
-                const cat = getCategoryMeta(place.category);
-                const isSelected = selectedPlace?.id === place.id;
-                return (
-                  <React.Fragment key={place.id}>
-                    {isSelected && (
+                {plottedPins.map((pin, idx) => {
+                  if (idx === 0) return null;
+                  const prev = plottedPins[idx - 1];
+                  return (
+                    <Line
+                      key={`path-${pin.place.id}`}
+                      x1={prev.x}
+                      y1={prev.y}
+                      x2={pin.x}
+                      y2={pin.y}
+                      stroke={palette.textMuted}
+                      strokeOpacity="0.45"
+                      strokeDasharray="4,4"
+                      strokeWidth="1.5"
+                    />
+                  );
+                })}
+
+                {plottedPins.map(({ place, x, y }) => {
+                  const isSelected = selectedPlace?.id === place.id;
+                  return (
+                    <React.Fragment key={place.id}>
+                      {isSelected && (
+                        <Circle
+                          cx={x}
+                          cy={y}
+                          r={15}
+                          fill={palette.text}
+                          fillOpacity="0.16"
+                        />
+                      )}
                       <Circle
                         cx={x}
                         cy={y}
-                        r={16}
-                        fill={cat.color}
-                        fillOpacity="0.22"
+                        r={isSelected ? 8 : 6}
+                        fill={isSelected ? palette.text : palette.textMuted}
+                        stroke={palette.card}
+                        strokeWidth="2"
+                        onPress={() => setSelectedPlaceId(place.id)}
                       />
-                    )}
-                    <Circle
-                      cx={x}
-                      cy={y}
-                      r={isSelected ? 9 : 7}
-                      fill={cat.color}
-                      stroke="#FFFFFF"
-                      strokeWidth="2"
-                      onPress={() => setSelectedPlaceId(place.id)}
-                    />
-                  </React.Fragment>
-                );
-              })}
+                    </React.Fragment>
+                  );
+                })}
 
-              {tripPlaces.length === 0 && (
-                <Rect x="0" y="0" width="0" height="0" />
-              )}
-            </Svg>
-          </View>
-
-          {selectedPlace && (
-            <View
-              style={[
-                styles.selectedBanner,
-                { backgroundColor: palette.surface, borderColor: palette.border },
-              ]}
-            >
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.selectedTitle, { color: palette.text }]}>
-                  {getCategoryMeta(selectedPlace.category).emoji} {selectedPlace.name}
-                </Text>
-                <Text style={[styles.selectedCoords, { color: palette.textMuted }]}>
-                  {selectedPlace.lat.toFixed(4)}, {selectedPlace.lng.toFixed(4)}
-                  {selectedPlace.note ? ` • ${selectedPlace.note}` : ''}
-                </Text>
-              </View>
-              <Button
-                title="Directions"
-                onPress={() => openExternalMaps(selectedPlace)}
-                variant="ghost"
-                size="sm"
-                icon={<ExternalLink size={14} color={colors.primary} />}
-              />
+                {tripPlaces.length === 0 && (
+                  <Rect x="0" y="0" width="0" height="0" />
+                )}
+              </Svg>
             </View>
-          )}
-        </Card>
 
-        {/* Add Pin Form */}
-        {showAddForm && (
-          <Card style={[styles.formCard, { borderColor: colors.primary }]}>
-            <View style={styles.formHeader}>
-              <Text style={[styles.formTitle, { color: palette.text }]}>
-                Add Map Pin
-              </Text>
-              {coords && (
-                <Badge
-                  label={`GPS: ${coords.lat}, ${coords.lng}`}
-                  variant="success"
+            {selectedPlace && (
+              <View
+                style={[
+                  styles.selectedBanner,
+                  { backgroundColor: palette.surface, borderColor: palette.border },
+                ]}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.selectedTitle, { color: palette.text }]}>
+                    {selectedPlace.name}
+                  </Text>
+                  <Text style={[styles.selectedCoords, tabularNums, { color: palette.textMuted }]}>
+                    {selectedPlace.lat.toFixed(4)}, {selectedPlace.lng.toFixed(4)}
+                    {selectedPlace.note ? `  ${selectedPlace.note}` : ''}
+                  </Text>
+                </View>
+                <Button
+                  title="Directions"
+                  onPress={() => openExternalMaps(selectedPlace)}
+                  variant="outline"
+                  size="sm"
+                  icon={<ExternalLink size={13} color={palette.text} />}
                 />
-              )}
-            </View>
+              </View>
+            )}
+          </Card>
 
-            <Input
-              label="Place Name"
-              placeholder="e.g. Senso-ji Temple"
-              value={placeName}
-              onChangeText={(val) => {
-                setPlaceName(val);
-                setGpsError('');
-              }}
-            />
-            <Input
-              label="Note (Optional)"
-              placeholder="Great spot for sunset photos"
-              value={placeNote}
-              onChangeText={setPlaceNote}
-            />
+          {/* Add Pin Form */}
+          {showAddForm && (
+            <Card style={[styles.formCard, { borderColor: palette.text }]}>
+              <View style={styles.formHeader}>
+                <Text style={[styles.formTitle, { color: palette.text }]}>
+                  Add map pin
+                </Text>
+                {coords && (
+                  <Badge
+                    label={`${coords.lat}, ${coords.lng}`}
+                    variant="success"
+                  />
+                )}
+              </View>
 
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.catRow}
-            >
-              {EXPENSE_CATEGORIES.map((c) => {
-                const active = placeCategory === c.id;
-                return (
-                  <Pressable
-                    key={c.id}
-                    onPress={() => setPlaceCategory(c.id)}
+              <Input
+                label="Place name"
+                placeholder="Senso-ji Temple"
+                value={placeName}
+                onChangeText={(val) => {
+                  setPlaceName(val);
+                  setGpsError('');
+                }}
+              />
+              <Input
+                label="Note (optional)"
+                placeholder="Great spot for sunset photos"
+                value={placeNote}
+                onChangeText={setPlaceNote}
+              />
+
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.catRow}
+              >
+                {EXPENSE_CATEGORIES.map((c) => {
+                  const active = placeCategory === c.id;
+                  return (
+                    <Pressable
+                      key={c.id}
+                      onPress={() => setPlaceCategory(c.id)}
+                      style={[
+                        styles.catChip,
+                        {
+                          backgroundColor: active ? palette.accent : palette.surface,
+                          borderColor: active ? palette.accent : palette.border,
+                        },
+                      ]}
+                    >
+                      <CategoryIcon
+                        category={c.id}
+                        size={13}
+                        color={active ? palette.accentText : palette.text}
+                      />
+                      <Text
+                        style={{
+                          fontFamily: fonts.semibold,
+                          fontSize: 12,
+                          color: active ? palette.accentText : palette.text,
+                        }}
+                      >
+                        {c.shortLabel}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+
+              {gpsError ? (
+                <Text style={[styles.errorText, { color: debtColor }]}>{gpsError}</Text>
+              ) : null}
+
+              <View style={styles.formActions}>
+                <Button
+                  title="Cancel"
+                  onPress={() => setShowAddForm(false)}
+                  variant="ghost"
+                  size="sm"
+                  style={{ flex: 1 }}
+                />
+                <Button
+                  title="Save pin"
+                  onPress={handleSavePlace}
+                  variant="primary"
+                  size="sm"
+                  style={{ flex: 1 }}
+                />
+              </View>
+            </Card>
+          )}
+
+          {/* Saved Places List */}
+          <Text style={[styles.listHeading, { color: palette.text }]}>
+            Saved places
+          </Text>
+          <Card style={styles.placesListCard}>
+            {tripPlaces.map((place, idx) => {
+              const isSelected = selectedPlace?.id === place.id;
+              return (
+                <Pressable
+                  key={place.id}
+                  onPress={() => setSelectedPlaceId(place.id)}
+                  style={[
+                    styles.placeRow,
+                    isSelected && { backgroundColor: palette.surface },
+                    idx < tripPlaces.length - 1 && {
+                      borderBottomWidth: 1,
+                      borderBottomColor: palette.border,
+                    },
+                  ]}
+                >
+                  <View
                     style={[
-                      styles.catChip,
+                      styles.pinBadge,
                       {
-                        backgroundColor: active ? colors.primary : palette.surface,
-                        borderColor: active ? colors.primary : palette.border,
+                        backgroundColor: isSelected ? palette.accent : palette.surface,
                       },
                     ]}
                   >
-                    <Text
-                      style={{
-                        fontSize: 12,
-                        fontWeight: '600',
-                        color: active ? '#FFFFFF' : palette.text,
-                      }}
-                    >
-                      {c.emoji} {c.label.split(' ')[0]}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-
-            {gpsError ? <Text style={styles.errorText}>{gpsError}</Text> : null}
-
-            <View style={styles.formActions}>
-              <Button
-                title="Cancel"
-                onPress={() => setShowAddForm(false)}
-                variant="ghost"
-                size="sm"
-                style={{ flex: 1 }}
-              />
-              <Button
-                title="Save Pin"
-                onPress={handleSavePlace}
-                variant="primary"
-                size="sm"
-                style={{ flex: 1 }}
-              />
-            </View>
-          </Card>
-        )}
-
-        {/* Saved Places List */}
-        <Text style={[styles.listHeading, { color: palette.text }]}>
-          Saved Places
-        </Text>
-        {tripPlaces.map((place) => {
-          const cat = getCategoryMeta(place.category);
-          const isSelected = selectedPlace?.id === place.id;
-          return (
-            <Pressable
-              key={place.id}
-              onPress={() => setSelectedPlaceId(place.id)}
-            >
-              <Card
-                style={[
-                  styles.placeCard,
-                  isSelected && { borderColor: colors.primary, borderWidth: 1.5 },
-                ]}
-              >
-                <View style={styles.placeRow}>
-                  <View
-                    style={[styles.pinBadge, { backgroundColor: `${cat.color}20` }]}
-                  >
-                    <MapPin size={18} color={cat.color} />
+                    <CategoryIcon
+                      category={place.category}
+                      size={16}
+                      color={isSelected ? palette.accentText : palette.text}
+                    />
                   </View>
                   <View style={{ flex: 1, marginRight: 8 }}>
                     <Text style={[styles.placeName, { color: palette.text }]}>
-                      {cat.emoji} {place.name}
+                      {place.name}
                     </Text>
                     {place.note ? (
                       <Text style={[styles.placeNote, { color: palette.textMuted }]}>
@@ -455,13 +468,12 @@ export default function TripMapScreen() {
                     style={[styles.trashBtn, { backgroundColor: palette.surface }]}
                     accessibilityLabel={`Delete ${place.name}`}
                   >
-                    <Trash2 size={14} color={colors.danger} />
+                    <Trash2 size={14} color={debtColor} />
                   </Pressable>
-                </View>
-              </Card>
-            </Pressable>
-          );
-        })}
+                </Pressable>
+              );
+            })}
+          </Card>
         </ScrollView>
       </KeyboardAwareView>
     </SafeAreaView>
@@ -471,7 +483,7 @@ export default function TripMapScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   notFound: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  notFoundText: { fontSize: 16, fontWeight: '700' },
+  notFoundText: { fontFamily: fonts.bold, fontSize: 16 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -481,16 +493,16 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   iconButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: -0.3,
+    fontFamily: fonts.bold,
+    fontSize: 17,
+    letterSpacing: -0.2,
   },
   scroll: { padding: 16, paddingBottom: 40 },
   mapCard: { padding: 14 },
@@ -500,77 +512,73 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 12,
   },
-  mapTitle: { fontSize: 15, fontWeight: '700' },
+  mapTitle: { fontFamily: fonts.bold, fontSize: 15 },
   canvasWrap: {
-    borderRadius: 14,
+    borderRadius: 8,
     borderWidth: 1,
     overflow: 'hidden',
   },
   selectedBanner: {
     marginTop: 12,
     padding: 12,
-    borderRadius: 12,
+    borderRadius: 8,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  selectedTitle: { fontSize: 14, fontWeight: '700' },
-  selectedCoords: { fontSize: 12, marginTop: 2 },
-  formCard: {
-    padding: 16,
-    borderWidth: 1.5,
-  },
+  selectedTitle: { fontFamily: fonts.bold, fontSize: 14 },
+  selectedCoords: { fontFamily: fonts.regular, fontSize: 12, marginTop: 2 },
+  formCard: { padding: 16 },
   formHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
   },
-  formTitle: { fontSize: 16, fontWeight: '700' },
+  formTitle: { fontFamily: fonts.bold, fontSize: 16 },
   catRow: { gap: 8, paddingVertical: 8 },
   catChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     paddingHorizontal: 11,
     paddingVertical: 6,
-    borderRadius: 10,
+    borderRadius: 8,
     borderWidth: 1,
   },
-  formActions: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 10,
-  },
-  errorText: {
-    color: colors.danger,
-    fontSize: 12,
-    fontWeight: '600',
-    marginTop: 4,
-  },
+  formActions: { flexDirection: 'row', gap: 10, marginTop: 10 },
+  errorText: { fontFamily: fonts.semibold, fontSize: 12, marginTop: 4 },
   listHeading: {
-    fontSize: 17,
-    fontWeight: '800',
+    fontFamily: fonts.bold,
+    fontSize: 16,
     marginTop: 14,
     marginBottom: 6,
   },
-  placeCard: { padding: 13 },
+  placesListCard: {
+    padding: 0,
+    overflow: 'hidden',
+  },
   placeRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
   pinBadge: {
-    width: 38,
-    height: 38,
-    borderRadius: 11,
+    width: 36,
+    height: 36,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
-  placeName: { fontSize: 14, fontWeight: '700' },
-  placeNote: { fontSize: 12, marginTop: 2 },
+  placeName: { fontFamily: fonts.semibold, fontSize: 14 },
+  placeNote: { fontFamily: fonts.regular, fontSize: 12, marginTop: 2 },
   trashBtn: {
     width: 32,
     height: 32,
-    borderRadius: 9,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -7,7 +7,6 @@ import {
   Share,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,8 +14,9 @@ import Svg, { Circle } from 'react-native-svg';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
+import { CategoryIcon } from '../../../components/ui/CategoryIcon';
 import { getCategoryMeta } from '../../../constants/categories';
-import { colors } from '../../../constants/colors';
+import { fonts, tabularNums } from '../../../constants/typography';
 import {
   computeCategoryBreakdown,
   computeDailySpending,
@@ -24,12 +24,12 @@ import {
   convertToBaseMinor,
   formatMoney,
 } from '../../../domain';
+import { useTheme } from '../../../hooks/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
 
 export default function TripInsightsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const isDark = useColorScheme() === 'dark';
-  const palette = isDark ? colors.dark : colors.light;
+  const { isDark, palette } = useTheme();
 
   const trips = useAppStore((s) => s.trips);
   const members = useAppStore((s) => s.members);
@@ -83,7 +83,7 @@ export default function TripInsightsScreen() {
     return m.userId === currentUserId ? 'You' : m.displayName.split(' ')[0];
   };
 
-  // Donut chart geometry
+  // Monochrome tonal Donut chart geometry
   const size = 160;
   const strokeWidth = 22;
   const radius = (size - strokeWidth) / 2;
@@ -111,7 +111,7 @@ export default function TripInsightsScreen() {
             ...acc.segments,
             {
               category: item.category,
-              color: meta.color,
+              color: isDark ? meta.colorDark : meta.color,
               strokeDasharray: `${segmentLength} ${circumference}`,
               strokeDashoffset,
             },
@@ -121,7 +121,7 @@ export default function TripInsightsScreen() {
       },
       { segments: [], cumulativePercent: 0 }
     ).segments;
-  }, [categoryBreakdown, circumference]);
+  }, [categoryBreakdown, circumference, isDark]);
 
   if (!trip) {
     return (
@@ -149,7 +149,7 @@ export default function TripInsightsScreen() {
       .slice(0, 3)
       .map((c) => {
         const meta = getCategoryMeta(c.category);
-        return `• ${meta.emoji} ${meta.label}: ${formatMoney(
+        return `• ${meta.label}: ${formatMoney(
           c.amountBaseMinor,
           trip.baseCurrency
         )} (${c.percentage.toFixed(0)}%)`;
@@ -157,7 +157,7 @@ export default function TripInsightsScreen() {
       .join('\n');
 
     const message = [
-      `✈️ ${trip.name} — TripSplit Summary`,
+      `${trip.name} — TripSplit Summary`,
       `Total Spent: ${formatMoney(totalSpendMinor, trip.baseCurrency)} across ${tripExpenses.length} expenses`,
       `Travelers: ${tripMembers.length}`,
       topCategories ? `\nTop Categories:\n${topCategories}` : '',
@@ -179,26 +179,26 @@ export default function TripInsightsScreen() {
           onPress={() => router.back()}
           style={[styles.iconButton, { backgroundColor: palette.surface }]}
         >
-          <ArrowLeft size={20} color={palette.text} />
+          <ArrowLeft size={19} color={palette.text} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: palette.text }]}>Trip Insights</Text>
+        <Text style={[styles.headerTitle, { color: palette.text }]}>Insights</Text>
         <Pressable
           onPress={handleShareSummary}
           style={[styles.iconButton, { backgroundColor: palette.surface }]}
           accessibilityLabel="Share trip summary"
         >
-          <Share2 size={18} color={colors.primary} />
+          <Share2 size={17} color={palette.text} />
         </Pressable>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
-        {/* Category Donut Chart */}
+        {/* Monochrome Category Donut Chart */}
         <Card style={styles.card}>
           <View style={styles.cardHeader}>
             <View style={styles.titleIcon}>
-              <PieChart size={17} color={colors.primary} />
+              <PieChart size={16} color={palette.text} />
               <Text style={[styles.cardTitle, { color: palette.text }]}>
-                Spending by Category
+                Spending by category
               </Text>
             </View>
             <Badge label={`${tripExpenses.length} expenses`} variant="neutral" />
@@ -206,7 +206,7 @@ export default function TripInsightsScreen() {
 
           {categoryBreakdown.length === 0 ? (
             <Text style={[styles.emptyText, { color: palette.textMuted }]}>
-              Add expenses to unlock category analytics.
+              Add expenses to view category analytics.
             </Text>
           ) : (
             <>
@@ -241,7 +241,7 @@ export default function TripInsightsScreen() {
                   <Text style={[styles.donutLabel, { color: palette.textMuted }]}>
                     Total
                   </Text>
-                  <Text style={[styles.donutTotal, { color: palette.text }]}>
+                  <Text style={[styles.donutTotal, tabularNums, { color: palette.text }]}>
                     {formatMoney(totalSpendMinor, trip.baseCurrency)}
                   </Text>
                 </View>
@@ -250,6 +250,7 @@ export default function TripInsightsScreen() {
               <View style={styles.legendList}>
                 {categoryBreakdown.map((item, idx) => {
                   const meta = getCategoryMeta(item.category);
+                  const sliceColor = isDark ? meta.colorDark : meta.color;
                   return (
                     <View
                       key={item.category}
@@ -263,17 +264,18 @@ export default function TripInsightsScreen() {
                     >
                       <View style={styles.legendLeft}>
                         <View
-                          style={[styles.colorDot, { backgroundColor: meta.color }]}
+                          style={[styles.colorSwatch, { backgroundColor: sliceColor }]}
                         />
+                        <CategoryIcon category={item.category} size={15} color={palette.text} />
                         <Text style={[styles.legendName, { color: palette.text }]}>
-                          {meta.emoji} {meta.label}
+                          {meta.label}
                         </Text>
                       </View>
                       <View style={styles.legendRight}>
-                        <Text style={[styles.legendAmount, { color: palette.text }]}>
+                        <Text style={[styles.legendAmount, tabularNums, { color: palette.text }]}>
                           {formatMoney(item.amountBaseMinor, trip.baseCurrency)}
                         </Text>
-                        <Text style={[styles.legendPct, { color: palette.textMuted }]}>
+                        <Text style={[styles.legendPct, tabularNums, { color: palette.textMuted }]}>
                           {item.percentage.toFixed(0)}%
                         </Text>
                       </View>
@@ -289,22 +291,22 @@ export default function TripInsightsScreen() {
         <Card style={styles.card}>
           <View style={styles.cardHeader}>
             <View style={styles.titleIcon}>
-              <BarChart3 size={17} color={colors.primary} />
+              <BarChart3 size={16} color={palette.text} />
               <Text style={[styles.cardTitle, { color: palette.text }]}>
-                Paid vs. Share by Member
+                Paid vs. share by member
               </Text>
             </View>
           </View>
 
           <View style={styles.subLegendRow}>
             <View style={styles.subLegendItem}>
-              <View style={[styles.miniDot, { backgroundColor: colors.primary }]} />
+              <View style={[styles.miniDot, { backgroundColor: palette.text }]} />
               <Text style={[styles.subLegendText, { color: palette.textMuted }]}>
                 Paid upfront
               </Text>
             </View>
             <View style={styles.subLegendItem}>
-              <View style={[styles.miniDot, { backgroundColor: colors.info }]} />
+              <View style={[styles.miniDot, { backgroundColor: palette.textMuted }]} />
               <Text style={[styles.subLegendText, { color: palette.textMuted }]}>
                 Actual share
               </Text>
@@ -323,8 +325,8 @@ export default function TripInsightsScreen() {
                   <Text style={[styles.memberName, { color: palette.text }]}>
                     {getMemberName(m.userId)}
                   </Text>
-                  <Text style={[styles.memberValues, { color: palette.textMuted }]}>
-                    Paid {formatMoney(m.paidBaseMinor, trip.baseCurrency)} • Share{' '}
+                  <Text style={[styles.memberValues, tabularNums, { color: palette.textMuted }]}>
+                    Paid {formatMoney(m.paidBaseMinor, trip.baseCurrency)} / Share{' '}
                     {formatMoney(m.consumedBaseMinor, trip.baseCurrency)}
                   </Text>
                 </View>
@@ -335,7 +337,7 @@ export default function TripInsightsScreen() {
                       styles.barFill,
                       {
                         width: `${m.paidBaseMinor === 0 ? 0 : Math.max(4, paidPct)}%`,
-                        backgroundColor: colors.primary,
+                        backgroundColor: palette.text,
                       },
                     ]}
                   />
@@ -351,7 +353,7 @@ export default function TripInsightsScreen() {
                       styles.barFill,
                       {
                         width: `${m.consumedBaseMinor === 0 ? 0 : Math.max(4, consumedPct)}%`,
-                        backgroundColor: colors.info,
+                        backgroundColor: palette.textMuted,
                       },
                     ]}
                   />
@@ -365,7 +367,7 @@ export default function TripInsightsScreen() {
         {dailySpending.length > 0 && (
           <Card style={styles.card}>
             <Text style={[styles.cardTitle, { color: palette.text, marginBottom: 12 }]}>
-              Spending Over Time
+              Daily spend
             </Text>
             {dailySpending.map((day) => {
               const widthPct = Math.round(
@@ -373,7 +375,7 @@ export default function TripInsightsScreen() {
               );
               return (
                 <View key={day.date} style={styles.dayRow}>
-                  <Text style={[styles.dayLabel, { color: palette.textMuted }]}>
+                  <Text style={[styles.dayLabel, tabularNums, { color: palette.textMuted }]}>
                     {day.date.slice(5)}
                   </Text>
                   <View style={[styles.dayTrack, { backgroundColor: palette.surface }]}>
@@ -382,12 +384,12 @@ export default function TripInsightsScreen() {
                         styles.dayFill,
                         {
                           width: `${Math.max(8, widthPct)}%`,
-                          backgroundColor: colors.primary,
+                          backgroundColor: palette.text,
                         },
                       ]}
                     />
                   </View>
-                  <Text style={[styles.dayAmount, { color: palette.text }]}>
+                  <Text style={[styles.dayAmount, tabularNums, { color: palette.text }]}>
                     {formatMoney(day.amountBaseMinor, trip.baseCurrency)}
                   </Text>
                 </View>
@@ -397,11 +399,11 @@ export default function TripInsightsScreen() {
         )}
 
         <Button
-          title="Share Trip Summary"
+          title="Share trip summary"
           onPress={handleShareSummary}
           variant="primary"
           size="md"
-          icon={<Share2 size={16} color="#FFFFFF" />}
+          icon={<Share2 size={16} color={palette.accentText} />}
           style={{ marginTop: 8 }}
         />
       </ScrollView>
@@ -412,7 +414,7 @@ export default function TripInsightsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   notFound: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  notFoundText: { fontSize: 16, fontWeight: '700' },
+  notFoundText: { fontFamily: fonts.bold, fontSize: 16 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -422,35 +424,29 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   iconButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: -0.3,
+    fontFamily: fonts.bold,
+    fontSize: 17,
+    letterSpacing: -0.2,
   },
   scroll: { padding: 16, paddingBottom: 40 },
-  card: { padding: 16, marginBottom: 12 },
+  card: { padding: 16, marginBottom: 10 },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 12,
   },
-  titleIcon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
+  titleIcon: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  cardTitle: { fontFamily: fonts.bold, fontSize: 15 },
   emptyText: {
+    fontFamily: fonts.regular,
     fontSize: 13,
     textAlign: 'center',
     paddingVertical: 20,
@@ -467,119 +463,50 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   donutLabel: {
+    fontFamily: fonts.medium,
     fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
   },
   donutTotal: {
-    fontSize: 17,
-    fontWeight: '800',
+    fontFamily: fonts.bold,
+    fontSize: 16,
     marginTop: 2,
   },
-  legendList: {
-    marginTop: 10,
-  },
+  legendList: { marginTop: 10 },
   legendRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 10,
   },
-  legendLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  colorDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  legendName: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  legendRight: {
-    alignItems: 'flex-end',
-  },
-  legendAmount: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  legendPct: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  subLegendRow: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 12,
-  },
-  subLegendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  miniDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  subLegendText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  memberBarBlock: {
-    marginBottom: 14,
-  },
+  legendLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  colorSwatch: { width: 10, height: 10, borderRadius: 2 },
+  legendName: { fontFamily: fonts.semibold, fontSize: 13 },
+  legendRight: { alignItems: 'flex-end' },
+  legendAmount: { fontFamily: fonts.bold, fontSize: 13 },
+  legendPct: { fontFamily: fonts.medium, fontSize: 11 },
+  subLegendRow: { flexDirection: 'row', gap: 16, marginBottom: 12 },
+  subLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  miniDot: { width: 8, height: 8, borderRadius: 2 },
+  subLegendText: { fontFamily: fonts.medium, fontSize: 12 },
+  memberBarBlock: { marginBottom: 14 },
   memberBarHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 6,
   },
-  memberName: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  memberValues: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  barTrack: {
-    height: 7,
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  barFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
+  memberName: { fontFamily: fonts.bold, fontSize: 13 },
+  memberValues: { fontFamily: fonts.medium, fontSize: 11 },
+  barTrack: { height: 6, borderRadius: 3, overflow: 'hidden' },
+  barFill: { height: '100%', borderRadius: 3 },
   dayRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     marginBottom: 10,
   },
-  dayLabel: {
-    width: 44,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  dayTrack: {
-    flex: 1,
-    height: 8,
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  dayFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  dayAmount: {
-    width: 68,
-    textAlign: 'right',
-    fontSize: 12,
-    fontWeight: '700',
-  },
+  dayLabel: { width: 44, fontFamily: fonts.medium, fontSize: 12 },
+  dayTrack: { flex: 1, height: 7, borderRadius: 3, overflow: 'hidden' },
+  dayFill: { height: '100%', borderRadius: 3 },
+  dayAmount: { width: 68, textAlign: 'right', fontFamily: fonts.bold, fontSize: 12 },
 });
