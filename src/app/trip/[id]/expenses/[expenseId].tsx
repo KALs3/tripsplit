@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Calendar, FileText, Trash2, User } from 'lucide-react-native';
+import { ArrowLeft, Calendar, FileText, Pencil, Trash2, User } from 'lucide-react-native';
 import React from 'react';
 import {
   Alert,
@@ -95,13 +95,27 @@ export default function ExpenseDetailScreen() {
           <ArrowLeft size={20} color={palette.text} />
         </Pressable>
         <Text style={[styles.headerTitle, { color: palette.text }]}>Expense Details</Text>
-        <Pressable
-          onPress={handleDelete}
-          style={[styles.iconButton, { backgroundColor: colors.dangerLight }]}
-          accessibilityLabel="Delete expense"
-        >
-          <Trash2 size={18} color={colors.danger} />
-        </Pressable>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <Pressable
+            onPress={() =>
+              router.push({
+                pathname: '/trip/[id]/expenses/new',
+                params: { id: trip.id, expenseId: expense.id },
+              })
+            }
+            style={[styles.iconButton, { backgroundColor: palette.surface }]}
+            accessibilityLabel="Edit expense"
+          >
+            <Pencil size={17} color={palette.text} />
+          </Pressable>
+          <Pressable
+            onPress={handleDelete}
+            style={[styles.iconButton, { backgroundColor: colors.dangerLight }]}
+            accessibilityLabel="Delete expense"
+          >
+            <Trash2 size={18} color={colors.danger} />
+          </Pressable>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>

@@ -5,3 +5,4 @@ export * from './balances';
 export * from './debt';
 export * from './analytics';
 export * from './quickAdd';
+export * from './fx';

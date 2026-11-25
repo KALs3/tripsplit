@@ -23,7 +23,9 @@ import { colors } from '../../../../constants/colors';
 import {
   calculateSplits,
   CURRENCY_METADATA,
+  fetchLiveFxRate,
   formatMoney,
+  fromMinorUnits,
   parseQuickExpense,
   SplitValidationError,
   toMinorUnits,
@@ -39,16 +41,19 @@ const SPLIT_TABS: { id: SplitMethod; label: string }[] = [
 ];
 
 export default function AddExpenseModal() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, expenseId } = useLocalSearchParams<{ id: string; expenseId?: string }>();
   const isDark = useColorScheme() === 'dark';
   const palette = isDark ? colors.dark : colors.light;
 
   const trips = useAppStore((s) => s.trips);
   const members = useAppStore((s) => s.members);
+  const expenses = useAppStore((s) => s.expenses);
   const user = useAppStore((s) => s.user);
   const addExpense = useAppStore((s) => s.addExpense);
+  const updateExpense = useAppStore((s) => s.updateExpense);
 
   const trip = trips.find((t) => t.id === id);
+  const editingExpense = expenses.find((e) => e.id === expenseId && !e.deletedAt);
   const tripMembers = useMemo(
     () => members.filter((m) => m.tripId === id),
     [members, id]
@@ -57,27 +62,54 @@ export default function AddExpenseModal() {
   const currentUserId = user?.id || 'user_me';
   const baseCurrency = trip?.baseCurrency || 'USD';
 
-  // Form fields
+  // Form fields (pre-populated when editing an existing expense)
   const [quickInput, setQuickInput] = useState('');
-  const [title, setTitle] = useState('');
-  const [amountText, setAmountText] = useState('');
-  const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
-  const [currency, setCurrency] = useState(baseCurrency);
-  const [fxRateText, setFxRateText] = useState('1.0');
-  const [category, setCategory] = useState<ExpenseCategory>('food');
+  const [title, setTitle] = useState(() => editingExpense?.title ?? '');
+  const [amountText, setAmountText] = useState(() =>
+    editingExpense
+      ? String(fromMinorUnits(editingExpense.amountMinor, editingExpense.currency))
+      : ''
+  );
+  const [receiptUrl, setReceiptUrl] = useState<string | null>(
+    () => editingExpense?.receiptUrl ?? null
+  );
+  const [currency, setCurrency] = useState(
+    () => editingExpense?.currency ?? baseCurrency
+  );
+  const [fxRateText, setFxRateText] = useState(() =>
+    editingExpense ? String(editingExpense.fxRateToBase) : '1.0'
+  );
+  const [category, setCategory] = useState<ExpenseCategory>(
+    () => editingExpense?.category ?? 'food'
+  );
   const [paidBy, setPaidBy] = useState(
-    tripMembers.find((m) => m.userId === currentUserId)?.userId ||
+    () =>
+      editingExpense?.paidBy ||
+      tripMembers.find((m) => m.userId === currentUserId)?.userId ||
       tripMembers[0]?.userId ||
       currentUserId
   );
-  const [note, setNote] = useState('');
-  const [splitMethod, setSplitMethod] = useState<SplitMethod>('EQUAL');
+  const [note, setNote] = useState(() => editingExpense?.note ?? '');
+  const [splitMethod, setSplitMethod] = useState<SplitMethod>(() =>
+    editingExpense ? 'EXACT' : 'EQUAL'
+  );
 
   // Split method states
   const [equalParticipants, setEqualParticipants] = useState<string[]>(() =>
-    tripMembers.map((m) => m.userId)
+    editingExpense
+      ? editingExpense.splits.map((s) => s.userId)
+      : tripMembers.map((m) => m.userId)
   );
-  const [exactTexts, setExactTexts] = useState<Record<string, string>>({});
+  const [exactTexts, setExactTexts] = useState<Record<string, string>>(() => {
+    if (!editingExpense) return {};
+    const initial: Record<string, string> = {};
+    editingExpense.splits.forEach((s) => {
+      initial[s.userId] = String(
+        fromMinorUnits(s.shareMinor, editingExpense.currency)
+      );
+    });
+    return initial;
+  });
   const [percentageTexts, setPercentageTexts] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
     if (tripMembers.length > 0) {
@@ -199,22 +231,49 @@ export default function AddExpenseModal() {
 
     try {
       const finalSplits = calculateSplits(totalMinor, splitInput, paidBy);
-      addExpense({
-        tripId: trip.id,
-        title: title.trim(),
-        amountMinor: totalMinor,
-        currency,
-        fxRateToBase: fxRate,
-        category,
-        paidBy,
-        spentAt: new Date().toISOString(),
-        note: note.trim() || undefined,
-        receiptUrl: receiptUrl || undefined,
-        splits: finalSplits,
-      });
+      if (editingExpense) {
+        updateExpense({
+          ...editingExpense,
+          title: title.trim(),
+          amountMinor: totalMinor,
+          currency,
+          fxRateToBase: fxRate,
+          category,
+          paidBy,
+          note: note.trim() || undefined,
+          receiptUrl: receiptUrl || undefined,
+          splits: finalSplits,
+        });
+      } else {
+        addExpense({
+          tripId: trip.id,
+          title: title.trim(),
+          amountMinor: totalMinor,
+          currency,
+          fxRateToBase: fxRate,
+          category,
+          paidBy,
+          spentAt: new Date().toISOString(),
+          note: note.trim() || undefined,
+          receiptUrl: receiptUrl || undefined,
+          splits: finalSplits,
+        });
+      }
       router.back();
     } catch (err: any) {
       setFormError(err.message || 'Could not calculate splits.');
+    }
+  };
+
+  const handleSelectCurrency = async (nextCurrency: string) => {
+    setCurrency(nextCurrency);
+    if (!trip || nextCurrency === trip.baseCurrency) {
+      setFxRateText('1.0');
+      return;
+    }
+    const liveRate = await fetchLiveFxRate(nextCurrency, trip.baseCurrency);
+    if (liveRate) {
+      setFxRateText(liveRate.toFixed(4));
     }
   };
 
@@ -285,7 +344,9 @@ export default function AddExpenseModal() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
       <View style={[styles.header, { borderBottomColor: palette.border }]}>
-        <Text style={[styles.headerTitle, { color: palette.text }]}>Add Expense</Text>
+        <Text style={[styles.headerTitle, { color: palette.text }]}>
+          {editingExpense ? 'Edit Expense' : 'Add Expense'}
+        </Text>
         <Pressable onPress={() => router.back()} style={styles.closeBtn}>
           <X size={22} color={palette.text} />
         </Pressable>
@@ -369,7 +430,7 @@ export default function AddExpenseModal() {
               return (
                 <Pressable
                   key={curr}
-                  onPress={() => setCurrency(curr)}
+                  onPress={() => void handleSelectCurrency(curr)}
                   style={[
                     styles.chip,
                     {
@@ -700,7 +761,7 @@ export default function AddExpenseModal() {
           {formError ? <Text style={styles.errorText}>{formError}</Text> : null}
 
           <Button
-            title="Save Expense"
+            title={editingExpense ? 'Update Expense' : 'Save Expense'}
             onPress={handleSave}
             variant="primary"
             size="lg"

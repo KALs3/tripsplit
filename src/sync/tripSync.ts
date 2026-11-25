@@ -76,6 +76,7 @@ export async function executeSupabaseMutation(
           paid_by: expense.paidBy,
           spent_at: expense.spentAt || new Date().toISOString(),
           note: expense.note || null,
+          receipt_url: expense.receiptUrl || null,
           created_by: createdBy,
           deleted_at: expense.deletedAt || null,
         } as never,
@@ -260,6 +261,7 @@ export async function fetchUserTripsSnapshot(): Promise<RemoteTripsSnapshot> {
     paidBy: row.paid_by,
     spentAt: row.spent_at,
     note: row.note || undefined,
+    receiptUrl: row.receipt_url || undefined,
     deletedAt: row.deleted_at,
     splits: (row.expense_splits || []).map((s: any) => ({
       userId: s.user_id,

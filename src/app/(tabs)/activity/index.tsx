@@ -24,25 +24,31 @@ export default function ActivityScreen() {
     return members.find((m) => m.userId === userId)?.displayName || 'A member';
   };
 
-  // Combine expenses and payments into a chronological activity feed
+  // Combine active (non-deleted) expenses and payments into a chronological feed
   const feed = [
-    ...expenses.map((e) => ({
-      id: e.id,
-      type: 'expense' as const,
-      title: `${getMemberName(e.paidBy)} paid for "${e.title}"`,
-      amountMinor: e.amountMinor,
-      currency: e.currency,
-      subtitle: `${e.splits.length} people split this expense`,
-    })),
-    ...payments.map((p) => ({
-      id: p.id,
-      type: 'payment' as const,
-      title: `${getMemberName(p.fromUser)} paid ${getMemberName(p.toUser)}`,
-      amountMinor: p.amountMinor,
-      currency: p.currency,
-      subtitle: 'Debt settlement transfer',
-    })),
-  ];
+    ...expenses
+      .filter((e) => !e.deletedAt)
+      .map((e) => ({
+        id: e.id,
+        type: 'expense' as const,
+        title: `${getMemberName(e.paidBy)} paid for "${e.title}"`,
+        amountMinor: e.amountMinor,
+        currency: e.currency,
+        subtitle: `${e.splits.length} people split this expense`,
+        sortKey: e.spentAt || '',
+      })),
+    ...payments
+      .filter((p) => !p.deletedAt)
+      .map((p) => ({
+        id: p.id,
+        type: 'payment' as const,
+        title: `${getMemberName(p.fromUser)} paid ${getMemberName(p.toUser)}`,
+        amountMinor: p.amountMinor,
+        currency: p.currency,
+        subtitle: 'Debt settlement transfer',
+        sortKey: p.id,
+      })),
+  ].sort((a, b) => b.sortKey.localeCompare(a.sortKey));
 
   return (
     <SafeAreaView
