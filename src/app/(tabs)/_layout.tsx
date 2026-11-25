@@ -1,12 +1,14 @@
 import { Tabs } from 'expo-router';
 import { Compass, History, User } from 'lucide-react-native';
 import React from 'react';
-import { Platform, useColorScheme } from 'react-native';
+import { useColorScheme } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../constants/colors';
 
 export default function TabLayout() {
   const isDark = useColorScheme() === 'dark';
   const palette = isDark ? colors.dark : colors.light;
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
@@ -18,8 +20,8 @@ export default function TabLayout() {
           backgroundColor: palette.card,
           borderTopColor: palette.border,
           borderTopWidth: 1,
-          height: Platform.OS === 'ios' ? 88 : 64,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 10,
+          height: 58 + insets.bottom,
+          paddingBottom: Math.max(insets.bottom, 8),
           paddingTop: 8,
         },
         tabBarLabelStyle: {

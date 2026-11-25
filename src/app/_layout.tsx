@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAppStore } from '../store/useAppStore';
 
 export default function RootLayout() {
@@ -37,7 +38,7 @@ export default function RootLayout() {
   }, [setNetworkOnline]);
 
   return (
-    <>
+    <SafeAreaProvider>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
@@ -64,6 +65,6 @@ export default function RootLayout() {
         />
         <Stack.Screen name="trip/[id]" />
       </Stack>
-    </>
+    </SafeAreaProvider>
   );
 }

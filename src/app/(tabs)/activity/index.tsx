@@ -1,12 +1,12 @@
 import React from 'react';
 import {
   FlatList,
-  SafeAreaView,
   StyleSheet,
   Text,
   useColorScheme,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card } from '../../../components/ui/Card';
 import { colors } from '../../../constants/colors';
 import { formatMoney } from '../../../domain';
@@ -45,7 +45,10 @@ export default function ActivityScreen() {
   ];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
+    <SafeAreaView
+      edges={['top', 'left', 'right']}
+      style={[styles.container, { backgroundColor: palette.background }]}
+    >
       <View style={[styles.header, { borderBottomColor: palette.border }]}>
         <Text style={[styles.headerTitle, { color: palette.text }]}>Recent Activity</Text>
         <Text style={[styles.headerSubtitle, { color: palette.textMuted }]}>
