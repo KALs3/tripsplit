@@ -31,7 +31,7 @@ import { SyncStatusBadge } from '../../../components/ui/SyncStatusBadge';
 import { EXPENSE_CATEGORIES, getCategoryMeta } from '../../../constants/categories';
 import { colors } from '../../../constants/colors';
 import { calculateNetBalances, convertToBaseMinor, formatMoney, simplifyDebts } from '../../../domain';
-import { ExpenseCategory, ExpenseRecord } from '../../../domain/types';
+import { ExpenseCategory, ExpenseRecord, PaymentRecord } from '../../../domain/types';
 import { useAppStore } from '../../../store/useAppStore';
 import { subscribeToTripRealtime } from '../../../sync/tripSync';
 
@@ -107,6 +107,10 @@ export default function TripDashboardScreen() {
       });
   }, [expenses, id, searchQuery, selectedCategory]);
 
+  const activePayments = useMemo(() => {
+    return payments.filter((p) => p.tripId === id && !p.deletedAt);
+  }, [payments, id]);
+
   if (!trip) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
@@ -127,6 +131,49 @@ export default function TripDashboardScreen() {
 
   const isOwed = userNetMinor > 0;
   const isDebt = userNetMinor < 0;
+  const isUserSettled = userNetMinor === 0;
+
+  const renderPaymentRow = (payment: PaymentRecord) => {
+    const fromName = getMemberName(payment.fromUser);
+    const toName = getMemberName(payment.toUser);
+    return (
+      <Pressable
+        key={payment.id}
+        onPress={() =>
+          router.push({ pathname: '/trip/[id]/balances', params: { id: trip.id } })
+        }
+      >
+        <Card style={styles.expenseCard}>
+          <View style={styles.expenseRow}>
+            <View
+              style={[
+                styles.categoryIconBox,
+                { backgroundColor: `${colors.success}18` },
+              ]}
+            >
+              <Text style={styles.categoryEmoji}>💸</Text>
+            </View>
+            <View style={styles.expenseMeta}>
+              <Text style={[styles.expenseTitle, { color: palette.text }]} numberOfLines={1}>
+                {fromName} paid {toName}
+              </Text>
+              <Text style={[styles.expenseSub, { color: palette.textMuted }]}>
+                Settlement transfer
+              </Text>
+            </View>
+            <View style={styles.expenseImpact}>
+              <Text style={[styles.impactLabel, { color: colors.success }]}>
+                settled
+              </Text>
+              <Text style={[styles.impactAmount, { color: colors.success }]}>
+                {formatMoney(payment.amountMinor, payment.currency)}
+              </Text>
+            </View>
+          </View>
+        </Card>
+      </Pressable>
+    );
+  };
 
   const renderExpenseRow = (expense: ExpenseRecord) => {
     const cat = getCategoryMeta(expense.category);
@@ -183,6 +230,15 @@ export default function TripDashboardScreen() {
                 <Text style={[styles.impactLabel, { color: palette.textMuted }]}>
                   not involved
                 </Text>
+              ) : isUserSettled ? (
+                <>
+                  <Text style={[styles.impactLabel, { color: colors.success }]}>
+                    settled
+                  </Text>
+                  <Text style={[styles.impactAmount, { color: palette.textMuted }]}>
+                    {formatMoney(personalImpactMinor, expense.currency)}
+                  </Text>
+                </>
               ) : (
                 <>
                   <Text
@@ -501,6 +557,16 @@ export default function TripDashboardScreen() {
             );
           })}
         </ScrollView>
+
+        {/* Settlements Recorded in This Trip */}
+        {activePayments.length > 0 && selectedCategory === 'all' && !searchQuery.trim() && (
+          <View style={{ marginBottom: 8 }}>
+            <Text style={[styles.expensesHeading, { color: palette.text, fontSize: 15, marginBottom: 4 }]}>
+              Settlements ({activePayments.length})
+            </Text>
+            {activePayments.map(renderPaymentRow)}
+          </View>
+        )}
 
         {/* Expenses List */}
         {activeExpenses.length === 0 ? (
