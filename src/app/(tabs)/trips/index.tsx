@@ -14,6 +14,7 @@ import {
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
+import { SyncStatusBadge } from '../../../components/ui/SyncStatusBadge';
 import { colors } from '../../../constants/colors';
 import { formatMoney } from '../../../domain';
 import { MockTrip } from '../../../domain/mockData';
@@ -27,6 +28,8 @@ export default function TripsListScreen() {
   const members = useAppStore((s) => s.members);
   const user = useAppStore((s) => s.user);
   const isGuestDemo = useAppStore((s) => s.isGuestDemo);
+  const syncStatus = useAppStore((s) => s.syncStatus);
+  const pendingMutationsCount = useAppStore((s) => s.pendingMutationsCount);
   const setActiveTrip = useAppStore((s) => s.setActiveTrip);
   const getTripBalances = useAppStore((s) => s.getTripBalances);
 
@@ -106,12 +109,12 @@ export default function TripsListScreen() {
               Hi, {user?.displayName?.split(' ')[0] || 'Traveler'} 👋
             </Text>
             {isGuestDemo && (
-              <Badge label="Demo Mode" variant="info" style={{ marginLeft: 6 }} />
+              <Badge label="Demo" variant="info" style={{ marginLeft: 6 }} />
             )}
           </View>
-          <Text style={[styles.subGreeting, { color: palette.textMuted }]}>
-            Here are your shared trips
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>
+            <SyncStatusBadge status={syncStatus} pendingCount={pendingMutationsCount} />
+          </View>
         </View>
 
         <View style={{ flexDirection: 'row', gap: 8 }}>

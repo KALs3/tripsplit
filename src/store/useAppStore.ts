@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { calculateNetBalances, convertToBaseMinor, simplifyDebts } from '../domain';
 import {
@@ -10,6 +11,13 @@ import {
   MockTripMember,
 } from '../domain/mockData';
 import { ExpenseRecord, NetBalance, PaymentRecord, SettlementTransfer } from '../domain/types';
+import { generateClientUuid, OutboxQueue } from '../sync/outbox';
+import {
+  executeSupabaseMutation,
+  fetchUserTripsSnapshot,
+  isSupabaseConfigured,
+} from '../sync/tripSync';
+import { OutboxMutation, SyncStatus } from '../sync/types';
 
 export interface UserSession {
   id: string;
@@ -19,11 +27,19 @@ export interface UserSession {
   defaultCurrency: string;
 }
 
+const outbox = new OutboxQueue(AsyncStorage);
+
 interface AppState {
   // Auth state
   user: UserSession | null;
   isGuestDemo: boolean;
   isLoading: boolean;
+
+  // Sync & Offline state
+  isNetworkOnline: boolean;
+  isOfflineSimulated: boolean;
+  syncStatus: SyncStatus;
+  pendingMutationsCount: number;
 
   // Data state
   trips: MockTrip[];
@@ -37,6 +53,11 @@ interface AppState {
   setUser: (user: UserSession | null) => void;
   signOut: () => void;
   setActiveTrip: (tripId: string) => void;
+  setNetworkOnline: (online: boolean) => void;
+  toggleSimulateOffline: () => void;
+  hydrateFromRemote: () => Promise<void>;
+  flushOutbox: () => Promise<void>;
+
   addTrip: (trip: Omit<MockTrip, 'id' | 'inviteCode' | 'archived'>) => MockTrip;
   addExpense: (expense: Omit<ExpenseRecord, 'id'>) => ExpenseRecord;
   updateExpense: (expense: ExpenseRecord) => void;
@@ -46,7 +67,7 @@ interface AppState {
   addMemberToTrip: (tripId: string, displayName: string) => MockTripMember;
   removeMemberFromTrip: (tripId: string, userId: string) => void;
   joinTripByCode: (inviteCode: string) => { trip?: MockTrip; error?: string };
-  
+
   // Computed balance selectors
   getTripBalances: (tripId: string) => {
     balances: Map<string, number>;
@@ -57,10 +78,40 @@ interface AppState {
   };
 }
 
+async function enqueueAndMaybeFlush(
+  mutation: OutboxMutation,
+  get: () => AppState,
+  set: (partial: Partial<AppState>) => void
+) {
+  const { isGuestDemo, isOfflineSimulated, isNetworkOnline } = get();
+  const shouldQueue = !isGuestDemo || isOfflineSimulated;
+
+  if (!shouldQueue) {
+    return;
+  }
+
+  const updated = await outbox.enqueue(mutation);
+  const effectivelyOnline = isNetworkOnline && !isOfflineSimulated;
+
+  set({
+    pendingMutationsCount: updated.length,
+    syncStatus: effectivelyOnline ? 'syncing' : 'offline',
+  });
+
+  if (effectivelyOnline) {
+    await get().flushOutbox();
+  }
+}
+
 export const useAppStore = create<AppState>((set, get) => ({
   user: null,
   isGuestDemo: false,
   isLoading: false,
+
+  isNetworkOnline: true,
+  isOfflineSimulated: false,
+  syncStatus: 'synced',
+  pendingMutationsCount: 0,
 
   trips: [],
   activeTripId: null,
@@ -69,9 +120,13 @@ export const useAppStore = create<AppState>((set, get) => ({
   payments: [],
 
   loginAsGuest: () => {
+    void outbox.clear();
     set({
       user: DEMO_USER,
       isGuestDemo: true,
+      isOfflineSimulated: false,
+      syncStatus: 'synced',
+      pendingMutationsCount: 0,
       trips: [DEMO_TRIP],
       activeTripId: DEMO_TRIP.id,
       members: DEMO_MEMBERS,
@@ -82,12 +137,19 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setUser: (user) => {
     set({ user, isGuestDemo: false });
+    if (user && isSupabaseConfigured()) {
+      void get().hydrateFromRemote();
+    }
   },
 
   signOut: () => {
+    void outbox.clear();
     set({
       user: null,
       isGuestDemo: false,
+      isOfflineSimulated: false,
+      syncStatus: 'synced',
+      pendingMutationsCount: 0,
       trips: [],
       activeTripId: null,
       members: [],
@@ -100,21 +162,111 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ activeTripId: tripId });
   },
 
+  setNetworkOnline: (online: boolean) => {
+    const prev = get();
+    const effectivelyOnline = online && !prev.isOfflineSimulated;
+    set({
+      isNetworkOnline: online,
+      syncStatus: effectivelyOnline
+        ? prev.pendingMutationsCount > 0
+          ? 'syncing'
+          : 'synced'
+        : 'offline',
+    });
+
+    if (effectivelyOnline && prev.pendingMutationsCount > 0) {
+      void get().flushOutbox();
+    }
+  },
+
+  toggleSimulateOffline: () => {
+    const prev = get();
+    const nextSimulated = !prev.isOfflineSimulated;
+    const effectivelyOnline = prev.isNetworkOnline && !nextSimulated;
+
+    set({
+      isOfflineSimulated: nextSimulated,
+      syncStatus: effectivelyOnline
+        ? prev.pendingMutationsCount > 0
+          ? 'syncing'
+          : 'synced'
+        : 'offline',
+    });
+
+    if (effectivelyOnline && prev.pendingMutationsCount > 0) {
+      void get().flushOutbox();
+    }
+  },
+
+  hydrateFromRemote: async () => {
+    const { isGuestDemo, user } = get();
+    if (isGuestDemo || !user || !isSupabaseConfigured()) return;
+
+    set({ isLoading: true, syncStatus: 'syncing' });
+    try {
+      const snapshot = await fetchUserTripsSnapshot();
+      const pending = await outbox.load();
+      set({
+        trips: snapshot.trips,
+        members: snapshot.members,
+        expenses: snapshot.expenses,
+        payments: snapshot.payments,
+        pendingMutationsCount: pending.length,
+        syncStatus: pending.length > 0 ? 'offline' : 'synced',
+        isLoading: false,
+      });
+    } catch {
+      set({ isLoading: false, syncStatus: 'error' });
+    }
+  },
+
+  flushOutbox: async () => {
+    const { isNetworkOnline, isOfflineSimulated, isGuestDemo } = get();
+    if (!isNetworkOnline || isOfflineSimulated) {
+      const pending = await outbox.load();
+      set({ syncStatus: 'offline', pendingMutationsCount: pending.length });
+      return;
+    }
+
+    set({ syncStatus: 'syncing' });
+
+    const result = await outbox.flush(async (mutation) => {
+      if (!isGuestDemo) {
+        await executeSupabaseMutation(mutation);
+      }
+    });
+
+    if (result.error) {
+      set({
+        syncStatus: 'error',
+        pendingMutationsCount: result.remaining.length,
+      });
+    } else {
+      set({
+        syncStatus: 'synced',
+        pendingMutationsCount: 0,
+      });
+    }
+  },
+
   addTrip: (tripData) => {
     const state = get();
     const newTrip: MockTrip = {
       ...tripData,
-      id: `trip_${Date.now()}`,
+      id: generateClientUuid(),
       inviteCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
       archived: false,
     };
 
+    const ownerId = state.user?.id || 'user_me';
     const ownerMember: MockTripMember = {
       tripId: newTrip.id,
-      userId: state.user?.id || 'user_me',
+      userId: ownerId,
       role: 'owner',
       displayName: state.user?.displayName || 'You',
-      avatarUrl: state.user?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+      avatarUrl:
+        state.user?.avatarUrl ||
+        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
     };
 
     set({
@@ -123,6 +275,17 @@ export const useAppStore = create<AppState>((set, get) => ({
       activeTripId: newTrip.id,
     });
 
+    void enqueueAndMaybeFlush(
+      {
+        mutationId: generateClientUuid(),
+        createdAt: new Date().toISOString(),
+        type: 'CREATE_TRIP',
+        payload: { trip: newTrip, ownerId },
+      },
+      get,
+      set
+    );
+
     return newTrip;
   },
 
@@ -130,12 +293,26 @@ export const useAppStore = create<AppState>((set, get) => ({
     const state = get();
     const newExpense: ExpenseRecord = {
       ...expenseData,
-      id: `exp_${Date.now()}`,
+      id: generateClientUuid(),
     };
 
     set({
       expenses: [newExpense, ...state.expenses],
     });
+
+    void enqueueAndMaybeFlush(
+      {
+        mutationId: generateClientUuid(),
+        createdAt: new Date().toISOString(),
+        type: 'UPSERT_EXPENSE',
+        payload: {
+          expense: newExpense,
+          createdBy: state.user?.id || 'user_me',
+        },
+      },
+      get,
+      set
+    );
 
     return newExpense;
   },
@@ -147,46 +324,105 @@ export const useAppStore = create<AppState>((set, get) => ({
         e.id === updatedExpense.id ? updatedExpense : e
       ),
     });
+
+    void enqueueAndMaybeFlush(
+      {
+        mutationId: generateClientUuid(),
+        createdAt: new Date().toISOString(),
+        type: 'UPSERT_EXPENSE',
+        payload: {
+          expense: updatedExpense,
+          createdBy: state.user?.id || 'user_me',
+        },
+      },
+      get,
+      set
+    );
   },
 
   deleteExpense: (expenseId: string) => {
     const state = get();
-    // Soft delete
+    const deletedAt = new Date().toISOString();
+    const target = state.expenses.find((e) => e.id === expenseId);
+
     set({
       expenses: state.expenses.map((e) =>
-        e.id === expenseId ? { ...e, deletedAt: new Date().toISOString() } : e
+        e.id === expenseId ? { ...e, deletedAt } : e
       ),
     });
+
+    if (target) {
+      void enqueueAndMaybeFlush(
+        {
+          mutationId: generateClientUuid(),
+          createdAt: deletedAt,
+          type: 'DELETE_EXPENSE',
+          payload: { expenseId, tripId: target.tripId, deletedAt },
+        },
+        get,
+        set
+      );
+    }
   },
 
   addPayment: (paymentData) => {
     const state = get();
     const newPayment: PaymentRecord = {
       ...paymentData,
-      id: `pay_${Date.now()}`,
+      id: generateClientUuid(),
     };
 
     set({
       payments: [newPayment, ...state.payments],
     });
 
+    void enqueueAndMaybeFlush(
+      {
+        mutationId: generateClientUuid(),
+        createdAt: new Date().toISOString(),
+        type: 'CREATE_PAYMENT',
+        payload: {
+          payment: newPayment,
+          createdBy: state.user?.id || 'user_me',
+        },
+      },
+      get,
+      set
+    );
+
     return newPayment;
   },
 
   deletePayment: (paymentId: string) => {
     const state = get();
+    const deletedAt = new Date().toISOString();
+    const target = state.payments.find((p) => p.id === paymentId);
+
     set({
       payments: state.payments.map((p) =>
-        p.id === paymentId ? { ...p, deletedAt: new Date().toISOString() } : p
+        p.id === paymentId ? { ...p, deletedAt } : p
       ),
     });
+
+    if (target) {
+      void enqueueAndMaybeFlush(
+        {
+          mutationId: generateClientUuid(),
+          createdAt: deletedAt,
+          type: 'DELETE_PAYMENT',
+          payload: { paymentId, tripId: target.tripId, deletedAt },
+        },
+        get,
+        set
+      );
+    }
   },
 
   addMemberToTrip: (tripId: string, displayName: string) => {
     const state = get();
     const newMember: MockTripMember = {
       tripId,
-      userId: `user_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      userId: generateClientUuid(),
       role: 'member',
       displayName: displayName.trim(),
       avatarUrl: '',
@@ -223,13 +459,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       return { trip: existing };
     }
 
-    // In Demo Mode, allow joining sample invite code PARIS26 for instant evaluation
     if (state.isGuestDemo && normalized === 'PARIS26') {
       const currentUserId = state.user?.id || 'user_me';
       const parisTrip: MockTrip = {
-        id: `trip_paris_${Date.now()}`,
+        id: generateClientUuid(),
         name: 'Paris Weekend 🥐',
-        coverUrl: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800',
+        coverUrl:
+          'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800',
         baseCurrency: 'EUR',
         startDate: '2026-12-05',
         endDate: '2026-12-08',
@@ -256,7 +492,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       ];
 
       const parisExpense: ExpenseRecord = {
-        id: `exp_paris_${Date.now()}`,
+        id: generateClientUuid(),
         tripId: parisTrip.id,
         title: 'Le Marais Bistro Dinner',
         amountMinor: 9200, // €92.00

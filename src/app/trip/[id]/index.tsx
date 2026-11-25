@@ -9,7 +9,7 @@ import {
   Sparkles,
   Users,
 } from 'lucide-react-native';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Image,
   Pressable,
@@ -24,11 +24,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
+import { SyncStatusBadge } from '../../../components/ui/SyncStatusBadge';
 import { EXPENSE_CATEGORIES, getCategoryMeta } from '../../../constants/categories';
 import { colors } from '../../../constants/colors';
 import { calculateNetBalances, convertToBaseMinor, formatMoney, simplifyDebts } from '../../../domain';
 import { ExpenseCategory, ExpenseRecord } from '../../../domain/types';
 import { useAppStore } from '../../../store/useAppStore';
+import { subscribeToTripRealtime } from '../../../sync/tripSync';
 
 export default function TripDashboardScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -40,6 +42,17 @@ export default function TripDashboardScreen() {
   const expenses = useAppStore((s) => s.expenses);
   const payments = useAppStore((s) => s.payments);
   const user = useAppStore((s) => s.user);
+  const isGuestDemo = useAppStore((s) => s.isGuestDemo);
+  const syncStatus = useAppStore((s) => s.syncStatus);
+  const pendingMutationsCount = useAppStore((s) => s.pendingMutationsCount);
+  const hydrateFromRemote = useAppStore((s) => s.hydrateFromRemote);
+
+  useEffect(() => {
+    if (!id || isGuestDemo) return;
+    return subscribeToTripRealtime(id, () => {
+      void hydrateFromRemote();
+    });
+  }, [id, isGuestDemo, hydrateFromRemote]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<ExpenseCategory | 'all'>('all');
@@ -213,8 +226,9 @@ export default function TripDashboardScreen() {
           <View style={styles.topBarMeta}>
             <Users size={12} color={palette.textMuted} />
             <Text style={[styles.topBarSub, { color: palette.textMuted }]}>
-              {tripMembers.length} members • Code: {trip.inviteCode}
+              {tripMembers.length} members • {trip.inviteCode}
             </Text>
+            <SyncStatusBadge status={syncStatus} pendingCount={pendingMutationsCount} />
           </View>
         </View>
 

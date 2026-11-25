@@ -1,11 +1,12 @@
 import { router } from 'expo-router';
-import { Award, DollarSign, LogOut, User } from 'lucide-react-native';
+import { Award, DollarSign, LogOut, User, WifiOff } from 'lucide-react-native';
 import React from 'react';
 import {
   Image,
   SafeAreaView,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   useColorScheme,
   View,
@@ -22,6 +23,9 @@ export default function ProfileScreen() {
 
   const user = useAppStore((s) => s.user);
   const isGuestDemo = useAppStore((s) => s.isGuestDemo);
+  const isOfflineSimulated = useAppStore((s) => s.isOfflineSimulated);
+  const pendingMutationsCount = useAppStore((s) => s.pendingMutationsCount);
+  const toggleSimulateOffline = useAppStore((s) => s.toggleSimulateOffline);
   const signOut = useAppStore((s) => s.signOut);
 
   const handleSignOut = () => {
@@ -86,7 +90,7 @@ export default function ProfileScreen() {
           </Text>
         </Card>
 
-        {/* Preferences */}
+        {/* Preferences & Offline Outbox Simulator */}
         <Card style={styles.settingsCard}>
           <View style={styles.settingRow}>
             <View style={styles.settingIconTitle}>
@@ -94,6 +98,35 @@ export default function ProfileScreen() {
               <Text style={[styles.settingLabel, { color: palette.text }]}>Base Currency</Text>
             </View>
             <Badge label={user?.defaultCurrency || 'USD'} variant="neutral" />
+          </View>
+
+          <View
+            style={[
+              styles.settingRow,
+              {
+                marginTop: 14,
+                paddingTop: 14,
+                borderTopWidth: 1,
+                borderTopColor: palette.border,
+              },
+            ]}
+          >
+            <View style={[styles.settingIconTitle, { flex: 1, marginRight: 10 }]}>
+              <WifiOff size={18} color={palette.textMuted} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.settingLabel, { color: palette.text }]}>
+                  Simulate Airplane Mode
+                </Text>
+                <Text style={{ fontSize: 12, color: palette.textMuted, marginTop: 2 }}>
+                  Queue expenses offline ({pendingMutationsCount} pending) and replay on reconnect
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={isOfflineSimulated}
+              onValueChange={toggleSimulateOffline}
+              trackColor={{ false: palette.border, true: colors.warning }}
+            />
           </View>
         </Card>
 
