@@ -50,7 +50,8 @@ export default function TripsListScreen() {
         {item.coverUrl ? (
           <Image
             source={{ uri: item.coverUrl }}
-            className="absolute inset-0 w-full h-full"
+            resizeMode="cover"
+            className="absolute inset-0"
           />
         ) : (
           <View className="absolute inset-0 bg-zinc-900 items-center justify-center">

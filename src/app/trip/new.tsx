@@ -135,7 +135,7 @@ export default function NewTripModal() {
                       : 'border border-hairline dark:border-hairline-dark'
                   }`}
                 >
-                  <Image source={{ uri: item.url }} className="w-full h-[54px] mb-1" />
+                  <Image source={{ uri: item.url }} resizeMode="cover" className="w-full h-[54px] mb-1" />
                   <Text className="font-medium text-[11px] text-ink dark:text-ink-dark">
                     {item.label}
                   </Text>

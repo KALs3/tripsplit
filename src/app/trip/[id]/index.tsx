@@ -280,65 +280,66 @@ export default function TripDashboardScreen() {
           showsVerticalScrollIndicator={false}
         >
           {/* Full-Bleed Travel Cover Hero */}
-          <View
-            style={{ paddingTop: Math.max(insets.top, 12) }}
-            className="min-h-[248px] justify-between px-4 pb-[34px] relative"
-          >
+          <View className="relative overflow-hidden bg-zinc-900">
             {trip.coverUrl ? (
               <Image
                 source={{ uri: trip.coverUrl }}
-                className="absolute inset-0 w-full h-full"
+                resizeMode="cover"
+                className="absolute inset-0"
               />
-            ) : (
-              <View className="absolute inset-0 bg-zinc-900" />
-            )}
+            ) : null}
             <View className="absolute inset-0 bg-black/35" />
 
-            {/* Top Hero Controls */}
-            <View className="flex-row items-center justify-between">
-              <Pressable
-                onPress={() => router.back()}
-                className="w-9 h-9 rounded-full bg-white items-center justify-center active:opacity-85"
-                accessibilityLabel="Go back to trips"
-              >
-                <ArrowLeft size={19} color="#09090B" />
-              </Pressable>
-
-              <View className="flex-row items-center gap-2">
-                {(syncStatus !== 'synced' || pendingMutationsCount > 0) && (
-                  <SyncStatusBadge
-                    status={syncStatus}
-                    pendingCount={pendingMutationsCount}
-                  />
-                )}
+            <View
+              style={{ paddingTop: Math.max(insets.top, 12) }}
+              className="min-h-[248px] justify-between px-4 pb-[34px]"
+            >
+              {/* Top Hero Controls */}
+              <View className="flex-row items-center justify-between">
                 <Pressable
-                  onPress={() =>
-                    router.push({ pathname: '/trip/[id]/members', params: { id: trip.id } })
-                  }
-                  accessibilityLabel="View trip members"
+                  onPress={() => router.back()}
+                  className="w-9 h-9 rounded-full bg-white items-center justify-center active:opacity-85"
+                  accessibilityLabel="Go back to trips"
                 >
-                  <AvatarStack
-                    members={tripMembers}
-                    size={30}
-                    maxVisible={2}
-                    ringColor="#FFFFFF"
-                    overflowTextColor="#FFFFFF"
-                  />
+                  <ArrowLeft size={19} color="#09090B" />
                 </Pressable>
-              </View>
-            </View>
 
-            {/* Overlaid Title & Dates */}
-            <View className="mt-7">
-              <Text
-                className="font-bold text-[28px] text-white tracking-tight"
-                numberOfLines={1}
-              >
-                {trip.name}
-              </Text>
-              <Text className="font-medium text-[13px] text-zinc-100 mt-0.5">
-                {dateRangeLabel}
-              </Text>
+                <View className="flex-row items-center gap-2">
+                  {(syncStatus !== 'synced' || pendingMutationsCount > 0) && (
+                    <SyncStatusBadge
+                      status={syncStatus}
+                      pendingCount={pendingMutationsCount}
+                    />
+                  )}
+                  <Pressable
+                    onPress={() =>
+                      router.push({ pathname: '/trip/[id]/members', params: { id: trip.id } })
+                    }
+                    accessibilityLabel="View trip members"
+                  >
+                    <AvatarStack
+                      members={tripMembers}
+                      size={30}
+                      maxVisible={2}
+                      ringColor="#FFFFFF"
+                      overflowTextColor="#FFFFFF"
+                    />
+                  </Pressable>
+                </View>
+              </View>
+
+              {/* Overlaid Title & Dates */}
+              <View className="mt-7">
+                <Text
+                  className="font-bold text-[28px] text-white tracking-tight"
+                  numberOfLines={1}
+                >
+                  {trip.name}
+                </Text>
+                <Text className="font-medium text-[13px] text-zinc-100 mt-0.5">
+                  {dateRangeLabel}
+                </Text>
+              </View>
             </View>
           </View>
 
