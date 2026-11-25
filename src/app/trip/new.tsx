@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Compass, X } from 'lucide-react-native';
+import { X } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
   Pressable,
@@ -11,7 +11,6 @@ import {
   View,
 } from 'react-native';
 import { Button } from '../../components/ui/Button';
-import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { colors } from '../../constants/colors';
 import { CURRENCY_METADATA } from '../../domain';
@@ -51,7 +50,7 @@ export default function NewTripModal() {
       endDate: null as any,
     });
 
-    router.replace(`/trip/${newTrip.id}`);
+    router.replace({ pathname: '/trip/[id]', params: { id: newTrip.id } });
   };
 
   return (

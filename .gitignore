@@ -43,3 +43,6 @@ example
 # generated native folders
 /ios
 /android
+
+# Added by MD Pretty View — Markdown Preview Enhanced pan/zoom assets
+.crossnote/

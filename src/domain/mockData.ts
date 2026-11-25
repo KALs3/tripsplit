@@ -85,7 +85,10 @@ export const DEMO_EXPENSES: ExpenseRecord[] = [
     amountMinor: 32000, // $320.00
     currency: 'USD',
     fxRateToBase: 1.0,
+    category: 'transport',
     paidBy: 'user_me',
+    spentAt: '2026-11-12T09:30:00Z',
+    note: 'Nozomi express reserved seats',
     splits: [
       { userId: 'user_me', shareMinor: 8000 },
       { userId: 'user_kenji', shareMinor: 8000 },
@@ -100,7 +103,9 @@ export const DEMO_EXPENSES: ExpenseRecord[] = [
     amountMinor: 5600, // $56.00
     currency: 'USD',
     fxRateToBase: 1.0,
+    category: 'food',
     paidBy: 'user_kenji',
+    spentAt: '2026-11-11T20:15:00Z',
     splits: [
       { userId: 'user_me', shareMinor: 1400 },
       { userId: 'user_kenji', shareMinor: 1400 },
@@ -115,7 +120,10 @@ export const DEMO_EXPENSES: ExpenseRecord[] = [
     amountMinor: 64000, // $640.00
     currency: 'USD',
     fxRateToBase: 1.0,
+    category: 'lodging',
     paidBy: 'user_sarah',
+    spentAt: '2026-11-12T15:00:00Z',
+    note: '2 nights near Gion district',
     splits: [
       { userId: 'user_me', shareMinor: 16000 },
       { userId: 'user_kenji', shareMinor: 16000 },
@@ -130,7 +138,9 @@ export const DEMO_EXPENSES: ExpenseRecord[] = [
     amountMinor: 14000, // $140.00
     currency: 'USD',
     fxRateToBase: 1.0,
+    category: 'activities',
     paidBy: 'user_marcus',
+    spentAt: '2026-11-10T14:00:00Z',
     splits: [
       { userId: 'user_me', shareMinor: 3500 },
       { userId: 'user_kenji', shareMinor: 3500 },

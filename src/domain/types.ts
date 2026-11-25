@@ -55,6 +55,14 @@ export type SplitInput =
   | PercentageSplitInput
   | SharesSplitInput;
 
+export type ExpenseCategory =
+  | 'food'
+  | 'transport'
+  | 'lodging'
+  | 'activities'
+  | 'shopping'
+  | 'other';
+
 export interface ExpenseRecord {
   id: string;
   tripId: string;
@@ -62,7 +70,10 @@ export interface ExpenseRecord {
   amountMinor: number;
   currency: CurrencyCode;
   fxRateToBase: number; // e.g. 1.0 if same currency, or rate where base_amount = amount * fxRateToBase
+  category?: ExpenseCategory;
   paidBy: string;
+  spentAt?: string;
+  note?: string;
   splits: SplitResult[];
   deletedAt?: string | null;
 }

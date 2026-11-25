@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Award, DollarSign, LogOut, ShieldCheck, User } from 'lucide-react-native';
+import { Award, DollarSign, LogOut, User } from 'lucide-react-native';
 import React from 'react';
 import {
   Image,

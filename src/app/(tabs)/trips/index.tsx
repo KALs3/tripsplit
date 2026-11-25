@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Calendar, Plus, QrCode, Sparkles, Users } from 'lucide-react-native';
+import { Calendar, Plus, Users } from 'lucide-react-native';
 import React from 'react';
 import {
   FlatList,
@@ -32,7 +32,7 @@ export default function TripsListScreen() {
 
   const handleOpenTrip = (tripId: string) => {
     setActiveTrip(tripId);
-    router.push(`/trip/${tripId}`);
+    router.push({ pathname: '/trip/[id]', params: { id: tripId } });
   };
 
   const renderTripCard = ({ item }: { item: MockTrip }) => {

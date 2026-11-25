@@ -1,12 +1,11 @@
 import { create } from 'zustand';
-import { calculateNetBalances, simplifyDebts } from '../domain';
+import { calculateNetBalances, convertToBaseMinor, simplifyDebts } from '../domain';
 import {
   DEMO_EXPENSES,
   DEMO_MEMBERS,
   DEMO_PAYMENTS,
   DEMO_TRIP,
   DEMO_USER,
-  MockProfile,
   MockTrip,
   MockTripMember,
 } from '../domain/mockData';
@@ -197,7 +196,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     sortedBalances.sort((a, b) => b.netMinor - a.netMinor);
 
     const totalSpendMinor = tripExpenses.reduce(
-      (sum, e) => sum + e.amountMinor,
+      (sum, e) => sum + convertToBaseMinor(e.amountMinor, e.fxRateToBase),
       0
     );
 
