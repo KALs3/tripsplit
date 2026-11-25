@@ -8,7 +8,7 @@ export const ar = {
     delete: 'حذف',
     remove: 'إزالة',
     add: 'إضافة',
-    you: 'اليك',
+    you: 'انت',
     youLower: 'اليك',
     member: 'مسافر',
     unknown: 'غير معروف',
