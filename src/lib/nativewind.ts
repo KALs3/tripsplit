@@ -1,7 +1,11 @@
 import { cssInterop } from 'nativewind';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
-// Enable NativeWind `className` prop on SafeAreaView across iOS, Android, and Web.
+// Enable NativeWind `className` prop on SafeArea primitives across iOS, Android, and Web.
+cssInterop(SafeAreaProvider, {
+  className: 'style',
+});
+
 cssInterop(SafeAreaView, {
   className: 'style',
 });

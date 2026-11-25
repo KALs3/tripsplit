@@ -13,6 +13,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
+import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useTheme } from '../hooks/useTheme';
 import { useAppStore } from '../store/useAppStore';
@@ -20,7 +21,7 @@ import { useAppStore } from '../store/useAppStore';
 void SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const { isDark } = useTheme();
+  const { isDark, palette } = useTheme();
   const setNetworkOnline = useAppStore((s) => s.setNetworkOnline);
   const hydrateThemePreference = useAppStore((s) => s.hydrateThemePreference);
 
@@ -73,34 +74,37 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider>
-      <StatusBar style={isDark ? 'light' : 'dark'} />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          animation: 'slide_from_right',
-        }}
-      >
-        <Stack.Screen name="index" />
-        <Stack.Screen name="(auth)/login" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="join/[code]" />
-        <Stack.Screen
-          name="trip/new"
-          options={{
-            presentation: 'modal',
-            animation: 'slide_from_bottom',
+    <SafeAreaProvider className="flex-1 bg-canvas dark:bg-canvas-dark">
+      <View className="flex-1 bg-canvas dark:bg-canvas-dark">
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            animation: 'slide_from_right',
+            contentStyle: { backgroundColor: palette.background },
           }}
-        />
-        <Stack.Screen
-          name="trip/join"
-          options={{
-            presentation: 'modal',
-            animation: 'slide_from_bottom',
-          }}
-        />
-        <Stack.Screen name="trip/[id]" />
-      </Stack>
+        >
+          <Stack.Screen name="index" />
+          <Stack.Screen name="(auth)/login" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="join/[code]" />
+          <Stack.Screen
+            name="trip/new"
+            options={{
+              presentation: 'modal',
+              animation: 'slide_from_bottom',
+            }}
+          />
+          <Stack.Screen
+            name="trip/join"
+            options={{
+              presentation: 'modal',
+              animation: 'slide_from_bottom',
+            }}
+          />
+          <Stack.Screen name="trip/[id]" />
+        </Stack>
+      </View>
     </SafeAreaProvider>
   );
 }
