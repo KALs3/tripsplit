@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Award, DollarSign, LogOut, User, WifiOff } from 'lucide-react-native';
+import { DollarSign, LogOut, User, WifiOff } from 'lucide-react-native';
 import React from 'react';
 import {
   Image,
@@ -69,28 +69,6 @@ export default function ProfileScreen() {
               </View>
             </View>
           </View>
-        </Card>
-
-        {/* Recruiter / Portfolio Architecture Card */}
-        <Card style={[styles.portfolioCard, { borderColor: colors.primary }]}>
-          <View style={styles.portfolioHeader}>
-            <Award size={20} color={colors.primary} />
-            <Text style={[styles.portfolioTitle, { color: colors.primary }]}>
-              Technical Highlights (Portfolio)
-            </Text>
-          </View>
-          <Text style={[styles.portfolioText, { color: palette.text }]}>
-            • <Text style={{ fontWeight: '700' }}>Zero Floating-Point Math:</Text> Currencies stored as integer minor units (cents).
-          </Text>
-          <Text style={[styles.portfolioText, { color: palette.text }]}>
-            • <Text style={{ fontWeight: '700' }}>Greedy Debt Simplification:</Text> O(N log N) bipartite algorithm minimizing transfers.
-          </Text>
-          <Text style={[styles.portfolioText, { color: palette.text }]}>
-            • <Text style={{ fontWeight: '700' }}>PostgreSQL RLS:</Text> Engine-level security guaranteeing multi-tenant isolation.
-          </Text>
-          <Text style={[styles.portfolioText, { color: palette.text }]}>
-            • <Text style={{ fontWeight: '700' }}>Offline-First Ready:</Text> Client UUID idempotency for robust mutation replays.
-          </Text>
         </Card>
 
         {/* Preferences & Offline Outbox Simulator */}
@@ -197,28 +175,9 @@ const styles = StyleSheet.create({
   badgeRow: {
     marginTop: 8,
   },
-  portfolioCard: {
-    borderWidth: 1.5,
-    marginVertical: 14,
-    padding: 16,
-  },
-  portfolioHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 10,
-  },
-  portfolioTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  portfolioText: {
-    fontSize: 13,
-    lineHeight: 20,
-    marginVertical: 2,
-  },
   settingsCard: {
     padding: 16,
+    marginTop: 10,
   },
   settingRow: {
     flexDirection: 'row',
